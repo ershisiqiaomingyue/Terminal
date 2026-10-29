@@ -1,0 +1,37 @@
+use super::super::*;
+
+pub(in crate::agent::turn) async fn run_turn_body<'a>(
+    input: super::turn_entry::TurnInput<'a>,
+) -> Result<AgentChatResponse, String> {
+    let super::turn_entry::TurnInput { app, state, mcp_state, request, session_id, turn_id,
+        mut request_guard, ssh_context, mut ssh_connection_id, wsl_root, wsl_context,
+        default_ssh_host, bound_ssh_hosts, is_ssh_target, is_wsl_target,
+        default_environment, provider, selected_model, protocol, mut image_attachments,
+    } = input;
+    let cancellation = request_guard.cancellation();
+    let cancellation_reason = request_guard.cancellation_reason();
+    let cancellation_token = request_guard.cancellation_token();
+    let steer_receiver = request_guard.take_steer_receiver();
+    drop(steer_receiver);
+    let current_user_message_id = format!("user:{turn_id}");
+    let attachment_root = app
+        .path()
+        .app_cache_dir()
+        .map_err(|error| error.to_string())?
+        .join("agent-attachments");
+    let mut image_attachments = normalize_request_image_attachments(
+        &attachment_root,
+        &request.attachments,
+        &request.context,
+        selected_model.supports_vision,
+        &current_user_message_id,
+    )?;
+    for turn in &mut request.context {
+        if turn.role.eq_ignore_ascii_case("user") {
+            append_image_source_labels(
+                &mut turn.content,
+                &turn.attachments,
+                "[历史消息中的图片来源]",
+            );
+        }
+    }

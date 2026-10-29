@@ -1,0 +1,41 @@
+{
+  "name": "terminal",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "test:rust": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-rust.ps1"
+  },
+  "dependencies": {
+    "@aurigax-ai/ghostty-web": "0.3.6",
+    "@radix-ui/react-menubar": "^1.2.1",
+    "@tanstack/react-virtual": "^3.14.13",
+    "@tauri-apps/api": "^2.12.4",
+    "@tauri-apps/plugin-dialog": "^2.8.4",
+    "@tauri-apps/plugin-opener": "^2.7.2",
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/xterm": "^6.0.0",
+    "clsx": "^2.1.1",
+    "dompurify": "^3.4.15",
+    "highlight.js": "^11.12.0",
+    "jsonc-parser": "^3.3.1",
+    "lucide-react": "^0.475.0",
+    "marked": "^18.0.14",
+    "mermaid": "11.17.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.12.4",
+    "@types/node": "^22.13.4",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.7.3",
+    "vite": "^6.1.0"
+  }
+}

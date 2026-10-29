@@ -1,0 +1,21 @@
+            &turn_id,
+            &snapshot_paths,
+            &before_files,
+            &last_file_snapshot,
+            true,
+        )
+        .await;
+    }
+    drop(file_backup_lease);
+    Ok(AgentChatResponse {
+        session_id,
+        text,
+        usage,
+        report,
+        report_error,
+        evidence: Some(evidence),
+        context_checkpoint: checkpoint.summary.map(|summary| AgentContextCheckpoint {
+            id: format!("context-{}", uuid_suffix()),
+            summary,
+            evidence_policy_version: CONTEXT_CHECKPOINT_EVIDENCE_POLICY_VERSION,
+            covered_through_message_id: checkpoint.covered_through_message_id.take(),

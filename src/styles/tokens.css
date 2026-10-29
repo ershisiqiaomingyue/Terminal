@@ -1,0 +1,705 @@
+/**
+ * ============================================================================
+ * Android Toolkit UI Design Tokens
+ * Shared V2 surfaces, readable controls and semantic colors for both themes.
+ * ============================================================================
+ */
+
+:root {
+  --font-display: -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+  --font-sans: var(--font-display);
+  --font-mono: "JetBrains Mono", "Cascadia Mono", "Cascadia Code", Consolas, monospace;
+
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+
+  /* Component outlines stay transparent in every theme; keep their reserved
+     width so theme changes and removing decoration do not resize the layout.
+     Content dividers and keyboard focus use their own tokens. */
+  --card-radius: 18px;
+  /* Only form fields use a thin halo; actions respond with background fills. */
+  --input-hover-ring: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 16%, transparent);
+  --input-hover-shadow: var(--input-hover-ring), var(--input-inner-shadow);
+  --card-hover-shadow: var(--shadow-lg);
+  --card-footer-bg: transparent;
+  --markdown-code-surface: var(--ambient-glow), var(--markdown-code-bg);
+  --control-radius: 10px;
+  --control-height: 32px;
+  --control-height-sm: 28px;
+  --control-height-md: 32px;
+  --control-height-lg: 38px;
+
+  --radius-sm: 8px;
+  --radius-base: 10px;
+  --radius-lg: 18px;
+  --radius-full: 9999px;
+
+  --transition-fast: 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-base: 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* card-showcase.html: glass track, secondary fill and accent selected text. */
+  --segmented-bg: var(--input-bg-sunken);
+  --segmented-text: var(--control-text);
+  --segmented-hover-bg: color-mix(in srgb, var(--segmented-bg) 94%, var(--text-primary));
+  --segmented-active-bg: var(--btn-secondary-bg);
+  --segmented-active-hover-bg: var(--btn-secondary-hover);
+  --segmented-active-text: var(--accent-primary);
+  --segmented-active-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --btn-primary-rim: inset 0 1px 1px 0 rgba(255, 255, 255, 0.25);
+
+  --btn-danger-active-bg: color-mix(in srgb, var(--danger-text) 18%, var(--bg-canvas));
+  --btn-success-bg: var(--status-success-bg);
+  --btn-success-hover: color-mix(in srgb, var(--success-text) 12%, var(--bg-canvas));
+  --btn-success-text: var(--status-success-text);
+  --control-text: color-mix(in srgb, var(--text-secondary) 80%, var(--text-primary));
+  --surface-inset-bg: color-mix(in srgb, var(--bg-surface) 98%, var(--text-primary));
+  --surface-action-bg: color-mix(in srgb, var(--bg-surface) 96%, var(--text-primary));
+  --surface-action-hover-bg: color-mix(in srgb, var(--bg-surface) 91%, var(--text-primary));
+  --surface-action-active-bg: color-mix(in srgb, var(--bg-surface) 86%, var(--text-primary));
+  --status-success-bg: color-mix(in srgb, var(--success-text) 6%, var(--bg-canvas));
+  --status-success-text: color-mix(in srgb, var(--success-text) 88%, var(--text-primary));
+  --status-warning-bg: color-mix(in srgb, var(--warning-text) 6%, var(--bg-canvas));
+  --status-warning-text: color-mix(in srgb, var(--warning-text) 88%, var(--text-primary));
+  --status-danger-bg: color-mix(in srgb, var(--danger-text) 6%, var(--bg-canvas));
+  --status-danger-text: color-mix(in srgb, var(--danger-text) 88%, var(--text-primary));
+  --status-info-bg: var(--btn-primary-bg);
+  --status-info-text: var(--btn-primary-text);
+  --status-neutral-bg: var(--bg-surface);
+  --status-neutral-text: var(--control-text);
+  --focus-ring: 0 0 0 2px var(--accent-primary);
+  --divider-dashed: 1px dashed var(--divider-color);
+  --overlay-bg: color-mix(in srgb, #000000 36%, transparent);
+  --tooltip-bg: var(--text-primary);
+  --tooltip-text: var(--bg-canvas);
+  --toast-bg: var(--popover-bg);
+  --toast-text: var(--text-primary);
+  --toast-shadow: var(--popover-shadow);
+  --progress-track-bg: color-mix(in srgb, var(--text-primary) 10%, var(--bg-canvas));
+  --terminal-foreground: var(--text-primary);
+  --badge-bg: var(--status-neutral-bg);
+  --badge-text: var(--status-neutral-text);
+  --send-button-bg: var(--text-primary);
+  --send-button-text: var(--bg-canvas);
+  --send-button-hover: color-mix(in srgb, var(--text-primary) 85%, var(--bg-canvas));
+  /* Paired palettes for controls embedded in an input, and shared tables. */
+  --input-muted: color-mix(in srgb, var(--input-bg-focus) 32%, var(--input-text));
+  --input-action-bg: color-mix(in srgb, var(--input-bg-sunken) 86%, var(--input-text));
+  --input-action-hover: color-mix(in srgb, var(--input-bg-sunken) 76%, var(--input-text));
+  --input-action-text: var(--input-text);
+  /* Flat search fields are separate from cards and page panels. */
+  --input-surface-bg: var(--input-bg-sunken);
+  --input-surface-hover-bg: var(--input-bg-hover);
+  --input-surface-focus-bg: var(--input-bg-focus);
+  --composer-bg: var(--input-bg-sunken);
+  --composer-text: var(--input-text);
+  --composer-muted: var(--input-muted);
+  --composer-control-bg: color-mix(in srgb, var(--composer-bg) 86%, var(--composer-text));
+  --composer-control-hover: var(--button-hover-bg);
+  --composer-control-text: var(--input-action-text);
+  --composer-send-bg: var(--send-button-bg);
+  --composer-send-hover: var(--send-button-hover);
+  --composer-send-text: var(--send-button-text);
+  --composer-disabled-bg: var(--composer-control-bg);
+  --composer-disabled-text: var(--composer-muted);
+  --composer-ring-track: color-mix(in srgb, var(--composer-bg) 72%, var(--composer-text));
+  --composer-divider: color-mix(in srgb, var(--composer-bg) 88%, var(--composer-text));
+  --composer-warning: var(--warning-text);
+  --composer-danger: var(--danger-text);
+  --composer-permission-bg: color-mix(in srgb, var(--composer-bg) 92%, var(--composer-danger));
+  --composer-permission-hover: color-mix(in srgb, var(--composer-bg) 86%, var(--composer-danger));
+  --table-bg: var(--bg-surface);
+  --table-text: var(--text-primary);
+  --table-header-bg: color-mix(in srgb, var(--table-bg) 92%, var(--accent-primary));
+  --table-header-text: var(--table-text);
+  --table-stripe-bg: color-mix(in srgb, var(--table-bg) 97.5%, var(--accent-primary));
+  --table-hover-bg: color-mix(in srgb, var(--table-bg) 93%, var(--accent-primary));
+  --table-divider: color-mix(in srgb, var(--table-bg) 92%, var(--table-text));
+  --terminal-tabs-bg: color-mix(in srgb, var(--bg-surface) 94%, var(--text-primary));
+  --terminal-surround-bg: color-mix(in srgb, var(--bg-canvas) 94%, var(--text-primary));
+  --session-tab-bg: color-mix(in srgb, var(--terminal-tabs-bg) 96%, var(--text-primary));
+  --session-tab-text: var(--control-text);
+  --session-tab-hover-bg: color-mix(in srgb, var(--session-tab-bg) 94%, var(--text-primary));
+  --session-tab-active-bg: color-mix(in srgb, var(--session-tab-bg) 92%, var(--text-primary));
+  --session-tab-active-hover-bg: color-mix(in srgb, var(--session-tab-bg) 88%, var(--text-primary));
+  --session-tab-active-text: var(--text-primary);
+  --task-surface: var(--bg-card);
+  --task-title: var(--text-primary);
+  --task-detail: var(--control-text);
+  --task-action: var(--control-text);
+  --task-action-hover-bg: var(--segmented-hover-bg);
+  --inference-accent: var(--btn-primary-text);
+  --inference-track: var(--input-bg-sunken);
+  --inference-fill: #9a59e0;
+  --inference-fill-deep: #4a3584;
+  --inference-fill-highlight: #e1b7ff;
+  --inference-fill-warm: #f2c94c;
+  --inference-spark: #f8e2ff;
+  --inference-spark-warm: #ffe39a;
+  --inference-thumb: var(--text-primary);
+  --inference-knob-bg: #ffffff;
+  --inference-thumb-shadow: 0 1px 4px color-mix(in srgb, #000000 24%, transparent);
+  --workspace-panel-bg: var(--page-pane-bg);
+  --workspace-panel-text: var(--text-primary);
+  --workspace-panel-muted: var(--control-text);
+  --pane-divider-color: color-mix(in srgb, var(--text-primary) 10%, transparent);
+  --pane-divider-active-color: color-mix(in srgb, var(--text-primary) 30%, transparent);
+
+  /* Markdown surfaces stay distinct from the conversation canvas in every theme. */
+  --markdown-inline-code-bg: color-mix(in srgb, var(--bg-canvas) 88%, var(--text-primary));
+  --markdown-code-bg: color-mix(in srgb, var(--context-navigation-bg) 95%, var(--text-primary));
+  --markdown-code-text: var(--text-primary);
+  --markdown-quote-bg: var(--markdown-code-bg);
+  --markdown-quote-text: var(--text-primary);
+  --markdown-table-heading-bg: var(--table-header-bg);
+  --markdown-divider: color-mix(in srgb, var(--text-primary) 12%, transparent);
+  --tool-input-bg: var(--markdown-inline-code-bg);
+  --tool-output-bg: var(--markdown-code-bg);
+  --tool-code-text: var(--markdown-code-text);
+  --tool-detail-muted: var(--control-text);
+  --tool-detail-divider: var(--markdown-divider);
+  --tool-state-bg: color-mix(in srgb, var(--bg-canvas) 96%, var(--text-primary));
+  --tool-state-text: var(--control-text);
+  --tool-state-muted: var(--text-tertiary);
+  --property-surface: var(--bg-surface);
+  --property-hover-bg: var(--bg-hover);
+  --property-divider: var(--divider-color);
+  --property-value-text: var(--text-primary);
+  --property-unknown-text: var(--control-text);
+  --tool-scrollbar-thumb: var(--scrollbar-thumb);
+  --tool-scrollbar-thumb-hover: var(--scrollbar-thumb-hover);
+  --processing-status-text: var(--control-text);
+  --processing-status-icon: var(--accent-primary);
+  --processing-status-shimmer: color-mix(in srgb, var(--accent-primary) 18%, transparent);
+  --execution-status-text: var(--text-secondary);
+  --row-hover-bg: color-mix(in srgb, var(--bg-card) 97.5%, var(--text-primary));
+  --page-header-bg: var(--bg-canvas);
+  --page-pane-bg: var(--bg-canvas);
+  --switch-thumb-bg: var(--control-checked-mark);
+  --switch-thumb-shadow: 0 2px 5px color-mix(in srgb, #000000 25%, transparent);
+}
+
+/* ============================================================================
+ * 1. 深色模式 (DARK MODE - 默认) - macOS Studio 苹果原生专业工作台
+ * ============================================================================ */
+:root {
+  /* UA 默认滚动条/原生控件跟随主题：不声明时 WebView2 一律按 light 渲染，
+     所有没写滚动条样式的滚动元素在暗色主题下都是刺眼的浅色滚动条。 */
+  color-scheme: dark;
+  --bg-ambient: #090b10;
+  --bg-app: #151a23;
+  --context-navigation-bg: #151a23;
+  --context-navigation-divider: rgba(255, 255, 255, 0.07);
+  --button-hover-bg: rgba(255, 255, 255, 0.08);
+  --button-hover-text: var(--text-primary);
+  --chrome-hover-text: var(--chrome-ink);
+  --selection-text: var(--text-primary);
+  --input-text: var(--text-primary);
+  --input-hover-text: var(--text-primary);
+  --rail-hover-bg: rgba(255, 255, 255, 0.08);
+  --rail-active-bg: rgba(99, 102, 241, 0.22);
+  --topbar-bg: var(--bg-ambient);
+  --bg-base: transparent;
+  --bg-canvas: #0b0e13;
+  --page-header-bg: #0b0e13;
+  --page-pane-bg: #0b0e13;
+  --workspace-panel-bg: #121720;
+  --chrome-ink: #f8fafc;
+  --chrome-muted: #94a3b8;
+  --chrome-hover: rgba(255, 255, 255, 0.08);
+  --ambient-glow: radial-gradient(circle, rgba(139, 92, 246, 0.08) 0%, rgba(99, 102, 241, 0.03) 30%, transparent 60%);
+  --card-bg: linear-gradient(145deg, rgba(31, 36, 46, 0.98) 0%, rgba(22, 26, 35, 0.98) 100%);
+  --bg-card: var(--card-bg);
+  --chat-user-message-bg: color-mix(in srgb, var(--accent-primary) 13%, var(--bg-canvas));
+  --bg-panel: #12151e;
+  --bg-card-hover: var(--bg-card);
+  --card-blur: 28px;
+  --bg-surface: #171c28;
+  --bg-muted: var(--bg-surface);
+  --bg-hover: rgba(255, 255, 255, 0.06);
+  --bg-selected: rgba(99, 102, 241, 0.22);
+  --bg-input: rgba(255, 255, 255, 0.05);
+  --card-rim: inset 0 1px 1px 0 rgba(255, 255, 255, 0.16);
+  --accent-color: var(--accent-primary);
+  --btn-primary-bg: #6366f1;
+  --btn-primary-hover: #4f46e5;
+  --btn-primary-text: #ffffff;
+  --btn-confirm-bg: #6366f1;
+  --btn-confirm-hover: #4f46e5;
+  --btn-confirm-text: #ffffff;
+
+  /* 下拉浮层面板专属：实心深蓝黑防穿透 */
+  --popover-bg: rgba(18, 21, 28, 0.98);
+  --popover-border: 1px solid transparent;
+  --popover-shadow: 0 24px 50px rgba(0, 0, 0, 0.65), 0 4px 16px rgba(0, 0, 0, 0.35);
+  --popover-item-hover: rgba(255, 255, 255, 0.08);
+  --popover-item-active-bg: rgba(99, 102, 241, 0.22);
+  --popover-item-active-text: #a5b4fc;
+
+  /* ── 表单控件 (暗色) ───────────────────────────────────────────────────
+     同样是"比所在表面亮一档"的冷调阶梯。用的不是纯白叠加（那会偏灰发闷，
+     且在 #171c28 的卡片上几乎看不出来），而是带蓝的 slate 提亮：
+       #12151e -> #1a2030 -> #202839 -> #232b3d
+     配合 --bg-canvas #0b0e13 / --bg-surface #171c28，每一档都能立住边界。
+     focus 继续抬升而不是回落，因为暗色下"浮起"要靠变亮来表达。 */
+  --input-bg-sunken: #1a2030;
+  --input-bg-hover: #202839;
+  --input-bg-focus: #232b3d;
+  --input-bg: var(--input-bg-sunken);
+  --input-surface-bg: #1a2030;
+  --input-surface-hover-bg: #202839;
+  --input-surface-focus-bg: #232b3d;
+  --control-unchecked-bg: rgba(255, 255, 255, 0.14);
+  --control-checked-bg: var(--accent-primary);
+  --control-checked-mark: #ffffff;
+  --input-placeholder: var(--input-muted);
+  --input-focus-border: color-mix(in srgb, var(--input-bg-sunken) 84%, var(--text-primary));
+  --input-focus-ring: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 32%, transparent);
+  --input-border: 1px solid color-mix(in srgb, var(--input-bg-sunken) 86%, var(--text-primary));
+  --input-lift: 0 1px 2px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.22);
+  --input-lift-hover: 0 2px 5px rgba(0, 0, 0, 0.42), 0 5px 14px rgba(0, 0, 0, 0.28);
+  --input-rim: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  --input-glass: var(--input-lift), var(--input-rim);
+  --input-inner-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.24);
+
+  --terminal-canvas-bg: #202020;
+  --terminal-cursor: #ededed;
+  --terminal-selection: #494949;
+  /* 终端 dim（SGR 2）文字的保留强度：xterm 默认只留 50% 不透明度，
+     亮色下会淡到看不清，所以亮色单独调高（见 styles/terminal.css）。 */
+  --terminal-dim-strength: 50%;
+  --terminal-dim-ansi-strength: 50%;
+  /* 终端前景色的最低对比度（WCAG）。暗色底本身够暗，保持 xterm 默认不干预。 */
+  --terminal-contrast-ratio: 1;
+  --terminal-black: #8b949e;
+  --terminal-red: #ff7b72;
+  --terminal-green: #7ee787;
+  --terminal-yellow: #d29922;
+  --terminal-blue: #79c0ff;
+  --terminal-magenta: #d2a8ff;
+  --terminal-cyan: #76e3ea;
+  --terminal-white: #c9d1d9;
+  --terminal-bright-black: #a0a0a0;
+  --terminal-bright-red: #ffa198;
+  --terminal-bright-green: #aff5b4;
+  --terminal-bright-yellow: #e3b341;
+  --terminal-bright-blue: #a5d6ff;
+  --terminal-bright-magenta: #e2c5ff;
+  --terminal-bright-cyan: #b3f0ff;
+  --terminal-bright-white: #ffffff;
+  --code-background: var(--bg-canvas);
+  --code-foreground: var(--text-primary);
+  --code-line-number: var(--text-tertiary);
+  --code-selection: #494949;
+  --code-find-match: #35516d;
+  --code-find-current: #436c94;
+  --code-diff-added-bg: #17392b;
+  --code-diff-removed-bg: #412529;
+  --code-diff-added-text: #7dd3a4;
+  --code-diff-removed-text: #f5a1a8;
+  --code-syntax-comment: var(--text-tertiary);
+  --code-syntax-keyword: #ef9d89;
+  --code-syntax-literal: #efaa68;
+  --code-syntax-type: #8fc6ff;
+  --code-syntax-string: #6fc6a5;
+  --code-syntax-attribute: #8fc6ff;
+  --code-syntax-number: #efaa68;
+  --code-syntax-function: #8fc6ff;
+  --code-syntax-builtin: #f3b77d;
+  --code-syntax-meta: #f3b77d;
+  --terminal-scrollbar-thumb: rgba(148, 163, 184, 0.72);
+  --terminal-scrollbar-thumb-hover: rgba(226, 232, 240, 0.9);
+
+  /* 按钮系统 - 完全对齐 showcase 亚克力磨砂物理底座，border 极淡近透明，hover 仅变背景 */
+  --btn-secondary-bg: rgba(255, 255, 255, 0.06);
+  --btn-secondary-hover: rgba(255, 255, 255, 0.12);
+  --btn-secondary-border: rgba(255, 255, 255, 0.10);
+  --btn-secondary-text: var(--text-primary);
+  --btn-subtle-bg: transparent;
+  --btn-subtle-hover: rgba(255, 255, 255, 0.08);
+  --btn-subtle-border: transparent;
+  --btn-subtle-text: var(--text-secondary);
+
+  /* 危险按钮核心：纯正鲜红实体 (#EF4444) + 纯白文字 */
+  --btn-danger-default-bg: var(--status-danger-bg);
+  --btn-danger-default-text: var(--status-danger-text);
+  --btn-danger-default-border: transparent;
+  --btn-danger-default-glow: 0 4px 14px rgba(239, 68, 68, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  --btn-danger-hover-bg: color-mix(in srgb, var(--danger-text) 12%, var(--bg-canvas));
+  --btn-danger-hover-text: #ffffff;
+  --btn-danger-hover-border: transparent;
+  --btn-danger-hover-glow: 0 6px 24px rgba(239, 68, 68, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  --btn-danger-bg: var(--status-danger-bg);
+  --btn-danger-hover: color-mix(in srgb, var(--danger-text) 12%, var(--bg-canvas));
+  --btn-danger-text: var(--status-danger-text);
+
+  /* 品牌主色 - 方案 2: 雾霾冷靛青 (Slate Indigo) */
+  --accent-gradient: linear-gradient(135deg, #6366f1, #4f46e5);
+  --accent-primary: #6366f1;
+  --accent-hover: #4f46e5;
+  --accent-glow: 0 4px 16px rgba(99, 102, 241, 0.35);
+  --accent-subtle: rgba(99, 102, 241, 0.12);
+  --accent-border: rgba(99, 102, 241, 0.35);
+  --accent-text: #ffffff;
+
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
+  --text-muted: #a0a0a0;
+  --text-quaternary: #939393;
+  --success-text: #71d2a6;
+  --warning-text: #e6bc66;
+  --danger-text: #fa9292;
+  --status-success: var(--success-text);
+  --status-warning: var(--warning-text);
+  --status-danger: var(--danger-text);
+  --success: var(--success-text);
+  --warning: var(--warning-text);
+  --danger: var(--danger-text);
+
+  --glass-blur: blur(28px) saturate(185%);
+  --card-border: 1px solid transparent;
+  --border-subtle: rgba(255, 255, 255, 0.1);
+  --border-hover: rgba(255, 255, 255, 0.09);
+  --divider-color: rgba(255, 255, 255, 0.1);
+  --divider-subtle: 1px solid var(--divider-color);
+  --table-border-subtle: 1px solid var(--divider-color);
+  --card-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.65), 0 6px 18px rgba(0, 0, 0, 0.4);
+  --card-rim: inset 0 1px 1px 0 rgba(255, 255, 255, 0.16);
+  --focus-glow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+  --markdown-code-bg: rgba(18, 22, 30, 0.92);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.65);
+
+  --sidebar-bg: var(--bg-app);
+
+  --scrollbar-thumb: rgba(255, 255, 255, 0.25);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.45);
+  --scrollbar-track: rgba(0, 0, 0, 0.15);
+
+  --blob-1: radial-gradient(circle, rgba(14, 165, 233, 0.22) 0%, transparent 70%);
+  --blob-2: radial-gradient(circle, rgba(99, 102, 241, 0.18) 0%, transparent 70%);
+  --blob-3: radial-gradient(circle, rgba(56, 189, 248, 0.14) 0%, transparent 70%);
+  --blob-4: radial-gradient(circle, rgba(139, 92, 246, 0.16) 0%, transparent 70%);
+}
+
+/* ============================================================================
+ * 2. 亮色模式 (LIGHT MODE) - 还原早期流体渐变与白晶磨砂
+ * ============================================================================ */
+html[data-theme="light"] {
+  color-scheme: light;
+  --chrome-ink: #151e32;
+  --chrome-muted: #64748b;
+  --chrome-hover: rgba(255, 255, 255, 0.65);
+  --chrome-selected: rgba(255, 255, 255, 0.95);
+  --bg-ambient: #f1f4f9;
+  --bg-app: #f1f4f9;
+  --context-navigation-bg: #e6edf7;
+  --context-navigation-divider: rgba(210, 222, 238, 0.85);
+  --topbar-bg: var(--bg-ambient);
+  --bg-base: transparent;
+  --bg-canvas: #f7f9fc;
+  --page-header-bg: #f7f9fc;
+  --page-pane-bg: #f7f9fc;
+  --workspace-panel-bg: rgba(247, 249, 252, 0.94);
+  --terminal-tabs-bg: rgba(244, 247, 254, 0.85);
+  --terminal-surround-bg: rgba(244, 247, 254, 0.7);
+  --session-tab-bg: rgba(255, 255, 255, 0.6);
+  --session-tab-text: #4d5b76;
+  --session-tab-hover-bg: rgba(255, 255, 255, 0.9);
+  --session-tab-active-bg: #ffffff;
+  --session-tab-active-hover-bg: #ffffff;
+  --ambient-glow: radial-gradient(circle, rgba(139, 92, 246, 0.08) 0%, rgba(99, 102, 241, 0.03) 30%, transparent 60%);
+  --card-bg: rgba(255, 255, 255, 0.85);
+  --bg-card: var(--card-bg);
+  --bg-panel: rgba(255, 255, 255, 0.88);
+  --bg-card-hover: var(--bg-card);
+  --segmented-active-shadow: 0 2px 8px rgba(30, 41, 59, 0.08);
+  --card-blur: 28px;
+  --card-rim: inset 0 1px 1px 0 #ffffff;
+  --bg-surface: #ffffff;
+  --bg-muted: rgba(240, 245, 255, 0.7);
+  --bg-hover: rgba(99, 102, 241, 0.06);
+  --bg-selected: rgba(99, 102, 241, 0.12);
+  --btn-primary-bg: #6366f1;
+  --btn-primary-hover: #4f46e5;
+  --btn-primary-text: #ffffff;
+  --btn-confirm-bg: #6366f1;
+  --btn-confirm-hover: #4f46e5;
+  --btn-confirm-text: #ffffff;
+
+  /* 下拉浮层面板专属 (亮色)：纯白高反差悬浮岛 + 双层高光 */
+  --popover-bg: rgba(255, 255, 255, 0.98);
+  --popover-border: 1px solid transparent;
+  --popover-shadow: 0 20px 45px rgba(30, 41, 59, 0.12), 0 4px 16px rgba(30, 41, 59, 0.04), inset 0 1px 1px 0 #ffffff;
+  --popover-item-hover: rgba(99, 102, 241, 0.06);
+  --popover-item-active-bg: rgba(99, 102, 241, 0.12);
+  --popover-item-active-text: #4f46e5;
+
+  /* ── 表单控件 (亮色) ───────────────────────────────────────────────────
+     内凹槽位 = 比所在表面深一档的冷灰，混的是 slate 蓝而不是文字色。
+
+     为什么不是 `color-mix(surface, text-primary)`：文字色是近黑的暖蓝，
+     混进表面后会得到一层发污的灰绿，和画布的 slate 冷调对不上；顶栏那种
+     #edf2f9 的条上尤其明显。改用固定的 slate 色阶后，槽位始终是冷灰，
+     和 --text-secondary / --border-subtle 同一族。
+
+     四个状态构成一条单调阶梯，状态切换不会跳变：
+       sunken (静息) < hover (更深) < focus (回落到表面白)
+     focus 回落到表面白是有意的：控件"浮起来"接管输入，这才是焦点该有的
+     抬升感；下拉选择器不走这条，它展开时保持 sunken（见 select.css）。 */
+  --input-bg-sunken: #eef1f6;
+  --input-bg-hover: #e7ebf2;
+  --input-bg-focus: #ffffff;
+  --input-bg: var(--input-bg-sunken);
+  --input-surface-bg: #eef1f6;
+  --input-surface-hover-bg: #e7ebf2;
+  --input-surface-focus-bg: #ffffff;
+  /* 对话输入区保留白色底，内部控件使用独立的 composer 配色。 */
+  --composer-bg: #ffffff;
+  --control-unchecked-bg: #cbd5e1;
+  --control-checked-bg: #6366f1;
+  --control-checked-mark: #ffffff;
+  --switch-thumb-bg: #ffffff;
+  --input-placeholder: var(--input-muted);
+  /* Focus is ONE cue, not three stacked purples.
+     Before: accent border + a 3px accent halo + the rim highlight all fired
+     together, and because they share a hue the ring read as a thick lilac
+     frame rather than a focus halo. Buttons mark focus with a single 2px
+     outline, so the field now does the same: the border stays neutral and
+     only the halo carries the accent. */
+  --input-focus-border: color-mix(in srgb, var(--bg-surface) 82%, var(--text-tertiary));
+  --input-focus-ring: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  /* 玻璃感与按钮同族：向外浮起，不是向内凹陷。
+     - --input-lift    外投影，给控件一层脱离页面的高度
+     - --input-rim     内高光，顶部一道亮边表达"玻璃厚度"
+     - --input-border  近乎透明的细边，只在深色背景上兜住轮廓 */
+  --input-border: 1px solid color-mix(in srgb, var(--bg-surface) 90%, var(--text-tertiary));
+  --input-lift: 0 1px 2px rgba(15, 23, 42, 0.06), 0 2px 6px rgba(15, 23, 42, 0.04);
+  --input-lift-hover: 0 2px 4px rgba(15, 23, 42, 0.08), 0 4px 10px rgba(15, 23, 42, 0.06);
+  --input-rim: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  /* --input-glass is the outward recipe used by form controls.
+     --input-inner-shadow stays inset-only: switches, tables and list rows also
+     consume it and must not be lifted off the page. */
+  --input-glass: var(--input-lift), var(--input-rim);
+  --input-inner-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.05);
+
+  /* 亮色终端不再用纯白底：纯白 + 浅灰 dim 文字是「太白、看着累」的主因，
+     换成略深的纸灰底后眩光明显下降，同时仍与页面 --bg-canvas 分层。 */
+  --terminal-canvas-bg: #f1f5f9;
+  --terminal-foreground: #1f2937;
+  --terminal-cursor: #1f2937;
+  --terminal-selection: #cbd5e1;
+  /* 亮色下 dim 只留 50% 会淡到接近不可见，单独调高保留强度。 */
+  --terminal-dim-strength: 72%;
+  --terminal-dim-ansi-strength: 94%;
+  /* 亮色底浅，很多 TUI 的 truecolor / 256 色是按深底设计的，直接铺在浅底上会糊成一片。
+     交给 xterm 动态把这类前景色调深到 WCAG AA，保留色相不改变应用本身的输出。 */
+  --terminal-contrast-ratio: 4.5;
+  /* ANSI colors are tuned for the paper canvas and stay above 5:1. */
+  --terminal-black: #24292f;
+  --terminal-red: #c81e28;
+  --terminal-green: #0f5c24;
+  --terminal-yellow: #734700;
+  --terminal-blue: #0862ce;
+  --terminal-magenta: #7b48d8;
+  --terminal-cyan: #17727a;
+  --terminal-white: #4a4a4a;
+  --terminal-bright-black: #5a636f;
+  --terminal-bright-red: #9c0c22;
+  --terminal-bright-green: #17762f;
+  --terminal-bright-yellow: #5c3700;
+  --terminal-bright-blue: #0550ae;
+  --terminal-bright-magenta: #6639ba;
+  --terminal-bright-cyan: #096b72;
+  --terminal-bright-white: #1d1d1f;
+  --code-selection: #dedede;
+  --code-find-match: #dcecff;
+  --code-find-current: #9dcaff;
+  --code-diff-added-bg: #eaf7ee;
+  --code-diff-removed-bg: #fff0f0;
+  --code-diff-added-text: #16834e;
+  --code-diff-removed-text: #c23d48;
+  --code-syntax-keyword: #a64b39;
+  --code-syntax-literal: #bd6b23;
+  --code-syntax-type: #2563a9;
+  --code-syntax-string: #128a62;
+  --code-syntax-attribute: #2563a9;
+  --code-syntax-number: #bd6b23;
+  --code-syntax-function: #2563a9;
+  --code-syntax-builtin: #a85a1e;
+  --code-syntax-meta: #a85a1e;
+  --terminal-scrollbar-thumb: rgba(71, 85, 105, 0.42);
+  --terminal-scrollbar-thumb-hover: rgba(51, 65, 85, 0.64);
+
+  /* 按钮专属 (亮色) */
+  --surface-action-bg: color-mix(in srgb, var(--bg-surface) 94%, var(--text-primary));
+  --surface-action-hover-bg: color-mix(in srgb, var(--bg-surface) 89%, var(--text-primary));
+  --surface-action-active-bg: color-mix(in srgb, var(--bg-surface) 84%, var(--text-primary));
+  --button-hover-bg: var(--surface-action-hover-bg);
+  --button-hover-text: #151e32;
+  --rail-hover-bg: rgba(255, 255, 255, 0.7);
+  --rail-active-bg: rgba(255, 255, 255, 0.95);
+  --btn-secondary-bg: var(--bg-surface);
+  --btn-secondary-hover: #f8fafc;
+  --btn-secondary-border: rgba(203, 213, 225, 0.85);
+  --btn-secondary-text: var(--text-primary);
+  --btn-subtle-bg: transparent;
+  --btn-subtle-hover: rgba(0, 0, 0, 0.05);
+  --btn-subtle-border: transparent;
+  --btn-subtle-text: var(--text-secondary);
+
+  --segmented-active-bg: #ffffff;
+  --segmented-active-hover-bg: #ffffff;
+  --status-neutral-bg: var(--surface-inset-bg);
+
+  /* 危险按钮核心：纯正鲜红实体 (#EF4444) + 纯白文字 */
+  --btn-danger-default-bg: var(--status-danger-bg);
+  --btn-danger-default-text: var(--status-danger-text);
+  --btn-danger-default-border: transparent;
+  --btn-danger-default-glow: 0 4px 14px rgba(239, 68, 68, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  --btn-danger-hover-bg: color-mix(in srgb, var(--danger-text) 12%, var(--bg-canvas));
+  --btn-danger-hover-text: #ffffff;
+  --btn-danger-hover-border: transparent;
+  --btn-danger-hover-glow: 0 6px 20px rgba(239, 68, 68, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  --btn-danger-bg: var(--status-danger-bg);
+  --btn-danger-hover: color-mix(in srgb, var(--danger-text) 12%, var(--bg-canvas));
+  --btn-danger-text: var(--status-danger-text);
+
+  /* 品牌核心主色：雾霾冷靛青 (Slate Indigo) */
+  --accent-gradient: linear-gradient(135deg, #6366f1, #4f46e5);
+  --accent-primary: #6366f1;
+  --accent-hover: #4f46e5;
+  --accent-glow: 0 4px 16px rgba(99, 102, 241, 0.35);
+  --accent-subtle: rgba(99, 102, 241, 0.12);
+  --accent-border: rgba(99, 102, 241, 0.25);
+  --accent-text: #ffffff;
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #64748b;
+  --text-muted: #6b7a94;
+  --text-quaternary: #9aa7be;
+  --success-text: #059669;
+  --warning-text: #d97706;
+  --danger-text: #e11d48;
+
+  --glass-blur: blur(28px) saturate(185%);
+  --card-border: 1px solid transparent;
+  --border-subtle: rgba(226, 232, 240, 0.9);
+  --border-hover: rgba(255, 255, 255, 0.95);
+  --divider-color: rgba(226, 234, 248, 0.8);
+  --divider-subtle: 1px solid var(--divider-color);
+  --table-border-subtle: 1px solid var(--divider-color);
+  --card-shadow: 0 20px 44px -8px rgba(30, 41, 59, 0.1), 0 4px 16px rgba(30, 41, 59, 0.03);
+  --card-rim: inset 0 1px 1px 0 #ffffff;
+  --focus-glow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+  --markdown-code-bg: rgba(255, 255, 255, 0.95);
+
+  --shadow-sm: 0 2px 6px rgba(30, 58, 110, 0.05);
+  --shadow-md: 0 10px 28px -4px rgba(30, 58, 110, 0.07), inset 0 1px 1px 0 rgba(255, 255, 255, 0.95);
+  --shadow-lg: 0 18px 45px -6px rgba(28, 54, 105, 0.14), inset 0 1px 1px 0 rgba(255, 255, 255, 0.95);
+
+  --sidebar-bg: var(--context-navigation-bg);
+
+  --scrollbar-thumb: rgba(30, 58, 110, 0.16);
+  --scrollbar-thumb-hover: rgba(30, 58, 110, 0.3);
+  --scrollbar-track: transparent;
+
+  --blob-1: radial-gradient(circle, rgba(195, 217, 254, 0.75) 0%, transparent 70%);
+  --blob-2: radial-gradient(circle, rgba(219, 234, 254, 0.65) 0%, transparent 70%);
+  --blob-3: radial-gradient(circle, rgba(233, 213, 255, 0.5) 0%, transparent 70%);
+  --blob-4: radial-gradient(circle, rgba(240, 253, 244, 0.55) 0%, transparent 70%);
+}
+
+/* Imported palettes own all shared chrome and surface tokens. */
+html[data-custom-theme] {
+  --workspace-panel-bg: var(--bg-canvas);
+  --card-footer-bg: var(--bg-surface);
+  --markdown-code-surface: var(--markdown-code-bg);
+  --ambient-glow: radial-gradient(circle, color-mix(in srgb, var(--accent-primary) 8%, transparent) 0%, transparent 60%);
+  --accent-glow: 0 4px 18px color-mix(in srgb, var(--accent-primary) 32%, transparent);
+  --focus-glow: var(--input-focus-ring);
+  /* 内凹槽位的描边按主题推导，自定义主题只改色不改这一层；写死 transparent 会让所有输入框失去凹陷边。 */
+  --bg-ambient: var(--bg-app);
+  --bg-base: var(--bg-canvas);
+  --sidebar-bg: var(--context-navigation-bg);
+  --topbar-bg: var(--bg-app);
+  --bg-panel: var(--bg-canvas);
+  --bg-muted: var(--bg-surface);
+  --rail-hover-bg: var(--button-hover-bg);
+  --rail-active-bg: var(--chrome-selected);
+  --popover-item-hover: var(--bg-hover);
+  --accent-gradient: linear-gradient(135deg, var(--btn-primary-bg), var(--btn-primary-hover));
+  --accent-text: var(--btn-primary-text);
+  --border-hover: var(--divider-color);
+  --card-border: 1px solid transparent;
+  --popover-border: 1px solid transparent;
+  --btn-secondary-border: rgba(203, 213, 225, 0.85);
+  --btn-subtle-border: transparent;
+  --terminal-scrollbar-thumb: var(--scrollbar-thumb);
+  --terminal-scrollbar-thumb-hover: var(--scrollbar-thumb-hover);
+  --scrollbar-track: transparent;
+}
+
+/* ==========================================================================
+   Glass button material: one shared recipe for every labelled button.
+   Icon-only buttons opt out and keep their flat quiet resting state.
+   ========================================================================== */
+html[data-theme] {
+  --btn-glass-blur: blur(20px) saturate(170%);
+  --btn-glass-rim: inset 0 1px 0 rgba(255, 255, 255, 0.32), inset 0 -1px 0 rgba(255, 255, 255, 0.06);
+  --btn-glass-sheen: linear-gradient(160deg, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0) 46%);
+
+  /* Glass fills: the tint carries the semantic, the density carries the
+     thickness, the sheen and rim carry the material. Depth comes from fill
+     density, never from a coloured outer glow, so a tinted button reads as a
+     slab of glass rather than a lamp. The lift is a neutral contact shadow
+     only: it separates the slab from the page, it does not glow. */
+  --btn-glass-lift: 0 1px 2px rgba(0, 0, 0, 0.30);
+  --btn-glass-lift-hover: 0 2px 5px rgba(0, 0, 0, 0.34);
+  --btn-glass-accent-bg: color-mix(in srgb, var(--accent-primary) 26%, transparent);
+  --btn-glass-accent-hover: color-mix(in srgb, var(--accent-primary) 36%, transparent);
+  --btn-glass-accent-active: color-mix(in srgb, var(--accent-primary) 44%, transparent);
+  --btn-glass-accent-text: color-mix(in srgb, var(--accent-primary) 72%, var(--text-primary));
+  --btn-glass-neutral-bg: rgba(255, 255, 255, 0.10);
+  --btn-glass-neutral-hover: rgba(255, 255, 255, 0.18);
+  --btn-glass-neutral-active: rgba(255, 255, 255, 0.24);
+  --btn-glass-danger-bg: color-mix(in srgb, var(--danger-text) 32%, transparent);
+  --btn-glass-danger-hover: color-mix(in srgb, var(--danger-text) 42%, transparent);
+  --btn-glass-danger-active: color-mix(in srgb, var(--danger-text) 50%, transparent);
+}
+
+html[data-theme="light"] {
+  --btn-glass-rim: inset 0 1px 0 rgba(255, 255, 255, 0.92), inset 0 -1px 0 rgba(255, 255, 255, 0.35);
+  --btn-glass-sheen: linear-gradient(160deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 52%);
+
+  /* Daylight glass: a white slab on a near-white canvas needs a shallower tint
+     plus a slate contact shadow, otherwise the fill either washes out or the
+     lift turns into a grey smudge. */
+  --btn-glass-lift: 0 1px 2px rgba(15, 23, 42, 0.10);
+  --btn-glass-lift-hover: 0 2px 5px rgba(15, 23, 42, 0.14);
+  --btn-glass-accent-bg: color-mix(in srgb, var(--accent-primary) 14%, transparent);
+  --btn-glass-accent-hover: color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  --btn-glass-accent-active: color-mix(in srgb, var(--accent-primary) 30%, transparent);
+  --btn-glass-neutral-bg: rgba(15, 23, 42, 0.06);
+  --btn-glass-neutral-hover: rgba(15, 23, 42, 0.10);
+  --btn-glass-neutral-active: rgba(15, 23, 42, 0.14);
+  --btn-glass-danger-bg: color-mix(in srgb, var(--danger-text) 14%, transparent);
+  --btn-glass-danger-hover: color-mix(in srgb, var(--danger-text) 22%, transparent);
+  --btn-glass-danger-active: color-mix(in srgb, var(--danger-text) 30%, transparent);
+}
+
+html[data-theme="dark"] {
+}
+
+/* Stacked card nesting: every level inside another card sinks one step. */
+html[data-theme] {
+  --status-pending-border: 1.5px solid rgba(255, 255, 255, 0.32);
+}
+
+html[data-theme="light"] {
+  --status-pending-border: 1.5px solid rgba(15, 23, 42, 0.35);
+}

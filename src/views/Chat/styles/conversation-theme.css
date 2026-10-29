@@ -1,0 +1,356 @@
+
+
+/* The chat surface consumes the shared application tokens in both themes.
+   Keep the composer glow separate: its fixed colors are part of the input
+   interaction, rather than a theme color. */
+html[data-theme] .conversation-page {
+  color: var(--text-primary);
+  background: var(--bg-canvas);
+}
+
+html[data-theme] .conversation-page .page-shell {
+  background: var(--bg-canvas);
+  box-shadow: none;
+}
+
+html[data-theme] .conversation-page .conversation-content-area {
+  border-top-color: var(--border-subtle);
+  background: var(--bg-canvas);
+  box-shadow: none;
+}
+
+html[data-theme] .conversation-side {
+  border-right-color: var(--border-subtle);
+  color: var(--text-primary);
+  background: var(--page-pane-bg);
+}
+
+html[data-theme] .conversation-side-card,
+html[data-theme] .conversation-side-item,
+html[data-theme] .conversation-side-add,
+html[data-theme] .conversation-side-remove,
+html[data-theme] .conversation-page .session-folder-icon,
+html[data-theme] .conversation-page .header-icon-button,
+html[data-theme] .conversation-page .terminal-header-toggle,
+html[data-theme] .conversation-page .ssh-inspector-toggle,
+html[data-theme] .conversation-page .execution-target-button,
+html[data-theme] .conversation-page .environment-button {
+  color: var(--text-secondary);
+}
+
+html[data-theme] .conversation-side-card:hover,
+html[data-theme] .conversation-side-item:hover,
+html[data-theme] .conversation-side-add:hover,
+html[data-theme] .conversation-side-remove:hover,
+html[data-theme] .conversation-page .header-icon-button:hover,
+html[data-theme] .conversation-page .terminal-header-toggle:hover,
+html[data-theme] .conversation-page .terminal-header-toggle.active,
+html[data-theme] .conversation-page .ssh-inspector-toggle:hover,
+html[data-theme] .conversation-page .ssh-inspector-toggle.active,
+html[data-theme] .conversation-page .execution-target-button:hover,
+html[data-theme] .conversation-page .execution-target-button.open,
+html[data-theme] .conversation-page .environment-button:hover,
+html[data-theme] .conversation-page .environment-button.active {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+html[data-theme] .conversation-side-card.active,
+html[data-theme] .conversation-side-item.active {
+  color: var(--accent-primary);
+  background: var(--accent-subtle);
+}
+
+html[data-theme] .conversation-page .session-title,
+html[data-theme] .conversation-page .workspace-context-label,
+html[data-theme] .conversation-page .chat-empty h1,
+html[data-theme] .conversation-page .popover-heading,
+html[data-theme] .conversation-page .history-heading,
+html[data-theme] .conversation-page .usage-popover-heading,
+html[data-theme] .conversation-page .analysis-progress-popover-heading,
+html[data-theme] .conversation-page .ssh-status-popover-heading,
+html[data-theme] .conversation-page .environment-workspace-card b,
+html[data-theme] .conversation-page .popover-detail b,
+html[data-theme] .conversation-page .popover-row strong,
+html[data-theme] .conversation-page .environment-status-cell strong,
+html[data-theme] .conversation-page .history-row-copy b,
+html[data-theme] .conversation-page .usage-grid b,
+html[data-theme] .conversation-page .model-option b,
+html[data-theme] .conversation-page .sandbox-menu-row b,
+html[data-theme] .conversation-page .ssh-status-popover-heading b,
+html[data-theme] .conversation-page .ssh-status-metric b {
+  color: var(--text-primary);
+}
+
+html[data-theme] .conversation-page .execution-target-popover,
+html[data-theme] .conversation-page .environment-popover,
+html[data-theme] .conversation-page .history-popover,
+html[data-theme] .conversation-page .chat-history-popover,
+html[data-theme] .conversation-page .usage-popover,
+html[data-theme] .conversation-page .model-menu,
+html[data-theme] .conversation-page .model-options,
+html[data-theme] .conversation-page .slash-menu,
+html[data-theme] .conversation-page .composer-menu,
+html[data-theme] .conversation-page .sandbox-menu,
+html[data-theme] .conversation-page .ssh-status-popover,
+html[data-theme] .conversation-page .analysis-progress-popover,
+html[data-theme] .conversation-page .queued-message-menu,
+html[data-theme] .conversation-page .conversation-rail-preview {
+  border: var(--popover-border);
+  color: var(--text-primary);
+  background: var(--popover-bg);
+  box-shadow: var(--popover-shadow);
+}
+
+html[data-theme] .conversation-page .popover-readonly,
+html[data-theme] .conversation-page .popover-muted,
+html[data-theme] .conversation-page .popover-detail span,
+html[data-theme] .conversation-page .history-heading small,
+html[data-theme] .conversation-page .history-row-copy small,
+html[data-theme] .conversation-page .history-row time,
+html[data-theme] .conversation-page .usage-popover-heading small,
+html[data-theme] .conversation-page .usage-grid span,
+html[data-theme] .conversation-page .usage-popover-note,
+html[data-theme] .conversation-page .environment-workspace-card,
+html[data-theme] .conversation-page .environment-workspace-card small,
+html[data-theme] .conversation-page .environment-status-cell span,
+html[data-theme] .conversation-page .environment-remote span,
+html[data-theme] .conversation-page .environment-remote small,
+html[data-theme] .conversation-page .workspace-git-change-heading,
+html[data-theme] .conversation-page .workspace-git-change-row,
+html[data-theme] .conversation-page .workspace-git-change-list small,
+html[data-theme] .conversation-page .ssh-status-popover-heading small,
+html[data-theme] .conversation-page .ssh-status-metric > span,
+html[data-theme] .conversation-page .ssh-status-metric small,
+html[data-theme] .conversation-page .ssh-status-metric b.is-unavailable,
+html[data-theme] .conversation-page .message-duration,
+html[data-theme] .conversation-page .message-actions-time,
+html[data-theme] .conversation-page .message-processing-status,
+html[data-theme] .conversation-page .model-menu-value,
+html[data-theme] .conversation-page .model-option small,
+html[data-theme] .conversation-page .slash-menu-copy small,
+html[data-theme] .conversation-page .composer-menu-row small,
+html[data-theme] .conversation-page .sandbox-menu-row small {
+  color: var(--text-secondary);
+}
+
+html[data-theme] .conversation-page .execution-target-option,
+html[data-theme] .conversation-page .history-row,
+html[data-theme] .conversation-page .model-menu-row,
+html[data-theme] .conversation-page .model-reset-row,
+html[data-theme] .conversation-page .model-option,
+html[data-theme] .conversation-page .slash-menu-row,
+html[data-theme] .conversation-page .composer-menu-row,
+html[data-theme] .conversation-page .sandbox-menu-row,
+html[data-theme] .conversation-page .queued-message-menu button {
+  color: var(--text-secondary);
+}
+
+html[data-theme] .conversation-page .execution-target-option:hover,
+html[data-theme] .conversation-page .execution-target-option.selected,
+html[data-theme] .conversation-page .history-row:hover,
+html[data-theme] .conversation-page .history-row.current,
+html[data-theme] .conversation-page .model-menu-row:hover,
+html[data-theme] .conversation-page .model-reset-row:hover,
+html[data-theme] .conversation-page .model-option:hover,
+html[data-theme] .conversation-page .model-option.selected,
+html[data-theme] .conversation-page .slash-menu-row:hover,
+html[data-theme] .conversation-page .slash-menu-row.selected,
+html[data-theme] .conversation-page .composer-menu-row:hover,
+html[data-theme] .conversation-page .sandbox-menu-row:hover,
+html[data-theme] .conversation-page .sandbox-menu-row.selected,
+html[data-theme] .conversation-page .queued-message-menu button:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+/* Final icon-only treatment after legacy theme overrides. */
+html[data-theme] .conversation-page .slash-menu-icon,
+html[data-theme] .conversation-page .slash-menu-row.selected .slash-menu-icon {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+html[data-theme] .conversation-page .slash-menu-icon.is-skill { color: var(--accent-primary); }
+html[data-theme] .conversation-page .slash-menu-icon.is-tool { color: var(--text-secondary); }
+html[data-theme] .conversation-page .slash-menu-icon.is-app { color: var(--status-success, #16a34a); }
+
+html[data-theme] .conversation-page .slash-menu-icon,
+html[data-theme] .conversation-page .slash-menu-row.selected .slash-menu-icon {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+html[data-theme] .conversation-page .slash-menu-icon.is-skill {
+  color: var(--accent-primary);
+}
+
+html[data-theme] .conversation-page .slash-menu-icon.is-tool {
+  color: var(--text-secondary);
+}
+
+html[data-theme] .conversation-page .slash-menu-icon.is-app {
+  color: var(--status-success, #16a34a);
+}
+
+/* Composer usage is a compact session summary, not a provider diagnostics panel. */
+.conversation-page .chat-footer {
+  width: min(790px, calc(100% - 72px)) !important;
+}
+
+.conversation-page .message-list {
+  width: min(830px, calc(100% - 64px));
+}
+
+.conversation-page .composer-usage-summary {
+  position: relative;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  min-width: 0;
+  margin-top: 7px;
+  padding-top: 7px;
+  border-top: 0;
+  color: var(--composer-muted);
+  font-size: 10px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.conversation-page .composer-usage-summary::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: var(--composer-divider);
+  content: "";
+  pointer-events: none;
+}
+
+.conversation-page .composer-usage-summary > span,
+.conversation-page .composer-usage-summary > button,
+.conversation-page .composer-usage-summary > .composer-usage-item {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  min-width: 0;
+  padding: 0 9px;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+}
+
+/* Tooltip 的 className 落在它的根 span 上（只有缓存命中这一项带），
+   所以上面把两类选择器一起写；这里只补分隔线。 */
+
+.conversation-page .composer-usage-summary > span::after,
+.conversation-page .composer-usage-summary > button::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 1px;
+  height: 10px;
+  background: var(--composer-divider);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.conversation-page .composer-usage-summary > :first-child {
+  padding-left: 1px;
+}
+
+.conversation-page .composer-usage-summary > :last-child {
+  border-right: 0;
+}
+
+.conversation-page .composer-usage-summary > :last-child::after {
+  display: none;
+}
+
+.conversation-page .composer-usage-summary > .composer-usage-item:first-child > span,
+.conversation-page .composer-usage-summary > .composer-usage-item:first-child > button {
+  padding-left: 1px;
+}
+
+.conversation-page .composer-usage-summary > .composer-usage-item:last-child > span,
+.conversation-page .composer-usage-summary > .composer-usage-item:last-child > button {
+  padding-right: 1px;
+}
+
+.conversation-page .composer-usage-summary > .composer-usage-item:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+.conversation-page .composer-usage-summary b {
+  min-width: 0;
+  overflow: hidden;
+  max-width: 106px;
+  color: var(--composer-control-text);
+  font-size: 10px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+}
+
+.conversation-page .composer-usage-summary .ui-usage-label { color: var(--composer-muted); font-weight: 400; }
+
+.conversation-page .composer-usage-summary button {
+  cursor: pointer;
+}
+
+.conversation-page .composer-usage-summary button:hover b {
+  color: var(--composer-control-text);
+}
+
+.conversation-page .composer-usage-summary button.checking b {
+  color: var(--text-secondary);
+}
+
+.conversation-page .composer-usage-summary button.error b {
+  color: var(--status-danger, var(--status-danger-text));
+}
+
+.conversation-page .slash-menu-row {
+  min-height: 33px;
+  padding: 4px 6px;
+}
+
+.conversation-page .slash-menu-icon {
+  width: 20px;
+  height: 20px;
+  flex-basis: 20px;
+  border: 0;
+  border-radius: 0;
+  color: var(--text-tertiary);
+  background: transparent;
+}
+
+.conversation-page .slash-menu-icon.is-skill {
+  color: var(--accent-primary);
+}
+
+.conversation-page .slash-menu-icon.is-tool {
+  color: var(--text-secondary);
+}
+
+.conversation-page .slash-menu-icon.is-app {
+  color: var(--status-success, #16a34a);
+}
+
+.conversation-page .slash-menu-copy b {
+  font-size: 10px;
+}
+
+.conversation-page .slash-menu-copy small {
+  font-size: 8px;
+}

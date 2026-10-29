@@ -1,0 +1,2804 @@
+//! Standard local tools shared by the desktop runtime and future CLI hosts.
+//!
+//! This module deliberately contains no Tauri types.  A host only supplies the
+//! selected roots, cancellation flag, and optional live-output sink; the tool
+//! definitions and their filesystem/process behavior stay in the core crate.
+
+use crate::{
+    command_path_tokens, command_result_value, execute_process,
+    is_allowed_agent_path, is_allowed_command, is_allowed_windows_shell,
+    is_explicitly_selected_root,
+    is_forbidden_destructive_command, is_forbidden_destructive_command_line,
+    is_windows_shell_command, normalized_policy_path, policy_path_key,
+    resolve_command_working_directory, resolve_selected_path, resolve_user_directory_alias,
+    selected_working_directory, shell_process_args, strip_windows_extended_prefix,
+    CommandOutputSink, ToolDefinition, ToolHandler, ToolRegistry, WslRuntimeConfig,
+    MAX_COMMAND_TIMEOUT_MS,
+};
+use async_trait::async_trait;
+use chrono::Local;
+use serde_json::{json, Value};
+use std::fs;
+use std::io::{BufRead, BufReader, Read};
+use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+
+const MAX_SEARCH_RESULTS: usize = 256;
+const MAX_SEARCH_FILE_BYTES: usize = 2 * 1024 * 1024;
+const MAX_TREE_DEPTH: usize = 8;
+// The whole prefix is injected into the model transcript, so one read must stay
+// far below the context window: 512 KB could add roughly 130k tokens to a single
+// turn. 64 KB is still a large slice of a source file; read past it with the
+// start_line/end_line window, which addresses real file lines and is therefore
+// not limited by this bound.
+const MAX_FILE_READ_BYTES: usize = 64 * 1024;
+const MAX_BINARY_PREVIEW_BYTES: usize = 8 * 1024;
+// Buffered streaming reads for the line window: one buffer for the reader plus
+// at most MAX_FILE_READ_BYTES of retained line content, never the whole file.
+const FILE_WINDOW_BUFFER_BYTES: usize = 64 * 1024;
+const MAX_FILE_WRITE_BYTES: usize = 256 * 1024;
+const MAX_SHELL_COMMAND_CHARS: usize = 32 * 1024;
+
+/// Internal runtime-only tool used to request path permission before a model
+/// has produced a complete write or command call.
+pub const PATH_ACCESS_PROBE_TOOL: &str = "__agent_path_access_probe";
+
+#[derive(Clone)]
+pub struct LocalToolContext {
+    roots: Vec<String>,
+    excluded_paths: Vec<String>,
+    allow_external_paths: bool,
+    cancellation: Arc<AtomicBool>,
+    output_sink: Option<CommandOutputSink>,
+    wsl: Option<WslRuntimeConfig>,
+    command_timeout_limit: u64,
+}
+
+impl LocalToolContext {
+    pub fn new(
+        roots: Vec<String>,
+        excluded_paths: Vec<String>,
+        allow_external_paths: bool,
+        cancellation: Arc<AtomicBool>,
+        output_sink: Option<CommandOutputSink>,
+    ) -> Self {
+        Self {
+            roots,
+            excluded_paths,
+            allow_external_paths,
+            cancellation,
+            output_sink,
+            wsl: None,
+            command_timeout_limit: MAX_COMMAND_TIMEOUT_MS,
+        }
+    }
+
+    /// Route the same structured file tools through a local WSL distribution.
+    /// Files are accessed through the WSL UNC share while commands are started
+    /// with `wsl.exe`, so the model-facing tool names remain unchanged.
+    pub fn with_wsl(mut self, config: WslRuntimeConfig) -> Self {
+        let Ok(config) = config.normalized() else {
+            return self;
+        };
+        let mapper = WslPathMapper::new(config.clone());
+        self.roots = self
+            .roots
+            .iter()
+            .map(|root| mapper.to_unc_path(root))
+            .collect();
+        self.excluded_paths = self
+            .excluded_paths
+            .iter()
+            .map(|path| {
+                if path.starts_with('/') || path.starts_with('~') {
+                    mapper.to_unc_path(path)
+                } else {
+                    path.clone()
+                }
+            })
+            .collect();
+        self.wsl = Some(config);
+        self
+    }
+
+    pub fn with_output_sink(&self, output_sink: Option<CommandOutputSink>) -> Self {
+        Self {
+            roots: self.roots.clone(),
+            excluded_paths: self.excluded_paths.clone(),
+            allow_external_paths: self.allow_external_paths,
+            cancellation: self.cancellation.clone(),
+            output_sink,
+            wsl: self.wsl.clone(),
+            command_timeout_limit: self.command_timeout_limit,
+        }
+    }
+
+    pub fn with_allow_external_paths(&self, allow_external_paths: bool) -> Self {
+        Self {
+            roots: self.roots.clone(),
+            excluded_paths: self.excluded_paths.clone(),
+            allow_external_paths,
+            cancellation: self.cancellation.clone(),
+            output_sink: self.output_sink.clone(),
+            wsl: self.wsl.clone(),
+            command_timeout_limit: self.command_timeout_limit,
+        }
+    }
+
+    pub fn with_cancellation(&self, cancellation: Arc<AtomicBool>) -> Self {
+        Self {
+            roots: self.roots.clone(),
+            excluded_paths: self.excluded_paths.clone(),
+            allow_external_paths: self.allow_external_paths,
+            cancellation,
+            output_sink: self.output_sink.clone(),
+            wsl: self.wsl.clone(),
+            command_timeout_limit: self.command_timeout_limit,
+        }
+    }
+
+    fn for_tool(&self, tool_name: &'static str) -> Self {
+        Self {
+            roots: self.roots.clone(),
+            excluded_paths: self.excluded_paths.clone(),
+            allow_external_paths: self.allow_external_paths,
+            cancellation: self.cancellation.clone(),
+            output_sink: self
+                .output_sink
+                .as_ref()
+                .map(|sink| sink.with_tool(tool_name)),
+            wsl: self.wsl.clone(),
+            command_timeout_limit: self.command_timeout_limit,
+        }
+    }
+
+    /// Only a host-owned background job may extend the foreground time limit.
+    pub(crate) fn for_background(&self) -> Self {
+        let mut context = self.clone();
+        context.command_timeout_limit = crate::background::MAX_BACKGROUND_TIMEOUT_MS;
+        context
+    }
+
+    pub(crate) fn environment_label(&self) -> &'static str {
+        if self.wsl.is_some() { "wsl" } else { "local" }
+    }
+}
+
+pub fn register_local_tools(
+    registry: &mut ToolRegistry,
+    context: LocalToolContext,
+) -> Result<(), String> {
+    let registrations: Vec<Box<dyn ToolHandler>> = vec![
+        Box::new(CurrentTimeTool(context.for_tool("get_current_time"))),
+        Box::new(WorkingDirectoryTool {
+            roots: context.roots.clone(),
+        }),
+        Box::new(ListLocalFilesTool(context.for_tool("list_local_files"))),
+        Box::new(SearchLocalFilesTool(context.for_tool("search_local_files"))),
+        Box::new(SearchLocalCodeTool(context.for_tool("search_local_code"))),
+        Box::new(DirectoryTreeTool(context.for_tool("get_directory_tree"))),
+        Box::new(ApplyPatchTool(context.for_tool("apply_patch"))),
+        Box::new(ReadLocalFileTool(context.for_tool("read_local_file"))),
+        Box::new(WriteLocalFileTool(context.for_tool("write_local_file"))),
+        Box::new(CreateDirectoryTool(context.for_tool("create_directory"))),
+        Box::new(CopyFileTool(context.for_tool("copy_file"))),
+        Box::new(MoveFileTool(context.for_tool("move_file"))),
+        Box::new(DeleteFileTool(context.for_tool("delete_file"))),
+        Box::new(RunLocalCommandTool(context.for_tool("run_local_command"))),
+        Box::new(GetGitStatusTool(context.for_tool("get_git_status"))),
+        Box::new(GetGitDiffTool(context.for_tool("get_git_diff"))),
+        Box::new(RunProjectCheckTool(context.for_tool("run_project_check"))),
+        Box::new(RunLocalShellTool(context.for_tool("run_local_shell"))),
+        Box::new(PathAccessProbeTool),
+    ];
+    let wsl_mapper = context.wsl.clone().map(WslPathMapper::new);
+    for handler in registrations {
+        let handler: Box<dyn ToolHandler> = if let Some(mapper) = wsl_mapper.clone() {
+            Box::new(WslToolAdapter {
+                inner: handler,
+                mapper,
+            })
+        } else {
+            handler
+        };
+        registry
+            .register_handler_boxed(handler)
+            .map_err(|error| error.to_string())?;
+    }
+    Ok(())
+}
+
+#[derive(Clone)]
+struct WslPathMapper {
+    config: WslRuntimeConfig,
+    unc_prefix: String,
+}
+
+impl WslPathMapper {
+    fn new(config: WslRuntimeConfig) -> Self {
+        Self {
+            unc_prefix: format!(r"\\wsl.localhost\{}", config.distribution),
+            config,
+        }
+    }
+
+    fn to_unc_path(&self, raw: &str) -> String {
+        let value = raw.trim();
+        if value.starts_with(r"\\wsl.localhost\") || value.starts_with(r"\\wsl$\") {
+            return value.to_string();
+        }
+        let linux = if value == "~" || value.is_empty() {
+            self.config.root.clone()
+        } else if value.starts_with('/') {
+            crate::normalize_linux_path(value)
+        } else {
+            crate::normalize_linux_path(&format!("{}/{}", self.config.root, value))
+        };
+        if linux == "/" {
+            self.unc_prefix.clone()
+        } else {
+            format!(
+                "{}\\{}",
+                self.unc_prefix,
+                linux.trim_start_matches('/').replace('/', "\\")
+            )
+        }
+    }
+
+    fn from_unc_path(&self, raw: &str) -> String {
+        let value = raw.trim();
+        let prefix = self.unc_prefix.as_str();
+        if value.eq_ignore_ascii_case(prefix) {
+            return "/".to_string();
+        }
+        let prefix_with_separator = format!("{}\\", prefix);
+        if value.len() > prefix_with_separator.len()
+            && value[..prefix_with_separator.len()].eq_ignore_ascii_case(&prefix_with_separator)
+        {
+            return format!(
+                "/{}",
+                value[prefix_with_separator.len()..]
+                    .replace('\\', "/")
+                    .trim_matches('/')
+            );
+        }
+        value.to_string()
+    }
+}
+
+struct WslToolAdapter {
+    inner: Box<dyn ToolHandler>,
+    mapper: WslPathMapper,
+}
+
+fn map_wsl_input(value: &mut Value, mapper: &WslPathMapper) {
+    let Some(object) = value.as_object_mut() else {
+        return;
+    };
+    for key in ["path", "source", "destination", "cwd"] {
+        if let Some(Value::String(path)) = object.get_mut(key) {
+            *path = mapper.to_unc_path(path);
+        }
+    }
+}
+
+fn map_wsl_output(value: Value, mapper: &WslPathMapper) -> Value {
+    match value {
+        Value::String(value) => Value::String(mapper.from_unc_path(&value)),
+        Value::Array(values) => Value::Array(
+            values
+                .into_iter()
+                .map(|value| map_wsl_output(value, mapper))
+                .collect(),
+        ),
+        Value::Object(values) => Value::Object(
+            values
+                .into_iter()
+                .map(|(key, value)| (key, map_wsl_output(value, mapper)))
+                .collect(),
+        ),
+        value => value,
+    }
+}
+
+#[async_trait]
+impl ToolHandler for WslToolAdapter {
+    fn definition(&self) -> ToolDefinition {
+        self.inner.definition()
+    }
+
+    async fn execute(&self, mut input: Value) -> Result<Value, String> {
+        map_wsl_input(&mut input, &self.mapper);
+        self.inner
+            .execute(input)
+            .await
+            .map(|value| map_wsl_output(value, &self.mapper))
+    }
+}
+
+fn wsl_mapper(context: &LocalToolContext) -> Option<WslPathMapper> {
+    context.wsl.clone().map(WslPathMapper::new)
+}
+
+fn wsl_linux_cwd(context: &LocalToolContext, cwd: &Path) -> String {
+    wsl_mapper(context)
+        .map(|mapper| mapper.from_unc_path(&cwd.to_string_lossy()))
+        .filter(|path| path.starts_with('/'))
+        .or_else(|| context.wsl.as_ref().map(|config| config.root.clone()))
+        .unwrap_or_else(|| "/".to_string())
+}
+
+async fn execute_wsl_process(
+    context: &LocalToolContext,
+    command: &str,
+    args: &[String],
+    cwd: &Path,
+    timeout_ms: u64,
+    output_sink: Option<&CommandOutputSink>,
+) -> Result<crate::CommandExecutionResult, String> {
+    let config = context
+        .wsl
+        .as_ref()
+        .ok_or_else(|| "当前工具上下文不是 WSL".to_string())?;
+    #[cfg(target_os = "windows")]
+    {
+        return crate::wsl_process::execute(
+            &config.distribution,
+            &wsl_linux_cwd(context, cwd),
+            command,
+            args,
+            timeout_ms,
+            context.cancellation.clone(),
+            output_sink,
+        )
+        .await;
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        let _ = (config, command, args, cwd, timeout_ms, output_sink);
+        Err("WSL 执行目标只支持 Windows".to_string())
+    }
+}
+
+async fn execute_wsl_shell(
+    context: &LocalToolContext,
+    shell: &str,
+    command: &str,
+    cwd: &Path,
+    timeout_ms: u64,
+    output_sink: Option<&CommandOutputSink>,
+) -> Result<crate::CommandExecutionResult, String> {
+    let shell = if shell == "wsl" { "bash" } else { shell };
+    execute_wsl_process(
+        context,
+        shell,
+        &["-lc".to_string(), command.to_string()],
+        cwd,
+        timeout_ms,
+        output_sink,
+    )
+    .await
+}
+
+struct PathAccessProbeTool;
+
+#[async_trait]
+impl ToolHandler for PathAccessProbeTool {
+    fn definition(&self) -> ToolDefinition {
+        ToolDefinition::new(
+            PATH_ACCESS_PROBE_TOOL,
+            "Internal runtime permission preflight. Never expose this tool to the model.",
+            json!({
+                "type": "object",
+                "properties": {
+                    "path": { "type": "string" },
+                    "action": { "type": "string" }
+                },
+                "required": ["path"]
+            }),
+        )
+        .requiring_permission()
+        .internal()
+    }
+
+    async fn execute(&self, input: Value) -> Result<Value, String> {
+        Ok(json!({
+            "preflight": true,
+            "path": input.get("path").and_then(Value::as_str).unwrap_or_default(),
+            "action": input.get("action").and_then(Value::as_str).unwrap_or_default(),
+        }))
+    }
+}
+
+struct CurrentTimeTool(LocalToolContext);
+
+#[async_trait]
+impl ToolHandler for CurrentTimeTool {
+    fn definition(&self) -> ToolDefinition {
+        ToolDefinition::new(
+            "get_current_time",
+            "Get the current local date, time, and timezone from the host computer. Use this for questions about now, today's date, or the current time; never guess the clock.",
+            json!({ "type": "object", "properties": {} }),
+        )
+    }
+
+    async fn execute(&self, _input: Value) -> Result<Value, String> {
+        if self.0.wsl.is_some() {
+            let command = "printf '__AT_LOCAL__%s\\n' \"$(date '+%Y-%m-%d %H:%M:%S' 2>/dev/null || true)\"; printf '__AT_ISO__%s\\n' \"$(date -Iseconds 2>/dev/null || date '+%Y-%m-%dT%H:%M:%S%z' 2>/dev/null || true)\"; printf '__AT_TZ__%s\\n' \"$(date '+%Z %z' 2>/dev/null || true)\"";
+            let cwd = Path::new(".");
+            let output = execute_wsl_shell(
+                &self.0,
+                "bash",
+                command,
+                cwd,
+                30_000,
+                self.0.output_sink.as_ref(),
+            )
+            .await?;
+            if !output.status.success() {
+                return Err(format!(
+                    "读取 WSL 时间失败：{}",
+                    String::from_utf8_lossy(&output.stderr).trim()
+                ));
+            }
+            let mut local = String::new();
+            let mut iso = String::new();
+            let mut timezone = String::new();
+            for line in String::from_utf8_lossy(&output.stdout).lines() {
+                if let Some(value) = line.strip_prefix("__AT_LOCAL__") {
+                    local = value.trim().to_string();
+                } else if let Some(value) = line.strip_prefix("__AT_ISO__") {
+                    iso = value.trim().to_string();
+                } else if let Some(value) = line.strip_prefix("__AT_TZ__") {
+                    timezone = value.trim().to_string();
+                }
+            }
+            if local.is_empty() {
+                return Err("WSL 未返回有效时间".to_string());
+            }
+            return Ok(json!({
+                "local": local,
+                "iso": iso,
+                "timezone": timezone,
+                "target": "wsl",
+                "backend": "wsl.exe",
+            }));
+        }
+        let now = Local::now();
+        Ok(json!({
+            "local": now.format("%Y-%m-%d %H:%M:%S").to_string(),
+            "iso": now.to_rfc3339(),
+            "timezone": now.offset().to_string(),
+        }))
+    }
+}
+
+struct WorkingDirectoryTool {
+    roots: Vec<String>,
+}
+
+#[async_trait]
+impl ToolHandler for WorkingDirectoryTool {
+    fn definition(&self) -> ToolDefinition {
+        ToolDefinition::new(
+            "get_working_directory",
+            "Return the current user-selected Agent working directory. If the conversation has no selected workspace, return null instead of guessing a process directory.",
+            json!({ "type": "object", "properties": {} }),
+        )
+    }
+
+    async fn execute(&self, _input: Value) -> Result<Value, String> {
+        Ok(json!({
+            "path": selected_working_directory(&self.roots).map(|path| path.to_string_lossy().to_string()),
+            "selected": !self.roots.is_empty(),
+        }))
+    }
+}
+
+fn cancelled(cancellation: &Arc<AtomicBool>) -> Result<(), String> {
+    if cancellation.load(Ordering::Relaxed) {
+        Err("请求已取消".to_string())
+    } else {
+        Ok(())
+    }
+}
+
+fn selected_tool_path(
+    input: &Value,
+    roots: &[String],
+    allow_external_paths: bool,
+) -> Result<PathBuf, String> {
+    input
+        .get("path")
+        .and_then(Value::as_str)
+        .filter(|value| !value.trim().is_empty())
+        .map(PathBuf::from)
+        .map(|path| resolve_selected_path(&path, roots))
+        .or_else(|| selected_working_directory(roots))
+        .ok_or_else(|| {
+            if allow_external_paths {
+                "请提供要访问的路径".to_string()
+            } else {
+                "请先选择工作目录或文件".to_string()
+            }
+        })
+}
+
+fn is_excluded_path(path: &Path, excluded_paths: &[String]) -> bool {
+    if excluded_paths.is_empty() {
+        return false;
+    }
+    let target = policy_path_key(&normalized_policy_path(path));
+    excluded_paths.iter().any(|excluded| {
+        let excluded = policy_path_key(Path::new(excluded));
+        target == excluded || target.starts_with(&format!("{excluded}\\"))
+    })
+}
+
+fn is_allowed_tool_path(
+    path: &Path,
+    roots: &[String],
+    excluded_paths: &[String],
+    allow_external_paths: bool,
+) -> bool {
+    is_allowed_agent_path(path, roots, allow_external_paths)
+        && !is_excluded_path(path, excluded_paths)
+}
+
+fn command_uses_excluded_path(
+    command: &str,
+    args: &[String],
+    cwd: &Path,
+    roots: &[String],
+    excluded_paths: &[String],
+) -> bool {
+    let mut values = command_path_tokens(command);
+    values.extend(args.iter().cloned());
+    values.into_iter().any(|value| {
+        if !(value.contains('/') || value.contains('\\') || Path::new(&value).is_absolute()) {
+            return false;
+        }
+        let raw_path = Path::new(&value);
+        let path = if raw_path.is_absolute() {
+            resolve_selected_path(raw_path, roots)
+        } else {
+            cwd.join(raw_path)
+        };
+        is_excluded_path(&path, excluded_paths)
+    })
+}
+
+fn skip_agent_directory(path: &Path) -> bool {
+    path.file_name()
+        .and_then(|name| name.to_str())
+        .map(|name| {
+            matches!(
+                name.to_ascii_lowercase().as_str(),
+                ".git" | ".cache" | ".venv" | "venv" | "__pycache__" | "node_modules" | "target" | "dist" | "build" | ".gradle"
+            )
+        })
+        .unwrap_or(false)
+}
+
+#[path = "local_search.rs"]
+mod search;
+
+fn directory_tree_value(
+    path: &Path,
+    depth: usize,
+    max_depth: usize,
+    remaining: &mut usize,
+    excluded_paths: &[String],
+    cancellation: &Arc<AtomicBool>,
+) -> Result<Value, String> {
+    cancelled(cancellation)?;
+    if is_excluded_path(path, excluded_paths) {
+        return Ok(json!({
+            "name": path.file_name().and_then(|value| value.to_str()).unwrap_or_default(),
+            "path": path.to_string_lossy(),
+            "kind": "excluded",
+        }));
+    }
+    let metadata =
+        fs::metadata(path).map_err(|error| format!("无法读取路径 {}：{error}", path.display()))?;
+    let name = path
+        .file_name()
+        .map(|value| value.to_string_lossy().to_string())
+        .unwrap_or_else(|| path.to_string_lossy().to_string());
+    if !metadata.is_dir() || depth >= max_depth || *remaining == 0 {
+        return Ok(json!({
+            "name": name,
+            "path": path.to_string_lossy(),
+            "kind": if metadata.is_dir() { "directory" } else { "file" },
+        }));
+    }
+    *remaining = remaining.saturating_sub(1);
+    let mut children = fs::read_dir(path)
+        .map_err(|error| format!("无法读取目录 {}：{error}", path.display()))?
+        .filter_map(Result::ok)
+        .map(|entry| entry.path())
+        .filter(|child| !skip_agent_directory(child))
+        .filter(|child| !is_excluded_path(child, excluded_paths))
+        .collect::<Vec<_>>();
+    children.sort_by_key(|child| child.to_string_lossy().to_ascii_lowercase());
+    let mut values = Vec::new();
+    for child in children {
+        if *remaining == 0 {
+            break;
+        }
+        values.push(directory_tree_value(
+            &child,
+            depth + 1,
+            max_depth,
+            remaining,
+            excluded_paths,
+            cancellation,
+        )?);
+    }
+    Ok(json!({
+        "name": name,
+        "path": path.to_string_lossy(),
+        "kind": "directory",
+        "children": values,
+        "truncated": *remaining == 0,
+    }))
+}
+
+struct ListLocalFilesTool(LocalToolContext);
+
+#[async_trait]
+impl ToolHandler for ListLocalFilesTool {
+    fn definition(&self) -> ToolDefinition {
+        ToolDefinition::new(
+            "list_local_files",
+            "List the immediate children of a user-selected local directory, or an explicitly requested external directory when full access is enabled. Use this before reading a file from a directory; do not use ls or dir.",
+            json!({
+                "type": "object",
+                "properties": {
+                    "path": { "type": "string" },
+                    "extension": { "type": "string", "description": "Optional suffix filter such as .md" },
+                    "max_entries": { "type": "integer", "maximum": 256 }
+                }
+            }),
+        )
+    }
+
+    async fn execute(&self, input: Value) -> Result<Value, String> {
+        let context = &self.0;
+        let path = selected_tool_path(&input, &context.roots, context.allow_external_paths)?;
+        let metadata = fs::metadata(&path).map_err(|error| {
+            format!(
+                "无法读取目录元数据：{}：{error}。请使用工作区中实际存在的精确目录路径。",
+                path.display()
+            )
+        })?;
+        if !is_allowed_tool_path(
+            &path,
+            &context.roots,
+            &context.excluded_paths,
+            context.allow_external_paths,
+        ) {
+            return Err("只能列出用户明确选择的目录内容".to_string());
+        }
+        if !metadata.is_dir() {
+            return Err("list_local_files 只支持目录".to_string());
+        }
+        let extension = input
+            .get("extension")
+            .and_then(Value::as_str)
+            .map(|value| value.trim().to_ascii_lowercase())
+            .filter(|value| !value.is_empty());
+        let max_entries = input
+            .get("max_entries")
+            .and_then(Value::as_u64)
+            .unwrap_or(128)
+            .clamp(1, MAX_SEARCH_RESULTS as u64) as usize;
+        let mut entries = Vec::new();
+        for child in fs::read_dir(&path).map_err(|error| format!("无法读取目录: {error}"))? {
+            cancelled(&context.cancellation)?;
+            let child = child.map_err(|error| format!("无法读取目录项: {error}"))?;
+            let child_path = strip_windows_extended_prefix(&child.path());
+            if is_excluded_path(&child_path, &context.excluded_paths) {
+                continue;
+            }
+            let child_name = child.file_name().to_string_lossy().to_string();
+            let child_metadata = child
+                .metadata()
+                .map_err(|error| format!("无法读取目录项元数据: {error}"))?;
+            if let Some(extension) = extension.as_deref() {
+                if !child_metadata.is_dir() && !child_name.to_ascii_lowercase().ends_with(extension)
+                {
+                    continue;
+                }
+            }
+            entries.push(json!({
+                "name": child_name,
+                "path": child_path.to_string_lossy(),
+                "kind": if child_metadata.is_dir() { "directory" } else { "file" },
+                "size": if child_metadata.is_file() { child_metadata.len() } else { 0 },
+            }));
+        }
+        entries.sort_by(|left, right| {
+            left.get("name")
+                .and_then(Value::as_str)
+                .unwrap_or_default()
+                .to_ascii_lowercase()
+                .cmp(
+                    &right
+                        .get("name")
+                        .and_then(Value::as_str)
+                        .unwrap_or_default()
+                        .to_ascii_lowercase(),
+                )
+        });
+        let truncated = entries.len() > max_entries;
+        entries.truncate(max_entries);
+        Ok(json!({
+            "path": path.to_string_lossy(),
+            "entries": entries,
+            "truncated": truncated,
+        }))
+    }
+}
+
+struct SearchLocalFilesTool(LocalToolContext);
+struct SearchLocalCodeTool(LocalToolContext);
+
+#[async_trait]
+impl ToolHandler for SearchLocalFilesTool {
+    fn definition(&self) -> ToolDefinition { search::definition(false) }
+    async fn execute(&self, input: Value) -> Result<Value, String> {
+        let context = self.0.clone();
+        tokio::task::spawn_blocking(move || search::execute(&context, input, false))
+            .await.map_err(|error| format!("检索任务失败：{error}"))?
+    }
+}
+
+#[async_trait]
+impl ToolHandler for SearchLocalCodeTool {
+    fn definition(&self) -> ToolDefinition { search::definition(true) }
+    async fn execute(&self, input: Value) -> Result<Value, String> {
+        let context = self.0.clone();
+        tokio::task::spawn_blocking(move || search::execute(&context, input, true))
+            .await.map_err(|error| format!("检索任务失败：{error}"))?
+    }
+}
+
+struct DirectoryTreeTool(LocalToolContext);
+
+#[async_trait]
+impl ToolHandler for DirectoryTreeTool {
+    fn definition(&self) -> ToolDefinition {
+        ToolDefinition::new(
+            "get_directory_tree",
+            "Return a bounded directory tree for the selected local workspace.",
+            json!({
+                "type": "object",
+                "properties": {
+                    "path": { "type": "string" },
+                    "max_depth": { "type": "integer", "maximum": MAX_TREE_DEPTH },
+                    "max_entries": { "type": "integer", "maximum": MAX_SEARCH_RESULTS }
+                }
+            }),
+        )
+    }
+
+    async fn execute(&self, input: Value) -> Result<Value, String> {
+        let context = &self.0;
+        let root = selected_tool_path(&input, &context.roots, context.allow_external_paths)?;
+        if !is_allowed_tool_path(
+            &root,
+            &context.roots,
+            &context.excluded_paths,
+            context.allow_external_paths,
+        ) {
+            return Err("只能读取用户明确选择的目录".to_string());
+        }
+        let max_depth = input
+            .get("max_depth")
+            .and_then(Value::as_u64)
+            .unwrap_or(3)
+            .clamp(1, MAX_TREE_DEPTH as u64) as usize;
+        let max_entries = input
+            .get("max_entries")
+            .and_then(Value::as_u64)
+            .unwrap_or(256)
+            .clamp(1, MAX_SEARCH_RESULTS as u64) as usize;
+        let mut remaining = max_entries;
+        let tree = directory_tree_value(
+            &root,
+            0,
+            max_depth,
+            &mut remaining,
+            &context.excluded_paths,
+            &context.cancellation,
+        )?;
+        Ok(json!({
+            "path": root.to_string_lossy(),
+            "tree": tree,
+            "truncated": remaining == 0,
+        }))
+    }
+}
+
+struct ApplyPatchTool(LocalToolContext);
+
+fn patch_hunk_start(header: &str, fallback: usize) -> Result<usize, String> {
+    if header.trim() == "@@" {
+        return Ok(fallback);
+    }
+    header
+        .split_whitespace()
+        .find(|part| part.starts_with('-') && part.len() > 1)
+        .ok_or_else(|| format!("无法解析补丁 hunk 头：{header}"))?
+        .trim_start_matches('-')
+        .split(',')
+        .next()
+        .ok_or_else(|| format!("无法解析补丁 hunk 起始行：{header}"))?
+        .parse::<usize>()
+        .map_err(|_| format!("无法解析补丁 hunk 起始行：{header}"))
+}
+
+fn apply_patch_text(
+    content: &str,
+    patch: &str,
+    cancellation: &Arc<AtomicBool>,
+) -> Result<(String, usize), String> {
+    let source = content.split('\n').collect::<Vec<_>>();
+    let mut result = Vec::with_capacity(source.len());
+    let mut source_cursor = 0usize;
+    let mut hunk_count = 0usize;
+    let mut in_hunk = false;
+    let normalized_patch = patch.replace("\r\n", "\n");
+    for raw_line in normalized_patch.lines() {
+        cancelled(cancellation)?;
+        if raw_line.starts_with("@@") {
+            let start = patch_hunk_start(raw_line, source_cursor + 1)?.saturating_sub(1);
+            if start < source_cursor || start > source.len() {
+                return Err(format!("补丁 hunk 起始行超出文件范围：{}", start + 1));
+            }
+            result.extend(source[source_cursor..start].iter().copied());
+            source_cursor = start;
+            in_hunk = true;
+            hunk_count += 1;
+            continue;
+        }
+        if raw_line.starts_with("*** Begin Patch")
+            || raw_line.starts_with("*** Update File")
+            || raw_line.starts_with("*** End Patch")
+            || raw_line.starts_with("--- ")
+            || raw_line.starts_with("+++ ")
+        {
+            continue;
+        }
+        if !in_hunk || raw_line.starts_with("\\ No newline") {
+            continue;
+        }
+        let (kind, value) = raw_line.split_at(1);
+        match kind {
+            " " => {
+                let expected = source
+                    .get(source_cursor)
+                    .copied()
+                    .ok_or_else(|| "补丁上下文超出文件范围".to_string())?;
+                if expected != value {
+                    return Err(format!("补丁上下文不匹配，期望：{expected}"));
+                }
+                result.push(expected);
+                source_cursor += 1;
+            }
+            "-" => {
+                let expected = source
+                    .get(source_cursor)
+                    .copied()
+                    .ok_or_else(|| "补丁删除行超出文件范围".to_string())?;
+                if expected != value {
+                    return Err(format!("补丁删除行不匹配，期望：{expected}"));
+                }
+                source_cursor += 1;
+            }
+            "+" => result.push(value),
+            _ => return Err(format!("补丁包含无法识别的行：{raw_line}")),
+        }
+    }
+    if hunk_count == 0 {
+        return Err("apply_patch 需要至少一个 @@ hunk".to_string());
+    }
+    result.extend(source[source_cursor..].iter().copied());
+    Ok((result.join("\n"), hunk_count))
+}
+
+#[async_trait]
+impl ToolHandler for ApplyPatchTool {
+    fn definition(&self) -> ToolDefinition {
+        ToolDefinition::new(
+            "apply_patch",
+            "Apply a bounded patch to a selected local file. Prefer patch with one or more @@ hunks; old_text/new_text remains available for one exact replacement. The operation validates every context and deletion line before writing.",
+            json!({
+                "type": "object",
+                "properties": {
+                    "path": { "type": "string" },
+                    "patch": { "type": "string" },
+                    "old_text": { "type": "string" },
+                    "new_text": { "type": "string" }
+                },
+                "required": ["path"]
+            }),
+        )
+        .requiring_permission()
+    }
+
+    async fn execute(&self, input: Value) -> Result<Value, String> {
+        let context = &self.0;
+        cancelled(&context.cancellation)?;
+        let path = input
+            .get("path")
+            .and_then(Value::as_str)
+            .filter(|value| !value.trim().is_empty())
+            .map(PathBuf::from)
+            .map(|path| resolve_selected_path(&path, &context.roots))
+            .ok_or_else(|| "apply_patch 需要 path".to_string())?;
+        if !is_allowed_tool_path(
+            &path,
+            &context.roots,
+            &context.excluded_paths,
+            context.allow_external_paths,
+        ) {
+            return Err("只能修改用户明确选择的文件或目录".to_string());
+        }
+        let content = fs::read_to_string(&path)
+            .map_err(|error| format!("无法读取待修改文件 {}：{error}", path.display()))?;
+        let (next, applied) = if let Some(patch) = input
+            .get("patch")
+            .and_then(Value::as_str)
+            .filter(|value| !value.trim().is_empty())
+        {
+            apply_patch_text(&content, patch, &context.cancellation)?
+        } else {
+            let old_text = input
+                .get("old_text")
+                .and_then(Value::as_str)
+                .ok_or_else(|| {
+                    "apply_patch 需要 patch，或同时提供 old_text 和 new_text".to_string()
+                })?;
+            let new_text = input
+                .get("new_text")
+                .and_then(Value::as_str)
+                .ok_or_else(|| {
+                    "apply_patch 需要 new_text，或同时提供 old_text 和 patch".to_string()
+                })?;
+            if old_text.is_empty() {
+                return Err("apply_patch 不接受空 old_text".to_string());
+            }
+            let occurrences = content.match_indices(old_text).count();
+            if occurrences != 1 {
+                return Err(format!(
+                    "apply_patch 要求 old_text 恰好匹配一次，当前匹配 {occurrences} 次"
+                ));
+            }
+            (content.replacen(old_text, new_text, 1), 1)
+        };
+        cancelled(&context.cancellation)?;
+        fs::write(&path, next.as_bytes()).map_err(|error| format!("写入补丁失败: {error}"))?;
+        Ok(json!({
+            "path": path.to_string_lossy(),
+            "appliedHunks": applied,
+            "oldBytes": content.len(),
+            "newBytes": next.len(),
+        }))
+    }
+}
+
+struct ReadLocalFileTool(LocalToolContext);
+
+fn hex_preview(bytes: &[u8]) -> String {
+    const HEX: &[u8; 16] = b"0123456789abcdef";
+    let mut output = String::with_capacity(bytes.len().saturating_mul(2));
+    for byte in bytes {
+        output.push(HEX[(byte >> 4) as usize] as char);
+        output.push(HEX[(byte & 0x0f) as usize] as char);
+    }
+    output
+}
+
+/// Whether a prefix that failed strict UTF-8 validation is still text: a read
+/// that stopped in the middle of a multi-byte character is a truncated UTF-8
+/// prefix (`error_len()` is `None`), not a binary file.
+fn prefix_looks_like_text(bytes: &[u8]) -> bool {
+    match std::str::from_utf8(bytes) {
+        Ok(_) => true,
+        Err(error) => error.error_len().is_none(),
+    }
+}
+
+/// Consumes one line from `reader`, retaining at most `retain` bytes of it, so a
+/// file whose single line is several megabytes cannot blow up memory. Returns
+/// `None` at end of file, otherwise whether content had to be dropped because
+/// the line was longer than `retain`.
+fn read_bounded_line<R: BufRead>(
+    reader: &mut R,
+    retain: usize,
+    line: &mut Vec<u8>,
+) -> Result<Option<bool>, String> {
+    line.clear();
+    let mut overflowed = false;
+    let mut saw_any = false;
+    loop {
+        let (content_len, has_newline, at_eof, copied) = {
+            let available = reader
+                .fill_buf()
+                .map_err(|error| format!("读取文件失败: {error}"))?;
+            if available.is_empty() {
+                (0, false, true, 0)
+            } else {
+                let (content_len, has_newline) =
+                    match available.iter().position(|byte| *byte == b'\n') {
+                        Some(index) => (index, true),
+                        None => (available.len(), false),
+                    };
+                let copied = content_len.min(retain.saturating_sub(line.len()));
+                line.extend_from_slice(&available[..copied]);
+                (content_len, has_newline, false, copied)
+            }
+        };
+        if at_eof {
+            return Ok(saw_any.then_some(overflowed));
+        }
+        saw_any = true;
+        if copied < content_len {
+            overflowed = true;
+        }
+        reader.consume(content_len + usize::from(has_newline));
+        if has_newline {
+            return Ok(Some(overflowed));
+        }
+    }
+}
+
+/// Longest prefix of `text` that is at most `max_bytes` bytes long and ends on a
+/// character boundary.
+fn char_bounded_prefix(text: &str, max_bytes: usize) -> &str {
+    if text.len() <= max_bytes {
+        return text;
+    }
+    let mut end = max_bytes;
+    while end > 0 && !text.is_char_boundary(end) {
+        end -= 1;
+    }
+    &text[..end]
+}
+
+/// Strips one trailing `\n` and a `\r` before it, matching `str::lines`.
+fn trim_line_ending(line: &[u8]) -> &[u8] {
+    let without_newline = line.strip_suffix(b"\n").unwrap_or(line);
+    without_newline.strip_suffix(b"\r").unwrap_or(without_newline)
+}
+
+struct LineWindow {
+    content: String,
+    start_line: usize,
+    end_line: usize,
+    total_lines: usize,
+    lines_returned: usize,
+    content_truncated: bool,
+    note: Option<String>,
+}
+
+/// Reads the window `start_line..=end_line` (1-based, real file lines) in one
+/// streaming pass. Memory stays bounded by `max_bytes`: one line buffer of the
+/// same cap, the reader buffer, and the returned content — never the whole file.
+/// The scan continues to end of file only to report an exact `total_lines`, so
+/// time is O(file size) with no seek index needed.
+fn read_line_window(
+    path: &Path,
+    start_line: usize,
+    end_line: Option<usize>,
+    max_bytes: usize,
+) -> Result<LineWindow, String> {
+    let file = fs::File::open(path).map_err(|error| format!("无法打开文件: {error}"))?;
+    let mut reader = BufReader::with_capacity(FILE_WINDOW_BUFFER_BYTES, file);
+    let mut line = Vec::new();
+    let mut content = String::new();
+    let last_requested_line = end_line.unwrap_or(usize::MAX);
+    let mut line_number = 0usize;
+    let mut lines_returned = 0usize;
+    let mut last_returned_line = 0usize;
+    let mut content_truncated = false;
+    loop {
+        let overflowed = match read_bounded_line(&mut reader, max_bytes, &mut line)? {
+            Some(overflowed) => overflowed,
+            None => break,
+        };
+        line_number += 1;
+        if line_number < start_line || line_number > last_requested_line || content_truncated {
+            continue;
+        }
+        let text = String::from_utf8_lossy(trim_line_ending(&line)).into_owned();
+        let separator = if lines_returned == 0 { "" } else { "\n" };
+        let room = max_bytes.saturating_sub(content.len() + separator.len());
+        if !overflowed && text.len() <= room {
+            content.push_str(separator);
+            content.push_str(&text);
+            lines_returned += 1;
+            last_returned_line = line_number;
+            continue;
+        }
+        // The last requested line does not fit in max_bytes: keep as much of it
+        // as the character boundary allows, then report the cut.
+        content_truncated = true;
+        if content.len() + separator.len() >= max_bytes {
+            // Not even one more byte fits: the window ends at the previous line.
+            continue;
+        }
+        content.push_str(separator);
+        content.push_str(char_bounded_prefix(&text, room));
+        lines_returned += 1;
+        last_returned_line = line_number;
+    }
+
+    let returned_end_line = if lines_returned == 0 {
+        start_line.saturating_sub(1)
+    } else {
+        last_returned_line
+    };
+    let note = if line_number == 0 {
+        Some(format!(
+            "文件为空（0 行），start_line={start_line} 没有可返回的行。"
+        ))
+    } else if start_line > line_number {
+        Some(format!(
+            "start_line={start_line} 超过文件总行数 {line_number}：没有可返回的行，不要把前缀内容当作该窗口。"
+        ))
+    } else if let Some(end) = end_line.filter(|end| *end < start_line) {
+        Some(format!(
+            "end_line={end} 小于 start_line={start_line}：没有可返回的行。"
+        ))
+    } else if content_truncated && lines_returned == 0 {
+        Some(format!(
+            "max_bytes={max_bytes} 太小，不足以返回第 {start_line} 行的任何内容。"
+        ))
+    } else if content_truncated {
+        Some(format!(
+            "返回内容在 max_bytes={max_bytes} 处截断，最后一行（第 {last_returned_line} 行）只返回了开头部分；继续读取请把 start_line 设为 {}。",
+            last_returned_line.saturating_add(1)
+        ))
+    } else {
+        None
+    };
+    Ok(LineWindow {
+        content,
+        start_line,
+        end_line: returned_end_line,
+        total_lines: line_number,
+        lines_returned,
+        content_truncated,
+        note,
+    })
+}
+
+#[async_trait]
+impl ToolHandler for ReadLocalFileTool {
+    fn definition(&self) -> ToolDefinition {
+        ToolDefinition::new(
+            "read_local_file",
+            "Read a bounded preview from one explicitly selected ordinary local file, or an explicitly requested external file when full access is enabled. Text files return UTF-8 content; binary files return a bounded hexadecimal preview. Do not pass a directory, archive, or archive member; use list_local_files or read_local_log_range instead. Pass start_line/end_line to read a window of real file lines instead of the first 64 KB: after a search told you where the match is, that is also how you read past the prefix.",
+            json!({
+                "type": "object",
+                "properties": {
+                    "path": { "type": "string" },
+                    "max_bytes": { "type": "integer", "maximum": MAX_FILE_READ_BYTES },
+                    "start_line": { "type": "integer", "minimum": 1, "description": "1-based first line of the file to return, counted in real file lines and therefore not limited by the 64 KB prefix. Use the lineStart values returned by search_local_code to jump straight to a match instead of re-reading from the top." },
+                    "end_line": { "type": "integer", "minimum": 1, "description": "1-based last line to return, inclusive. With start_line this turns a read into a bounded window; the returned text is still capped at max_bytes and the last line may be cut short." }
+                },
+                "required": ["path"]
+            }),
+        )
+    }
+
+    async fn execute(&self, input: Value) -> Result<Value, String> {
+        let context = &self.0;
+        cancelled(&context.cancellation)?;
+        let path = input
+            .get("path")
+            .and_then(Value::as_str)
+            .map(PathBuf::from)
+            .map(|path| resolve_selected_path(&path, &context.roots))
+            .ok_or_else(|| "read_local_file 需要 path".to_string())?;
+        if !is_allowed_tool_path(
+            &path,
+            &context.roots,
+            &context.excluded_paths,
+            context.allow_external_paths,
+        ) {
+            return Err("只能读取用户明确选择的文件或目录".to_string());
+        }
+        let max_bytes = input
+            .get("max_bytes")
+            .and_then(Value::as_u64)
+            .unwrap_or(MAX_FILE_READ_BYTES as u64)
+            .min(MAX_FILE_READ_BYTES as u64) as usize;
+        let metadata = fs::metadata(&path).map_err(|error| {
+            format!(
+                "无法读取文件元数据：{}：{error}。请使用 list_local_files 返回的精确文件名，不要自行改写数字、空格或扩展名。",
+                path.display()
+            )
+        })?;
+        if !metadata.is_file() {
+            return Err("read_local_file 只支持文件".to_string());
+        }
+        let file = fs::File::open(&path).map_err(|error| format!("无法打开文件: {error}"))?;
+        let mut bytes = Vec::with_capacity(max_bytes);
+        file.take(max_bytes as u64)
+            .read_to_end(&mut bytes)
+            .map_err(|error| format!("读取文件失败: {error}"))?;
+        // A prefix that stops in the middle of a multi-byte character is still a
+        // text file: classifying it as binary would make the result depend on
+        // where the byte cap happens to fall (which is how a large CJK file used
+        // to come back as a hexadecimal preview and became unreadable to the
+        // model). Only bytes that are invalid in the middle stay binary.
+        let text_prefix = prefix_looks_like_text(&bytes);
+        let binary_bytes = bytes.len().min(MAX_BINARY_PREVIEW_BYTES);
+        let text = String::from_utf8_lossy(&bytes).to_string();
+
+        // Line window: a caller that already knows where the match is (from
+        // search_local_code) can read that range by real file line number,
+        // independently of the 64 KB prefix read above. Without start_line and
+        // end_line the result is exactly the old whole-prefix read.
+        let start_line = input
+            .get("start_line")
+            .and_then(Value::as_u64)
+            .filter(|value| *value >= 1)
+            .map(|value| value as usize);
+        let end_line = input
+            .get("end_line")
+            .and_then(Value::as_u64)
+            .filter(|value| *value >= 1)
+            .map(|value| value as usize);
+        let windowed = start_line.is_some() || end_line.is_some();
+        let (content, window, note, truncated) = if windowed && prefix_looks_like_text(&bytes) {
+            let window = read_line_window(&path, start_line.unwrap_or(1), end_line, max_bytes)?;
+            let truncated = window.content_truncated;
+            let value = json!({
+                "startLine": window.start_line,
+                "endLine": window.end_line,
+                "totalLines": window.total_lines,
+                "linesReturned": window.lines_returned,
+                "contentTruncated": window.content_truncated,
+            });
+            (Some(window.content), Some(value), window.note, truncated)
+        } else {
+            (
+                text_prefix.then(|| text.clone()),
+                None,
+                None,
+                metadata.len() > bytes.len() as u64,
+            )
+        };
+        let text_returned = content.is_some();
+
+        let mut result = json!({
+            "path": path.to_string_lossy(),
+            "content": content,
+            "encoding": if text_returned { "utf-8" } else { "hex" },
+            "contentHex": (!text_returned).then(|| hex_preview(&bytes[..binary_bytes])),
+            "binaryPreviewTruncated": !text_returned && bytes.len() > binary_bytes,
+            "window": window,
+            "truncated": truncated,
+        });
+        if let Some(note) = note {
+            result["note"] = Value::String(note);
+        }
+        Ok(result)
+    }
+}
+
+struct WriteLocalFileTool(LocalToolContext);
+
+fn mutation_path(input: &Value, key: &str, roots: &[String]) -> Result<PathBuf, String> {
+    input
+        .get(key)
+        .and_then(Value::as_str)
+        .filter(|value| !value.trim().is_empty())
+        .map(|value| resolve_selected_path(Path::new(value), roots))
+        .ok_or_else(|| format!("{key} 需要 path"))
+}
+
+fn ensure_mutation_path_allowed(
+    path: &Path,
+    context: &LocalToolContext,
+    label: &str,
+) -> Result<(), String> {
+    if !is_allowed_tool_path(
+        path,
+        &context.roots,
+        &context.excluded_paths,
+        context.allow_external_paths,
+    ) {
+        return Err(format!("只能在用户明确选择的范围内{label}"));
+    }
+    if let Some(parent) = path.parent() {
+        if !is_allowed_tool_path(
+            parent,
+            &context.roots,
+            &context.excluded_paths,
+            context.allow_external_paths,
+        ) {
+            return Err(format!("{label}的父目录不在用户选择范围内"));
+        }
+    }
+    Ok(())
+}
+
+fn same_policy_path(left: &Path, right: &Path) -> bool {
+    policy_path_key(&normalized_policy_path(left))
+        == policy_path_key(&normalized_policy_path(right))
+}
+
+struct CreateDirectoryTool(LocalToolContext);
+
+#[async_trait]
+impl ToolHandler for CreateDirectoryTool {
+    fn definition(&self) -> ToolDefinition {
+        ToolDefinition::new(
+            "create_directory",
+            "Create one directory inside the selected local workspace. Do not create parent trees implicitly.",
+            json!({
+                "type": "object",
+                "properties": { "path": { "type": "string" } },
+                "required": ["path"]
+            }),
+        )
+        .requiring_permission()
+    }
+
+    async fn execute(&self, input: Value) -> Result<Value, String> {
+        let context = &self.0;
+        cancelled(&context.cancellation)?;
+        let path = mutation_path(&input, "path", &context.roots)?;
+        ensure_mutation_path_allowed(&path, context, "创建目录")?;
+        match fs::metadata(&path) {
+            Ok(metadata) if metadata.is_dir() => {
+                return Ok(
+                    json!({ "path": path.to_string_lossy(), "created": false, "alreadyExists": true }),
+                );
+            }
+            Ok(_) => return Err("目标路径已经是文件，不能创建目录".to_string()),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => return Err(format!("无法检查目录：{error}")),
+        }
+        let parent = path.parent().ok_or_else(|| "目录父路径无效".to_string())?;
+        if !parent.is_dir() {
+            return Err("目录父路径不存在，请先创建上一级目录".to_string());
+        }
+        fs::create_dir(&path).map_err(|error| format!("创建目录失败：{error}"))?;
+        Ok(json!({ "path": path.to_string_lossy(), "created": true, "alreadyExists": false }))
+    }
+}
+
+struct CopyFileTool(LocalToolContext);
+
+#[async_trait]
+impl ToolHandler for CopyFileTool {
+    fn definition(&self) -> ToolDefinition {
+        ToolDefinition::new(
+            "copy_file",
+            "Copy one explicitly selected local file to another explicitly selected path. Directories and implicit recursive copies are not supported.",
+            json!({
+                "type": "object",
+                "properties": {
+                    "source": { "type": "string" },
+                    "destination": { "type": "string" },
+                    "overwrite": { "type": "boolean" }
+                },
+                "required": ["source", "destination"]
+            }),
+        )
+        .requiring_permission()
+    }
+
+    async fn execute(&self, input: Value) -> Result<Value, String> {
+        let context = &self.0;
+        cancelled(&context.cancellation)?;
+        let source = mutation_path(&input, "source", &context.roots)?;
+        let destination = mutation_path(&input, "destination", &context.roots)?;
+        ensure_mutation_path_allowed(&source, context, "复制文件")?;
+        ensure_mutation_path_allowed(&destination, context, "复制文件")?;
+        if same_policy_path(&source, &destination) {
+            return Err("复制源文件和目标文件不能相同".to_string());
+        }
+        if !fs::metadata(&source)
+            .map_err(|error| format!("无法读取复制源文件：{error}"))?
+            .is_file()
+        {
+            return Err("copy_file 只支持普通文件，不支持目录".to_string());
+        }
+        if destination.exists()
+            && !input
+                .get("overwrite")
+                .and_then(Value::as_bool)
+                .unwrap_or(false)
+        {
+            return Err("目标文件已存在；如需覆盖请明确传入 overwrite=true".to_string());
+        }
+        let parent = destination
+            .parent()
+            .ok_or_else(|| "目标父路径无效".to_string())?;
+        if !parent.is_dir() {
+            return Err("目标父目录不存在，请先使用 create_directory".to_string());
+        }
+        let bytes =
+            fs::copy(&source, &destination).map_err(|error| format!("复制文件失败：{error}"))?;
+        Ok(
+            json!({ "source": source.to_string_lossy(), "destination": destination.to_string_lossy(), "bytes": bytes, "overwritten": input.get("overwrite").and_then(Value::as_bool).unwrap_or(false) }),
+        )
+    }
+}
+
+struct MoveFileTool(LocalToolContext);
+
+#[async_trait]
+impl ToolHandler for MoveFileTool {
+    fn definition(&self) -> ToolDefinition {
+        ToolDefinition::new(
+            "move_file",
+            "Move one explicitly selected local file to another explicitly selected path. Directories and implicit recursive moves are not supported.",
+            json!({
+                "type": "object",
+                "properties": {
+                    "source": { "type": "string" },
+                    "destination": { "type": "string" },
+                    "overwrite": { "type": "boolean" }
+                },
+                "required": ["source", "destination"]
+            }),
+        )
+        .requiring_permission()
+    }
+
+    async fn execute(&self, input: Value) -> Result<Value, String> {
+        let context = &self.0;
+        cancelled(&context.cancellation)?;
+        let source = mutation_path(&input, "source", &context.roots)?;
+        let destination = mutation_path(&input, "destination", &context.roots)?;
+        ensure_mutation_path_allowed(&source, context, "移动文件")?;
+        ensure_mutation_path_allowed(&destination, context, "移动文件")?;
+        if same_policy_path(&source, &destination) {
+            return Err("移动源文件和目标文件不能相同".to_string());
+        }
+        if !fs::metadata(&source)
+            .map_err(|error| format!("无法读取移动源文件：{error}"))?
+            .is_file()
+        {
+            return Err("move_file 只支持普通文件，不支持目录".to_string());
+        }
+        if destination.exists()
+            && !input
+                .get("overwrite")
+                .and_then(Value::as_bool)
+                .unwrap_or(false)
+        {
+            return Err("目标文件已存在；如需覆盖请明确传入 overwrite=true".to_string());
+        }
+        let parent = destination
+            .parent()
+            .ok_or_else(|| "目标父路径无效".to_string())?;
+        if !parent.is_dir() {
+            return Err("目标父目录不存在，请先使用 create_directory".to_string());
+        }
+        if destination.exists() {
+            fs::remove_file(&destination).map_err(|error| format!("覆盖目标文件失败：{error}"))?;
+        }
+        fs::rename(&source, &destination).map_err(|error| format!("移动文件失败：{error}"))?;
+        Ok(
+            json!({ "source": source.to_string_lossy(), "destination": destination.to_string_lossy(), "moved": true }),
+        )
+    }
+}
+
+struct DeleteFileTool(LocalToolContext);
+
+#[async_trait]
+impl ToolHandler for DeleteFileTool {
+    fn definition(&self) -> ToolDefinition {
+        ToolDefinition::new(
+            "delete_file",
+            "Delete one explicitly selected local file or symlink. Never delete directories or recursively delete a tree.",
+            json!({
+                "type": "object",
+                "properties": { "path": { "type": "string" } },
+                "required": ["path"]
+            }),
+        )
+        .requiring_permission()
+    }
+
+    async fn execute(&self, input: Value) -> Result<Value, String> {
+        let context = &self.0;
+        cancelled(&context.cancellation)?;
+        let path = mutation_path(&input, "path", &context.roots)?;
+        ensure_mutation_path_allowed(&path, context, "删除文件")?;
+        if let Some(wsl) = context.wsl.clone() {
+            return delete_wsl_file(context, wsl, &path).await;
+        }
+        let metadata =
+            fs::symlink_metadata(&path).map_err(|error| format!("无法读取删除目标：{error}"))?;
+        if metadata.is_dir() {
+            return Err(
+                "delete_file 不支持删除目录或递归删除；请先明确提供目录管理需求".to_string(),
+            );
+        }
+        fs::remove_file(&path).map_err(|error| format!("删除文件失败：{error}"))?;
+        Ok(json!({ "path": path.to_string_lossy(), "deleted": true }))
+    }
+}
+
+/// Delete a WSL target file. Files are normally reached through the
+/// `\\wsl.localhost` UNC share, but that share can lose visibility of files
+/// after `wsl.exe` processes have run (WSL vserver staleness, os error 3 even
+/// though the file still exists in the distribution). When the UNC path is
+/// stale or missing, verify through `wsl.exe test -e` and delete through
+/// `wsl.exe rm -f` so the operation still succeeds.
+async fn delete_wsl_file(
+    context: &LocalToolContext,
+    wsl: WslRuntimeConfig,
+    path: &Path,
+) -> Result<Value, String> {
+    let unc_usable = match fs::symlink_metadata(path) {
+        Ok(metadata) if metadata.is_dir() => {
+            return Err(
+                "delete_file 不支持删除目录或递归删除；请先明确提供目录管理需求".to_string(),
+            );
+        }
+        Ok(_) => true,
+        Err(_) => false,
+    };
+    if unc_usable {
+        match fs::remove_file(path) {
+            Ok(()) => return Ok(json!({ "path": path.to_string_lossy(), "deleted": true })),
+            Err(_) => {}
+        }
+    }
+    let mapper = WslPathMapper::new(wsl.clone());
+    let linux = mapper.from_unc_path(&path.to_string_lossy());
+    let quoted = linux.replace('\'', "'\\''");
+    // `test` rejects a `--` option terminator, so only `rm` keeps it.
+    let command = format!("test -e '{quoted}' && rm -f -- '{quoted}'");
+    let cwd = path.parent().map(Path::to_path_buf).unwrap_or_default();
+    let result = execute_wsl_shell(context, "bash", &command, &cwd, 60_000, None).await?;
+    if result.status.success() {
+        Ok(json!({ "path": path.to_string_lossy(), "deleted": true, "backend": "wsl.exe" }))
+    } else {
+        Err(format!(
+            "删除文件失败：wsl.exe 未找到或无法删除目标（退出码 {}）",
+            result.status.code().unwrap_or(-1)
+        ))
+    }
+}
+
+#[async_trait]
+impl ToolHandler for WriteLocalFileTool {
+    fn definition(&self) -> ToolDefinition {
+        ToolDefinition::new(
+            "write_local_file",
+            "Write bounded text to a user-selected local file, or an explicitly requested external file when full access is enabled. Requires permission unless full access is active.",
+            json!({
+                "type": "object",
+                "properties": {
+                    "path": { "type": "string" },
+                    "content": { "type": "string", "maxLength": MAX_FILE_WRITE_BYTES }
+                },
+                "required": ["path", "content"]
+            }),
+        )
+        .requiring_permission()
+    }
+
+    async fn execute(&self, input: Value) -> Result<Value, String> {
+        let context = &self.0;
+        cancelled(&context.cancellation)?;
+        let path = input
+            .get("path")
+            .and_then(Value::as_str)
+            .map(PathBuf::from)
+            .map(|path| resolve_selected_path(&path, &context.roots))
+            .ok_or_else(|| "write_local_file 需要 path".to_string())?;
+        let content = input
+            .get("content")
+            .and_then(Value::as_str)
+            .ok_or_else(|| "write_local_file 需要 content".to_string())?;
+        if content.len() > MAX_FILE_WRITE_BYTES {
+            return Err(format!("单次写入不能超过 {} 字节", MAX_FILE_WRITE_BYTES));
+        }
+        if !is_allowed_tool_path(
+            &path,
+            &context.roots,
+            &context.excluded_paths,
+            context.allow_external_paths,
+        ) {
+            return Err("只能修改用户明确选择的文件或目录".to_string());
+        }
+        if let Some(parent) = path.parent() {
+            if !is_allowed_tool_path(
+                parent,
+                &context.roots,
+                &context.excluded_paths,
+                context.allow_external_paths,
+            ) && !is_explicitly_selected_root(&path, &context.roots)
+            {
+                return Err("文件父目录不在用户选择范围内".to_string());
+            }
+        }
+        fs::write(&path, content).map_err(|error| format!("写入文件失败: {error}"))?;
+        Ok(json!({ "path": path.to_string_lossy(), "bytes": content.len() }))
+    }
+}
+
+struct RunLocalCommandTool(LocalToolContext);
+
+fn output_sink_for_input(
+    sink: Option<&CommandOutputSink>,
+    input: &Value,
+) -> Option<CommandOutputSink> {
+    let call_id = input
+        .get("__agent_call_id")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    sink.map(|value| value.with_call_id(call_id.to_string()))
+}
+
+fn command_candidates(command: &Path) -> Vec<PathBuf> {
+    let mut names = vec![command.to_path_buf()];
+    #[cfg(windows)]
+    if command.extension().is_none() {
+        let extensions = std::env::var_os("PATHEXT")
+            .map(|value| {
+                value
+                    .to_string_lossy()
+                    .split(';')
+                    .filter(|extension| !extension.is_empty())
+                    .map(str::to_string)
+                    .collect::<Vec<_>>()
+            })
+            .filter(|values| !values.is_empty())
+            .unwrap_or_else(|| vec![".COM".into(), ".EXE".into(), ".BAT".into(), ".CMD".into()]);
+        for extension in extensions {
+            names.push(PathBuf::from(format!(
+                "{}{}",
+                command.to_string_lossy(),
+                extension
+            )));
+        }
+    }
+    names
+}
+
+fn resolve_command_executable(
+    command: &str,
+    cwd: &Path,
+    roots: &[String],
+    excluded_paths: &[String],
+    allow_external_paths: bool,
+) -> Result<PathBuf, String> {
+    let command_path = Path::new(command);
+    let has_path = command_path.is_absolute() || command.contains('\\') || command.contains('/');
+    if has_path {
+        if command_path.is_absolute() && !allow_external_paths {
+            return Err(
+                "命令路径必须是当前工作目录内的相对路径；外部程序请使用白名单中的裸命令名"
+                    .to_string(),
+            );
+        }
+        for candidate in command_candidates(command_path) {
+            let candidate = cwd.join(candidate);
+            if !is_allowed_tool_path(&candidate, roots, excluded_paths, allow_external_paths) {
+                continue;
+            }
+            if fs::metadata(&candidate)
+                .map(|metadata| metadata.is_file())
+                .unwrap_or(false)
+            {
+                return Ok(candidate);
+            }
+        }
+        return Err(format!(
+            "命令启动失败: 找不到可执行程序 `{command}`，不会通过 shell 执行"
+        ));
+    }
+    let names = command_candidates(command_path);
+    if command_path
+        .file_stem()
+        .and_then(|value| value.to_str())
+        .is_some_and(|name| name.eq_ignore_ascii_case("gradlew"))
+    {
+        for name in &names {
+            let candidate = cwd.join(name);
+            if is_allowed_tool_path(&candidate, roots, excluded_paths, allow_external_paths)
+                && fs::metadata(&candidate)
+                    .map(|metadata| metadata.is_file())
+                    .unwrap_or(false)
+            {
+                return Ok(candidate);
+            }
+        }
+    }
+    // Tools shipped with the application take precedence over the machine PATH
+    // so allowlisted bare names such as `adb` and `java` resolve on a clean
+    // Windows install that never had an Android SDK.
+    for directory in crate::network::child_environment_path_entries() {
+        for name in &names {
+            let candidate = directory.join(name);
+            if fs::metadata(&candidate)
+                .map(|metadata| metadata.is_file())
+                .unwrap_or(false)
+            {
+                return Ok(candidate);
+            }
+        }
+    }
+    if let Some(path) = std::env::var_os("PATH") {
+        for directory in std::env::split_paths(&path) {
+            for name in &names {
+                let candidate = directory.join(name);
+                if fs::metadata(&candidate)
+                    .map(|metadata| metadata.is_file())
+                    .unwrap_or(false)
+                {
+                    return Ok(candidate);
+                }
+            }
+        }
+    }
+    Err(format!(
+        "命令启动失败: 找不到可执行程序 `{command}`，不会通过 shell 执行"
+    ))
+}
+
+#[async_trait]
+impl ToolHandler for RunLocalCommandTool {
+    fn definition(&self) -> ToolDefinition {
+        ToolDefinition::new(
+            "run_local_command",
+            "Run one allowlisted local engineering executable with explicit arguments. Do not use a shell or shell aliases; use the controlled file tools or get_working_directory instead.",
+            json!({
+                "type": "object",
+                "properties": {
+                    "command": { "type": "string" },
+                    "args": { "type": "array", "items": { "type": "string" } },
+                    "cwd": { "type": "string" },
+                    "timeout_ms": { "type": "integer", "maximum": MAX_COMMAND_TIMEOUT_MS }
+                },
+                "required": ["command"]
+            }),
+        )
+        .requiring_permission()
+    }
+
+    async fn execute(&self, input: Value) -> Result<Value, String> {
+        let context = &self.0;
+        let command = input
+            .get("command")
+            .and_then(Value::as_str)
+            .filter(|value| !value.trim().is_empty())
+            .ok_or_else(|| "run_local_command 需要 command".to_string())?;
+        if is_forbidden_destructive_command(&input) {
+            return Err(crate::FORBIDDEN_DESTRUCTIVE_COMMAND_MESSAGE.to_string());
+        }
+        if let Some(tool) = crate::controlled_tool_for_command(command) {
+            return Err(format!(
+                "不能通过 run_local_command 执行 `{command}`，请改用 {tool}"
+            ));
+        }
+        if is_windows_shell_command(command) {
+            return Err(format!(
+                "不能通过 run_local_command 启动 shell `{command}`，请改用 run_local_shell"
+            ));
+        }
+        if !is_allowed_command(command) {
+            return Err("命令不在 Agent 允许列表中，且不会通过 shell 执行".to_string());
+        }
+        let args = input
+            .get("args")
+            .and_then(Value::as_array)
+            .map(|values| {
+                values
+                    .iter()
+                    .filter_map(Value::as_str)
+                    .map(str::to_string)
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default();
+        let cwd = resolve_command_working_directory(
+            input.get("cwd").and_then(Value::as_str),
+            &context.roots,
+            context.allow_external_paths,
+        )?;
+        if is_excluded_path(&cwd, &context.excluded_paths) {
+            return Err("命令工作目录位于 SELinux 配置的排除目录内".to_string());
+        }
+        if command_uses_excluded_path(
+            command,
+            &args,
+            &cwd,
+            &context.roots,
+            &context.excluded_paths,
+        ) {
+            return Err("命令参数引用了 SELinux 配置的排除目录".to_string());
+        }
+        let executable = if context.wsl.is_some() {
+            None
+        } else {
+            Some(resolve_command_executable(
+                command,
+                &cwd,
+                &context.roots,
+                &context.excluded_paths,
+                context.allow_external_paths,
+            )?)
+        };
+        let output_sink = output_sink_for_input(context.output_sink.as_ref(), &input);
+        if let Some(sink) = output_sink.as_ref() {
+            sink.emit_started(command, &args, &cwd);
+        }
+        let timeout_ms = input
+            .get("timeout_ms")
+            .and_then(Value::as_u64)
+            .unwrap_or(30_000)
+            .clamp(1_000, context.command_timeout_limit);
+        let output = if context.wsl.is_some() {
+            execute_wsl_process(
+                context,
+                command,
+                &args,
+                &cwd,
+                timeout_ms,
+                output_sink.as_ref(),
+            )
+            .await?
+        } else {
+            execute_process(
+                executable.ok_or_else(|| "WSL 命令执行器未初始化".to_string())?,
+                &args,
+                &cwd,
+                timeout_ms,
+                context.cancellation.clone(),
+                output_sink.as_ref(),
+            )
+            .await?
+        };
+        Ok(command_result_value(
+            json!({"command": command, "args": args, "cwd": cwd.to_string_lossy()}),
+            &output,
+        ))
+    }
+}
+
+struct GetGitStatusTool(LocalToolContext);
+struct GetGitDiffTool(LocalToolContext);
+
+async fn run_git(
+    context: &LocalToolContext,
+    input: &Value,
+    args: &[String],
+) -> Result<crate::CommandExecutionResult, String> {
+    let cwd = resolve_command_working_directory(
+        input.get("cwd").and_then(Value::as_str),
+        &context.roots,
+        context.allow_external_paths,
+    )?;
+    if is_excluded_path(&cwd, &context.excluded_paths) {
+        return Err("Git 工作目录位于 SELinux 配置的排除目录内".to_string());
+    }
+    let output_sink = output_sink_for_input(context.output_sink.as_ref(), input);
+    if let Some(sink) = output_sink.as_ref() {
+        sink.emit_started("git", args, &cwd);
+    }
+    if context.wsl.is_some() {
+        execute_wsl_process(context, "git", args, &cwd, 30_000, output_sink.as_ref()).await
+    } else {
+        let executable = resolve_command_executable(
+            "git",
+            &cwd,
+            &context.roots,
+            &context.excluded_paths,
+            context.allow_external_paths,
+        )?;
+        execute_process(
+            executable,
+            args,
+            &cwd,
+            30_000,
+            context.cancellation.clone(),
+            output_sink.as_ref(),
+        )
+        .await
+    }
+}
+
+#[async_trait]
+impl ToolHandler for GetGitStatusTool {
+    fn definition(&self) -> ToolDefinition {
+        ToolDefinition::new("get_git_status", "Return structured Git branch and working tree status for the selected workspace or an explicitly requested cwd in full access.", json!({"type":"object","properties":{"cwd":{"type":"string"}}})).requiring_permission()
+    }
+    async fn execute(&self, input: Value) -> Result<Value, String> {
+        let args = vec!["status".into(), "--porcelain=v1".into(), "--branch".into()];
+        let context = &self.0;
+        let cwd = resolve_command_working_directory(
+            input.get("cwd").and_then(Value::as_str),
+            &context.roots,
+            context.allow_external_paths,
+        )?;
+        let output = run_git(context, &input, &args).await?;
+        let raw = String::from_utf8_lossy(&output.stdout).to_string();
+        let mut lines = raw.lines();
+        let branch = lines
+            .next()
+            .unwrap_or_default()
+            .strip_prefix("## ")
+            .unwrap_or_default()
+            .to_string();
+        let files = lines
+            .filter(|line| !line.trim().is_empty())
+            .map(|line| {
+                let status = line.get(..2).unwrap_or_default().trim().to_string();
+                let path = line.get(3..).unwrap_or(line).trim().to_string();
+                json!({"status": status, "path": path})
+            })
+            .collect::<Vec<_>>();
+        Ok(
+            json!({"cwd": cwd.to_string_lossy(), "branch": branch, "dirty": !files.is_empty(), "files": files, "raw": raw, "exitCode": output.status.code(), "success": output.status.success()}),
+        )
+    }
+}
+
+#[async_trait]
+impl ToolHandler for GetGitDiffTool {
+    fn definition(&self) -> ToolDefinition {
+        ToolDefinition::new("get_git_diff", "Return a bounded structured Git diff for the selected workspace or an explicitly requested cwd/path in full access.", json!({"type":"object","properties":{"cwd":{"type":"string"},"path":{"type":"string"}}})).requiring_permission()
+    }
+    async fn execute(&self, input: Value) -> Result<Value, String> {
+        let context = &self.0;
+        let cwd = resolve_command_working_directory(
+            input.get("cwd").and_then(Value::as_str),
+            &context.roots,
+            context.allow_external_paths,
+        )?;
+        let mut args = vec!["diff".into(), "--no-ext-diff".into(), "--unified=3".into()];
+        if let Some(path) = input
+            .get("path")
+            .and_then(Value::as_str)
+            .filter(|value| !value.trim().is_empty())
+        {
+            let path = if Path::new(path).is_absolute()
+                || resolve_user_directory_alias(Path::new(path)).is_some()
+            {
+                resolve_selected_path(Path::new(path), &context.roots)
+            } else {
+                cwd.join(path)
+            };
+            if !is_allowed_tool_path(
+                &path,
+                &context.roots,
+                &context.excluded_paths,
+                context.allow_external_paths,
+            ) {
+                return Err("Git diff 路径不在用户选择范围内".to_string());
+            }
+            let git_path = if let Some(config) = &context.wsl {
+                WslPathMapper::new(config.clone()).from_unc_path(&path.to_string_lossy())
+            } else {
+                path.to_string_lossy().to_string()
+            };
+            args.extend(["--".into(), git_path]);
+        }
+        let output = run_git(context, &input, &args).await?;
+        let diff = String::from_utf8_lossy(&output.stdout).to_string();
+        let files = diff
+            .lines()
+            .filter_map(|line| line.strip_prefix("diff --git "))
+            .map(|line| {
+                line.split_once(" b/")
+                    .map(|(_, path)| path.to_string())
+                    .unwrap_or_else(|| line.to_string())
+            })
+            .collect::<Vec<_>>();
+        Ok(
+            json!({"cwd": cwd.to_string_lossy(), "files": files, "diff": diff, "exitCode": output.status.code(), "success": output.status.success(), "truncated": output.ordered_truncated}),
+        )
+    }
+}
+
+struct RunProjectCheckTool(LocalToolContext);
+
+#[async_trait]
+impl ToolHandler for RunProjectCheckTool {
+    fn definition(&self) -> ToolDefinition {
+        ToolDefinition::new("run_project_check", "Run a project-owned check: .agent-checks.json maps named entries to an executable and argument array for any language. Otherwise detects Cargo, package.json, Go modules or Gradle. Inspect project scripts first; never pass shell text as a command.", json!({"type":"object","properties":{"kind":{"type":"string","description":"Named .agent-checks.json entry, otherwise build/test/check"},"cwd":{"type":"string"},"timeout_ms":{"type":"integer","maximum":MAX_COMMAND_TIMEOUT_MS}},"required":["kind"]})).requiring_permission()
+    }
+    async fn execute(&self, input: Value) -> Result<Value, String> {
+        let context = &self.0;
+        let kind = input
+            .get("kind")
+            .and_then(Value::as_str)
+            .filter(|value| !value.trim().is_empty())
+            .ok_or_else(|| "run_project_check 需要检查入口名称".to_string())?;
+        let cwd = resolve_command_working_directory(
+            input.get("cwd").and_then(Value::as_str),
+            &context.roots,
+            context.allow_external_paths,
+        )?;
+        if is_excluded_path(&cwd, &context.excluded_paths) {
+            return Err("项目检查工作目录位于 SELinux 配置的排除目录内".to_string());
+        }
+        let has_cargo = cwd.join("Cargo.toml").is_file();
+        let has_package = cwd.join("package.json").is_file();
+        let wrapper = if context.wsl.is_some() && cwd.join("gradlew").is_file() {
+            Some("gradlew")
+        } else if cfg!(windows) && cwd.join("gradlew.bat").is_file() {
+            Some("gradlew.bat")
+        } else if cwd.join("gradlew").is_file() {
+            Some("gradlew")
+        } else {
+            None
+        };
+        let configured = crate::project_checks::configured_check(&cwd,kind)?;
+        if configured.is_none() && !matches!(kind,"build"|"test"|"check") { return Err("未配置该检查入口，请读取项目脚本或 .agent-checks.json".into()); }
+        let (command, args) = if let Some(entry) = configured {
+            (entry.command,entry.args)
+        } else if has_cargo {
+            ("cargo".to_string(), vec![kind.to_string()])
+        } else if has_package {
+            let package: Value = serde_json::from_str(
+                &fs::read_to_string(cwd.join("package.json"))
+                    .map_err(|error| format!("无法读取 package.json: {error}"))?,
+            )
+            .map_err(|error| format!("package.json 格式无效: {error}"))?;
+            let scripts = package.get("scripts").and_then(Value::as_object);
+            let script = if scripts.and_then(|values| values.get(kind)).is_some() {
+                kind.to_string()
+            } else if kind == "check" && scripts.and_then(|values| values.get("build")).is_some() {
+                "build".into()
+            } else {
+                return Err(format!("package.json 未定义 {kind} 脚本"));
+            };
+            ("npm".to_string(), vec!["run".into(), script])
+        } else if cwd.join("go.mod").is_file() {
+            ("go".to_string(), vec![if kind=="check" {"vet"} else {kind}.into(),"./...".into()])
+        } else if let Some(wrapper) = wrapper {
+            (
+                wrapper.to_string(),
+                vec![match kind {
+                    "build" => "build",
+                    "test" => "test",
+                    _ => "check",
+                }
+                .into()],
+            )
+        } else {
+            return Err("未检测到已声明的项目检查入口。请读取项目构建/测试脚本，用受控命令工具执行，或在 .agent-checks.json 配置任意语言的 command/args。".to_string());
+        };
+        let command = command.as_str();
+        if is_windows_shell_command(command) || crate::controlled_tool_for_command(command).is_some() {
+            return Err("项目检查入口应是构建/测试可执行文件；Shell 脚本请使用 run_local_shell 的显式命令与权限流程".into());
+        }
+        if is_forbidden_destructive_command(&json!({"command":command,"args":args})) {
+            return Err(crate::FORBIDDEN_DESTRUCTIVE_COMMAND_MESSAGE.into());
+        }
+        if command_uses_excluded_path(command,&args,&cwd,&context.roots,&context.excluded_paths) {
+            return Err("项目检查参数引用了排除路径".into());
+        }
+        let output_sink = output_sink_for_input(context.output_sink.as_ref(), &input);
+        if let Some(sink) = output_sink.as_ref() {
+            sink.emit_started(command, &args, &cwd);
+        }
+        let timeout_ms = input
+            .get("timeout_ms")
+            .and_then(Value::as_u64)
+            .unwrap_or(120_000)
+            .clamp(1_000, context.command_timeout_limit);
+        let output = if context.wsl.is_some() {
+            let command = if command == "gradlew" {
+                "./gradlew"
+            } else {
+                command
+            };
+            execute_wsl_process(
+                context,
+                command,
+                &args,
+                &cwd,
+                timeout_ms,
+                output_sink.as_ref(),
+            )
+            .await?
+        } else {
+            let executable = resolve_command_executable(
+                command,
+                &cwd,
+                &context.roots,
+                &context.excluded_paths,
+                context.allow_external_paths,
+            )?;
+            // G3-A：run_project_check 只执行项目自身声明的构建/测试入口，
+            // 本机实测受限令牌下 workspace 内的可执行文件会被加载器拒绝启动，
+            // 因此该工具不降权运行；降权只作用于 `run_local_shell` 的任意命令。
+            execute_process(
+                executable,
+                &args,
+                &cwd,
+                timeout_ms,
+                context.cancellation.clone(),
+                output_sink.as_ref(),
+            )
+            .await?
+        };
+        let diagnostics = String::from_utf8_lossy(&output.stderr)
+            .lines()
+            .chain(String::from_utf8_lossy(&output.stdout).lines())
+            .filter(|line| {
+                let line = line.to_ascii_lowercase();
+                line.contains("error") || line.contains("warning") || line.contains("failed")
+            })
+            .take(64)
+            .map(str::to_string)
+            .collect::<Vec<_>>();
+        let mut result = command_result_value(
+            json!({"kind": kind, "command": command, "args": args, "cwd": cwd.to_string_lossy()}),
+            &output,
+        );
+        if let Value::Object(object) = &mut result {
+            object.insert("diagnostics".into(), json!(diagnostics));
+        }
+        Ok(result)
+    }
+}
+
+struct RunLocalShellTool(LocalToolContext);
+
+#[async_trait]
+impl ToolHandler for RunLocalShellTool {
+    fn definition(&self) -> ToolDefinition {
+        ToolDefinition::new("run_local_shell", "Run one Windows shell command with explicit shell, command text, and selected workspace. Supported shells: powershell, pwsh, cmd, bash, wsl.", json!({"type":"object","properties":{"shell":{"type":"string","enum":["powershell","pwsh","cmd","bash","wsl"]},"command":{"type":"string","maxLength":MAX_SHELL_COMMAND_CHARS},"cwd":{"type":"string"},"timeout_ms":{"type":"integer","maximum":MAX_COMMAND_TIMEOUT_MS}},"required":["shell","command"]})).requiring_permission()
+    }
+    async fn execute(&self, input: Value) -> Result<Value, String> {
+        let context = &self.0;
+        let shell = input
+            .get("shell")
+            .and_then(Value::as_str)
+            .map(|value| value.trim().to_ascii_lowercase())
+            .filter(|value| {
+                if context.wsl.is_some() {
+                    matches!(value.as_str(), "bash" | "sh" | "zsh" | "wsl")
+                } else {
+                    is_allowed_windows_shell(value)
+                }
+            })
+            .ok_or_else(|| "run_local_shell 需要 powershell、pwsh、cmd、bash 或 wsl".to_string())?;
+        let command = input
+            .get("command")
+            .and_then(Value::as_str)
+            .map(str::trim)
+            .filter(|value| !value.is_empty())
+            .ok_or_else(|| "run_local_shell 需要 command".to_string())?;
+        if is_forbidden_destructive_command_line(command) {
+            return Err(crate::FORBIDDEN_DESTRUCTIVE_COMMAND_MESSAGE.to_string());
+        }
+        if command.chars().count() > MAX_SHELL_COMMAND_CHARS {
+            return Err(format!(
+                "shell 命令不能超过 {} 个字符",
+                MAX_SHELL_COMMAND_CHARS
+            ));
+        }
+        let cwd = resolve_command_working_directory(
+            input.get("cwd").and_then(Value::as_str),
+            &context.roots,
+            context.allow_external_paths,
+        )?;
+        if is_excluded_path(&cwd, &context.excluded_paths) {
+            return Err("Shell 工作目录位于 SELinux 配置的排除目录内".to_string());
+        }
+        if command_uses_excluded_path(command, &[], &cwd, &context.roots, &context.excluded_paths) {
+            return Err("Shell 命令引用了 SELinux 配置的排除目录".to_string());
+        }
+        let executable = if context.wsl.is_some() {
+            None
+        } else {
+            Some(resolve_command_executable(
+                &shell,
+                &cwd,
+                &[],
+                &context.excluded_paths,
+                false,
+            )?)
+        };
+        let args = if context.wsl.is_some() {
+            Vec::new()
+        } else {
+            shell_process_args(&shell, command)?
+        };
+        let timeout_ms = input
+            .get("timeout_ms")
+            .and_then(Value::as_u64)
+            .unwrap_or(30_000)
+            .clamp(1_000, context.command_timeout_limit);
+        let output_sink = output_sink_for_input(context.output_sink.as_ref(), &input);
+        if let Some(sink) = output_sink.as_ref() {
+            let display_args = if context.wsl.is_some() {
+                vec!["-lc".to_string(), command.to_string()]
+            } else {
+                args.clone()
+            };
+            sink.emit_started(&shell, &display_args, &cwd);
+        }
+        let output = if context.wsl.is_some() {
+            execute_wsl_shell(
+                context,
+                &shell,
+                command,
+                &cwd,
+                timeout_ms,
+                output_sink.as_ref(),
+            )
+            .await?
+        } else {
+            execute_process(
+                executable.ok_or_else(|| "Shell 执行器未初始化".to_string())?,
+                &args,
+                &cwd,
+                timeout_ms,
+                context.cancellation.clone(),
+                output_sink.as_ref(),
+            )
+            .await?
+        };
+        Ok(command_result_value(
+            json!({"shell": shell, "command": command, "cwd": cwd.to_string_lossy()}),
+            &output,
+        ))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{AllowPermission, ToolExecutionError};
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    /// A line window must return exactly the requested lines by real file line
+    /// number, keep the default whole-prefix behaviour when omitted, and report
+    /// out-of-range input explicitly instead of clamping it.
+    #[tokio::test]
+    async fn read_local_file_returns_a_bounded_line_window() {
+        let root = temporary_root();
+        fs::create_dir_all(&root).unwrap();
+        let path = root.join("window.txt");
+        let body: Vec<String> = (1..=10).map(|n| format!("line{n}")).collect();
+        fs::write(&path, body.join("\n")).unwrap();
+
+        let context = LocalToolContext::new(
+            vec![root.to_string_lossy().into_owned()],
+            vec![],
+            false,
+            Arc::new(AtomicBool::new(false)),
+            None,
+        );
+
+        // No window: the whole file, exactly as before.
+        let full = ReadLocalFileTool(context.clone())
+            .execute(json!({ "path": path.to_string_lossy() }))
+            .await
+            .unwrap();
+        assert_eq!(full["window"], Value::Null);
+        assert_eq!(full["content"].as_str().unwrap(), body.join("\n"));
+
+        // Explicit window: only the requested lines.
+        let window = ReadLocalFileTool(context.clone())
+            .execute(json!({
+                "path": path.to_string_lossy(),
+                "start_line": 3,
+                "end_line": 5
+            }))
+            .await
+            .unwrap();
+        assert_eq!(window["content"].as_str().unwrap(), "line3\nline4\nline5");
+        assert_eq!(window["window"]["startLine"], 3);
+        assert_eq!(window["window"]["endLine"], 5);
+        assert_eq!(window["window"]["totalLines"], 10);
+
+        // start_line alone runs to the end.
+        let tail = ReadLocalFileTool(context.clone())
+            .execute(json!({ "path": path.to_string_lossy(), "start_line": 9 }))
+            .await
+            .unwrap();
+        assert_eq!(tail["content"].as_str().unwrap(), "line9\nline10");
+
+        // A start_line past the end of the file is an explicit empty result,
+        // never a silent fall back to the tail of the prefix.
+        let beyond = ReadLocalFileTool(context.clone())
+            .execute(json!({
+                "path": path.to_string_lossy(),
+                "start_line": 50,
+                "end_line": 99
+            }))
+            .await
+            .unwrap();
+        assert_eq!(beyond["content"].as_str().unwrap(), "");
+        assert_eq!(beyond["window"]["startLine"], 50);
+        assert_eq!(beyond["window"]["endLine"], 49);
+        assert_eq!(beyond["window"]["totalLines"], 10);
+        assert_eq!(beyond["window"]["linesReturned"], 0);
+        assert!(beyond["note"]
+            .as_str()
+            .unwrap()
+            .contains("超过文件总行数"));
+
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    /// The default read bound is 64 KB: a larger file is truncated, and an
+    /// explicit max_bytes request cannot raise the bound. Reading past it stays
+    /// possible through the start_line/end_line window, which addresses real
+    /// file lines (see `read_local_file_window_pages_real_file_lines`).
+    #[tokio::test]
+    async fn read_local_file_caps_the_default_prefix_at_sixty_four_kilobytes() {
+        assert_eq!(MAX_FILE_READ_BYTES, 64 * 1024);
+        // The shared temporary_root() uses %TEMP%, which is ACL-restricted in
+        // some sandboxes; this fixture stays under the crate's own target
+        // directory, which the test process is guaranteed to own.
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("target")
+            .join(format!("read-limit-fixture-{}", std::process::id()));
+        fs::create_dir_all(&root).unwrap();
+        let path = root.join("large.txt");
+        fs::write(&path, "a".repeat(MAX_FILE_READ_BYTES + 4 * 1024)).unwrap();
+
+        let context = LocalToolContext::new(
+            vec![root.to_string_lossy().into_owned()],
+            vec![],
+            false,
+            Arc::new(AtomicBool::new(false)),
+            None,
+        );
+
+        let default_read = ReadLocalFileTool(context.clone())
+            .execute(json!({ "path": path.to_string_lossy() }))
+            .await
+            .unwrap();
+        assert_eq!(default_read["truncated"], true);
+        assert_eq!(
+            default_read["content"].as_str().unwrap().len(),
+            MAX_FILE_READ_BYTES
+        );
+
+        // An oversized explicit request is clamped instead of honouring 10 MB.
+        let clamped = ReadLocalFileTool(context)
+            .execute(json!({
+                "path": path.to_string_lossy(),
+                "max_bytes": 10 * 1024 * 1024
+            }))
+            .await
+            .unwrap();
+        assert_eq!(clamped["truncated"], true);
+        assert_eq!(
+            clamped["content"].as_str().unwrap().len(),
+            MAX_FILE_READ_BYTES
+        );
+
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    /// A single line longer than the retention cap must not grow the buffer: the
+    /// reader drops the excess and consumes the rest of the line.
+    #[test]
+    fn bounded_line_reader_never_retains_more_than_the_cap() {
+        let data = vec![b'x'; 4 * 1024 * 1024];
+        let mut reader = std::io::BufReader::with_capacity(
+            4 * 1024,
+            std::io::Cursor::new(data),
+        );
+        let mut line = Vec::new();
+        let overflowed = read_bounded_line(&mut reader, 1024, &mut line)
+            .unwrap()
+            .unwrap();
+        assert!(overflowed);
+        assert_eq!(line.len(), 1024);
+        // The whole 4 MB line was consumed, so the stream is at EOF.
+        assert!(read_bounded_line(&mut reader, 1024, &mut line)
+            .unwrap()
+            .is_none());
+
+        // Character-boundary trimming and line ending trimming.
+        assert_eq!(char_bounded_prefix("中文", 4), "中");
+        assert_eq!(char_bounded_prefix("中文", 5), "中");
+        assert_eq!(char_bounded_prefix("中文", 6), "中文");
+        assert_eq!(char_bounded_prefix("中文", 2), "");
+        assert_eq!(trim_line_ending(b"line\r\n"), b"line");
+        assert_eq!(trim_line_ending(b"line\n"), b"line");
+        assert_eq!(trim_line_ending(b"line"), b"line");
+    }
+
+    /// The window addresses real file lines, so content far beyond the 64 KB
+    /// prefix stays readable; the default prefix read is unchanged.
+    #[tokio::test]
+    async fn read_local_file_window_pages_real_file_lines() {
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("target")
+            .join(format!("read-window-fixture-{}", std::process::id()));
+        fs::create_dir_all(&root).unwrap();
+        let path = root.join("deep.txt");
+        let body: String = (1..=20_000)
+            .map(|n| format!("line{n:05} marker{n:05}\n"))
+            .collect();
+        fs::write(&path, &body).unwrap();
+        assert!(body.len() > 200 * 1024);
+
+        let context = LocalToolContext::new(
+            vec![root.to_string_lossy().into_owned()],
+            vec![],
+            false,
+            Arc::new(AtomicBool::new(false)),
+            None,
+        );
+
+        // A deep window reads real lines far beyond the prefix, cheaply.
+        let window = ReadLocalFileTool(context.clone())
+            .execute(json!({
+                "path": path.to_string_lossy(),
+                "start_line": 15_000,
+                "end_line": 15_010
+            }))
+            .await
+            .unwrap();
+        let content = window["content"].as_str().unwrap();
+        assert!(content.starts_with("line15000 marker15000"));
+        assert!(content.ends_with("line15010 marker15010"));
+        assert!(!content.contains("line00001"));
+        assert!(content.len() < 4 * 1024);
+        assert_eq!(window["window"]["startLine"], 15_000);
+        assert_eq!(window["window"]["endLine"], 15_010);
+        assert_eq!(window["window"]["totalLines"], 20_000);
+        assert_eq!(window["window"]["linesReturned"], 11);
+        assert_eq!(window["window"]["contentTruncated"], false);
+        assert_eq!(window["truncated"], false);
+        assert!(window.get("note").is_none());
+
+        // Without start_line/end_line the read is exactly the old 64 KB prefix.
+        let default_read = ReadLocalFileTool(context.clone())
+            .execute(json!({ "path": path.to_string_lossy() }))
+            .await
+            .unwrap();
+        assert_eq!(default_read["window"], Value::Null);
+        assert_eq!(default_read["truncated"], true);
+        let default_content = default_read["content"].as_str().unwrap();
+        assert_eq!(default_content.len(), MAX_FILE_READ_BYTES);
+        assert!(default_content.starts_with("line00001 marker00001"));
+        assert!(!default_content.contains("line15000"));
+
+        // A start_line past the end is an explicit empty window, never a silent
+        // fall back to the tail of the prefix.
+        let beyond = ReadLocalFileTool(context.clone())
+            .execute(json!({
+                "path": path.to_string_lossy(),
+                "start_line": 99_999
+            }))
+            .await
+            .unwrap();
+        assert_eq!(beyond["content"].as_str().unwrap(), "");
+        assert_eq!(beyond["window"]["linesReturned"], 0);
+        assert_eq!(beyond["window"]["endLine"], 99_998);
+        assert_eq!(beyond["window"]["totalLines"], 20_000);
+        assert!(beyond["note"].as_str().unwrap().contains("超过文件总行数"));
+
+        // A window too large for max_bytes is cut on a character boundary and
+        // says so; an explicit 10 MB request is still clamped to 64 KB.
+        let cut = ReadLocalFileTool(context.clone())
+            .execute(json!({
+                "path": path.to_string_lossy(),
+                "start_line": 1,
+                "end_line": 20_000,
+                "max_bytes": 10 * 1024 * 1024
+            }))
+            .await
+            .unwrap();
+        assert_eq!(cut["content"].as_str().unwrap().len(), MAX_FILE_READ_BYTES);
+        assert_eq!(cut["truncated"], true);
+        assert_eq!(cut["window"]["contentTruncated"], true);
+        assert!(cut["window"]["endLine"].as_u64().unwrap() < 20_000);
+        assert!(cut["note"].as_str().unwrap().contains("截断"));
+
+        // CJK/emoji lines: the 64 KB prefix of this file stops inside a
+        // multi-byte character, so strict UTF-8 validation rejects that prefix,
+        // yet the window must still return real text lines without panicking.
+        let cjk_path = root.join("cjk.txt");
+        let mut cjk = "a".repeat(MAX_FILE_READ_BYTES - 1);
+        cjk.push('中');
+        for n in 1..=2_000 {
+            cjk.push('\n');
+            cjk.push_str(&format!("中文😀窗口行{n}"));
+        }
+        fs::write(&cjk_path, cjk.as_bytes()).unwrap();
+        assert!(std::str::from_utf8(&cjk.as_bytes()[..MAX_FILE_READ_BYTES]).is_err());
+
+        let cjk_window = ReadLocalFileTool(context.clone())
+            .execute(json!({
+                "path": cjk_path.to_string_lossy(),
+                "start_line": 500,
+                "end_line": 502
+            }))
+            .await
+            .unwrap();
+        assert_eq!(
+            cjk_window["content"].as_str().unwrap(),
+            "中文😀窗口行499\n中文😀窗口行500\n中文😀窗口行501"
+        );
+        assert_eq!(cjk_window["encoding"], "utf-8");
+        assert_eq!(cjk_window["contentHex"], Value::Null);
+        assert_eq!(cjk_window["window"]["totalLines"], 2_001);
+
+        // The default (prefix) read of that same file is text too: a byte cap
+        // that lands inside a character must not turn a readable text file into
+        // a hexadecimal preview (that classification used to depend on where the
+        // cap happened to fall). The cut character becomes U+FFFD and the result
+        // still reports truncation.
+        let cjk_default = ReadLocalFileTool(context.clone())
+            .execute(json!({ "path": cjk_path.to_string_lossy() }))
+            .await
+            .unwrap();
+        assert_eq!(cjk_default["encoding"], "utf-8");
+        assert_eq!(cjk_default["contentHex"], Value::Null);
+        assert_eq!(cjk_default["truncated"], true);
+        assert_eq!(cjk_default["window"], Value::Null);
+        let cjk_prefix = cjk_default["content"].as_str().unwrap();
+        assert!(cjk_prefix.starts_with(&"a".repeat(1_000)));
+        assert!(cjk_prefix.ends_with('\u{fffd}'));
+        assert!(!cjk_prefix.contains("窗口行"));
+
+        // end_line alone still starts at the first line.
+        let head_window = ReadLocalFileTool(context.clone())
+            .execute(json!({
+                "path": path.to_string_lossy(),
+                "end_line": 2
+            }))
+            .await
+            .unwrap();
+        assert_eq!(
+            head_window["content"].as_str().unwrap(),
+            "line00001 marker00001\nline00002 marker00002"
+        );
+        assert_eq!(head_window["window"]["endLine"], 2);
+
+        // end_line before start_line is an explicit empty window.
+        let inverted = ReadLocalFileTool(context.clone())
+            .execute(json!({
+                "path": path.to_string_lossy(),
+                "start_line": 8,
+                "end_line": 3
+            }))
+            .await
+            .unwrap();
+        assert_eq!(inverted["content"].as_str().unwrap(), "");
+        assert_eq!(inverted["window"]["linesReturned"], 0);
+        assert!(inverted["note"].as_str().unwrap().contains("小于 start_line"));
+
+        // An empty file has no lines to report.
+        let empty_path = root.join("empty.txt");
+        fs::write(&empty_path, "").unwrap();
+        let empty = ReadLocalFileTool(context.clone())
+            .execute(json!({
+                "path": empty_path.to_string_lossy(),
+                "start_line": 1
+            }))
+            .await
+            .unwrap();
+        assert_eq!(empty["content"].as_str().unwrap(), "");
+        assert_eq!(empty["window"]["totalLines"], 0);
+        assert!(empty["note"].as_str().unwrap().contains("文件为空"));
+
+        // A binary file keeps its hexadecimal preview even when a window is
+        // requested: the window path never rewrites binary handling.
+        let binary_path = root.join("blob.bin");
+        fs::write(&binary_path, [0x00_u8, 0xff, 0xfe, 0x80, 0x01]).unwrap();
+        let binary = ReadLocalFileTool(context)
+            .execute(json!({
+                "path": binary_path.to_string_lossy(),
+                "start_line": 1,
+                "end_line": 3
+            }))
+            .await
+            .unwrap();
+        assert_eq!(binary["content"], Value::Null);
+        assert_eq!(binary["encoding"], "hex");
+        assert_eq!(binary["window"], Value::Null);
+        assert_eq!(binary["contentHex"].as_str().unwrap(), "00fffe8001");
+
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    pub(super) fn temporary_root() -> PathBuf {
+        let suffix = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system clock should be available")
+            .as_nanos();
+        std::env::temp_dir().join(format!("android-tool-agent-files-{suffix}"))
+    }
+
+    #[tokio::test]
+    async fn project_owned_check_executes_an_arbitrary_tool_and_preserves_permission() {
+        let root = temporary_root();
+        fs::create_dir_all(&root).unwrap();
+        let executable = std::env::current_exe().unwrap();
+        let name = format!("project-check-fixture{}", std::env::consts::EXE_SUFFIX);
+        fs::copy(executable, root.join(&name)).unwrap();
+        fs::write(root.join(".agent-checks.json"), json!({"checks":{"custom-toolchain":{
+            "command":format!("./{name}"),"args":["--list","--format","terse"]
+        }}}).to_string()).unwrap();
+        let mut registry = ToolRegistry::new();
+        register_local_tools(&mut registry, LocalToolContext::new(vec![root.to_string_lossy().into_owned()],vec![],false,Arc::new(AtomicBool::new(false)),None)).unwrap();
+        assert!(registry.get("run_project_check").unwrap().requires_permission);
+        let output = registry.execute("run_project_check", json!({"kind":"custom-toolchain"}), &AllowPermission).await.unwrap();
+        assert_eq!(output["success"],true);
+        assert!(output["stdout"].as_str().unwrap().contains("project_owned_check_executes_an_arbitrary_tool"));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[cfg(windows)]
+    #[tokio::test]
+    #[ignore = "Requires ANDROID_DSH_TEST_WSL and runs a real, test-owned Linux process"]
+    async fn real_wsl_cancellation_drains_linux_descendants() {
+        real_wsl_descendant_cleanup("cancel").await;
+        real_wsl_descendant_cleanup("timeout").await;
+        real_wsl_descendant_cleanup("finish").await;
+    }
+
+    #[cfg(windows)]
+    async fn real_wsl_descendant_cleanup(mode: &str) {
+        use std::sync::Mutex;
+        let distribution = std::env::var("ANDROID_DSH_TEST_WSL").expect("select a test distro");
+        let marker = format!(
+            "dsh-cancel-{}",
+            temporary_root().file_name().unwrap().to_string_lossy()
+        );
+        let cancellation = Arc::new(AtomicBool::new(false));
+        let captured = Arc::new(Mutex::new(String::new()));
+        let listener_captured = captured.clone();
+        let listener_cancel = cancellation.clone();
+        let cancel_on_output = mode == "cancel";
+        let sink = CommandOutputSink::new(
+            Arc::new(move |event| {
+                if event["stream"] == "stdout" {
+                    let mut text = listener_captured.lock().unwrap();
+                    text.push_str(event["text"].as_str().unwrap_or_default());
+                    if cancel_on_output && text.contains('\n') {
+                        listener_cancel.store(true, Ordering::Relaxed);
+                    }
+                }
+            }),
+            "test",
+            "test",
+            "run_local_shell",
+        );
+        let context = LocalToolContext::new(vec!["/tmp".into()], vec![], false, cancellation, None)
+            .with_wsl(WslRuntimeConfig {
+                distribution: distribution.clone(),
+                root: "/tmp".into(),
+            });
+        let ending = if mode == "finish" {
+            "exit 7"
+        } else {
+            "wait \"$worker\""
+        };
+        let result = execute_wsl_process(
+            &context,
+            "env",
+            &[
+                format!("ANDROID_DSH_WSL_TEST={marker}"),
+                "sh".into(),
+                "-c".into(),
+                format!(
+                    "trap '' HUP TERM; sleep 45 & worker=$!; printf '%s\\n' \"$worker\"; {ending}"
+                ),
+            ],
+            Path::new("/tmp"),
+            if mode == "timeout" { 4_000 } else { 20_000 },
+            Some(&sink),
+        )
+        .await;
+        let pid: u32 = captured
+            .lock()
+            .unwrap()
+            .trim()
+            .parse()
+            .expect("test child pid");
+        // Verify the unique inherited marker before inspecting or cleaning up a PID.
+        let probe = tokio::process::Command::new("wsl.exe")
+            .args(["-d", &distribution, "--exec", "sh", "-c",
+                "if test -r /proc/$1/environ && tr '\\0' '\\n' < /proc/$1/environ | grep -Fxq \"ANDROID_DSH_WSL_TEST=$2\"; then ps -o stat= -p \"$1\"; kill -KILL \"$1\"; fi",
+                "dsh-test-cleanup", &pid.to_string(), &marker])
+            .output().await.expect("WSL test probe");
+        assert!(probe.status.success(), "test-owned process probe failed");
+        let state = String::from_utf8_lossy(&probe.stdout);
+        assert!(
+            state.trim().is_empty() || state.trim().starts_with('Z'),
+            "cancelled Linux descendant is still live: {state}"
+        );
+        match mode {
+            "cancel" => assert!(matches!(result, Err(message) if message.contains("取消"))),
+            "timeout" => assert!(matches!(result, Err(message) if message.contains("超时"))),
+            "finish" => assert_eq!(
+                result.ok().expect("command should finish").status.code(),
+                Some(7)
+            ),
+            _ => unreachable!(),
+        }
+    }
+
+    #[tokio::test]
+    async fn file_management_tools_are_scoped_and_non_recursive() {
+        let root = temporary_root();
+        fs::create_dir_all(&root).expect("test root should be created");
+        let source = root.join("source.txt");
+        let destination = root.join("nested").join("copy.txt");
+        fs::write(&source, "remote-ready").expect("source should be written");
+        let cancellation = Arc::new(AtomicBool::new(false));
+        let mut registry = ToolRegistry::new();
+        register_local_tools(
+            &mut registry,
+            LocalToolContext::new(
+                vec![root.to_string_lossy().to_string()],
+                Vec::new(),
+                false,
+                cancellation,
+                None,
+            ),
+        )
+        .expect("file tools should register");
+
+        registry
+            .execute(
+                "create_directory",
+                json!({ "path": "nested" }),
+                &AllowPermission,
+            )
+            .await
+            .expect("directory should be created");
+        registry
+            .execute(
+                "copy_file",
+                json!({ "source": "source.txt", "destination": "nested/copy.txt" }),
+                &AllowPermission,
+            )
+            .await
+            .expect("file should be copied");
+        assert_eq!(fs::read_to_string(&destination).unwrap(), "remote-ready");
+
+        registry
+            .execute(
+                "move_file",
+                json!({ "source": "nested/copy.txt", "destination": "moved.txt" }),
+                &AllowPermission,
+            )
+            .await
+            .expect("file should be moved");
+        assert!(root.join("moved.txt").is_file());
+        assert!(!destination.exists());
+
+        registry
+            .execute(
+                "delete_file",
+                json!({ "path": "moved.txt" }),
+                &AllowPermission,
+            )
+            .await
+            .expect("file should be deleted");
+        assert!(!root.join("moved.txt").exists());
+        let error = registry
+            .execute("delete_file", json!({ "path": "nested" }), &AllowPermission)
+            .await
+            .expect_err("directory deletion must be rejected");
+        assert!(
+            matches!(error, ToolExecutionError::Handler(message) if message.contains("不支持删除目录"))
+        );
+
+        let _ = fs::remove_dir_all(root);
+    }
+}

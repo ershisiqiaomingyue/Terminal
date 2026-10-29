@@ -1,0 +1,13 @@
+.file-metadata-control { position: relative; display: inline-flex; flex: 0 0 auto; }
+.file-metadata-popover { position: absolute; z-index: 40; top: calc(100% + 7px); right: 0; width: 248px; padding: 11px 12px; border: 1px solid var(--border-subtle); border-radius: 7px; color: var(--text-primary); background: var(--bg-panel); box-shadow: var(--shadow-lg); font-size: 11px; }
+.file-metadata-popover > strong { display: block; margin-bottom: 8px; font-size: 11px; font-weight: 600; }
+.file-metadata-popover dl { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 6px 8px; margin: 0; }
+.file-metadata-popover dt { color: var(--text-tertiary); }
+.file-metadata-popover dd { min-width: 0; margin: 0; overflow-wrap: anywhere; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.file-metadata-loading { display: flex; align-items: center; gap: 6px; color: var(--text-secondary); }
+.file-metadata-error { display: block; color: var(--danger-text); overflow-wrap: anywhere; }
+.file-metadata-hover-card { position: fixed; z-index: 10000; width: 248px; padding: 10px 12px; border: 1px solid var(--border-subtle); border-radius: 7px; color: var(--text-primary); background: var(--bg-panel); box-shadow: var(--shadow-lg); font-size: 11px; pointer-events: none; }
+.file-metadata-hover-card > strong { display: block; margin-bottom: 8px; overflow: hidden; font-size: 11px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.file-metadata-hover-card dl { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 6px 8px; margin: 0; }
+.file-metadata-hover-card dt { color: var(--text-tertiary); }
+.file-metadata-hover-card dd { min-width: 0; margin: 0; overflow-wrap: anywhere; color: var(--text-secondary); font-variant-numeric: tabular-nums; }

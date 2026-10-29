@@ -1,0 +1,11 @@
+.btn.tool-page-back-button {
+  width: 32px;
+  min-width: 32px;
+  height: 28px;
+  padding: 0;
+  flex: 0 0 auto;
+}
+
+.tool-page-back-button .btn-icon {
+  display: inline-flex;
+}

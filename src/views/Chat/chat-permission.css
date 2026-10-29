@@ -1,0 +1,40 @@
+.agent-permission-bar {
+  box-sizing: border-box;
+  width: min(860px, calc(100% - 32px));
+  max-height: min(360px, 45vh);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  margin: 0 auto 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  /* --bg-card 在亮色是 rgba(...,0.85)：去掉 alpha 再垫一层不透明画布底色，
+     否则上方的对话文字会从这条权限条里透出来。 */
+  background-color: var(--bg-canvas);
+  background-image: linear-gradient(
+    color-mix(in srgb, var(--bg-card) 100%, var(--bg-canvas)),
+    color-mix(in srgb, var(--bg-card) 100%, var(--bg-canvas))
+  );
+  color: var(--text-primary);
+  font-size: 12px;
+}
+.agent-permission-heading { display: flex; align-items: center; gap: 7px; color: var(--text-secondary); font-weight: 500; }
+.agent-permission-heading > svg { flex-shrink: 0; }
+.agent-permission-close { margin-left: auto; }
+.agent-permission-close-placeholder { flex: 0 0 28px; width: 28px; height: 28px; margin-left: auto; }
+.agent-permission-prompt { margin: 8px 0 10px; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; white-space: pre-wrap; }
+.agent-permission-command { max-height: 180px; margin: 0 0 12px; padding: 9px 11px; overflow: auto; scrollbar-gutter: stable; border-radius: var(--radius-sm); background: var(--tool-input-bg); color: var(--text-primary); font-family: var(--font-mono); font-size: 12px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.agent-permission-command code { color: inherit; background: transparent; }
+.agent-permission-reply { display: flex; align-items: center; gap: 8px; }
+.agent-permission-input { flex: 1; min-width: 0; }
+.agent-permission-reply > .btn { flex-shrink: 0; }
+.agent-permission-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.agent-permission-actions > small { flex: 1 1 210px; color: var(--text-secondary); line-height: 1.5; }
+.agent-question-options { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.agent-question-options .btn { height: auto; min-height: 29px; white-space: normal; overflow-wrap: anywhere; text-align: left; }
+@media (max-width: 540px) {
+  .agent-permission-bar { width: calc(100% - 20px); padding: 11px 12px; }
+  .agent-permission-actions > small { flex-basis: 100%; }
+}
+
+.agent-question-options .btn.is-selected { background: var(--input-action-bg); color: var(--input-action-text); }
+.agent-question-options .btn.is-selected:hover { background: var(--input-action-hover); color: var(--input-action-text); }

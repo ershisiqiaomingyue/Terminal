@@ -1,0 +1,32 @@
+        wsl_paths,
+        snapshot_paths,
+        mcp_tools,
+        allow_external_paths,
+        output_sink,
+        mut remote_context,
+        wsl_context,
+        mut tool_cancellation,
+        mut registry,
+        mut approved_path_registry,
+    } = setup::prepare_turn_input(
+        &app,
+        &request,
+        ssh_context.as_ref(),
+        &bound_ssh_hosts,
+        wsl_root.as_deref(),
+        wsl_context.as_ref(),
+        default_environment,
+        &mcp_state,
+        &session_id,
+        &turn_id,
+        &cancellation_reason,
+        &cancellation_token,
+        is_ssh_target,
+        is_wsl_target,
+    )
+    .await?;
+    let permission_mode = permission_mode.as_str();
+    let mut ssh_permission_namespace = ssh_connection_id
+        .as_deref()
+        .map(|id| format!("ssh:{id}"))
+        // P7-A：回退 namespace 不再掺 turn_id——掺了它每个 turn 都是新 key，

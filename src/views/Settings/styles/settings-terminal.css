@@ -1,0 +1,165 @@
+/* 终端设置面板（主体 / 文字 / 样式）。 */
+
+.terminal-pane-desc {
+  display: block;
+  margin: 2px 0 16px;
+  max-width: 74ch;
+}
+
+/* ---- 终端主题选择：单行下拉（Select 的 leading 扩展位），选项前是一排色点。
+   主题底色做衬底能一眼分清深浅；行高与其他设置项保持一致（一行字）。
+   下拉下方跟一块实时预览（换行铺满整行），选哪个主题立刻看到粗略的文字效果。 ---- */
+.terminal-theme-row {
+  flex-wrap: wrap;
+}
+
+.terminal-theme-preview {
+  flex-basis: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.terminal-theme-dots-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 4px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+}
+
+.terminal-theme-dots-mini i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.terminal-range-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 220px;
+}
+
+.terminal-range {
+  flex: 1 1 auto;
+  min-width: 140px;
+  accent-color: var(--accent-primary);
+}
+
+.terminal-range-value {
+  min-width: 58px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+.terminal-palette-control {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+}
+
+.terminal-color-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 6px;
+  width: 100%;
+}
+
+.terminal-color-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.terminal-color-field.overridden {
+  border-color: var(--accent-border);
+}
+
+.terminal-color-input {
+  width: 24px;
+  height: 20px;
+  flex: 0 0 auto;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+}
+
+.terminal-color-label {
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.terminal-color-value {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.terminal-settings-preview {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.terminal-settings-preview > div {
+  white-space: pre;
+}
+
+.terminal-settings-cursor {
+  display: inline-block;
+  width: 7px;
+  height: 1em;
+  margin-left: 4px;
+  vertical-align: text-bottom;
+}
+
+.terminal-settings-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.terminal-settings-swatch {
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.terminal-settings-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 18px 0 4px;
+}
+
+/* 当前内核不支持、或当前内核下无效的设置项：保留在界面上说明原因，但不可操作。 */
+.setting-row-item.is-disabled {
+  opacity: 0.62;
+}
+
+.setting-row-item.is-disabled .terminal-range {
+  cursor: not-allowed;
+}

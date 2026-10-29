@@ -1,0 +1,93 @@
+/* ==========================================================================
+   AndroidX Macrobenchmark 基准分析工作台 (BenchmarkView) - 现代原生桌面规范
+   ========================================================================== */
+
+.benchmark-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  background: var(--bg-canvas);
+  overflow: hidden;
+
+  --bench-card-bg: var(--bg-card);
+  --bench-card-hover: var(--bg-hover);
+}
+
+html[data-theme="dark"] .benchmark-container,
+[data-theme="dark"] .benchmark-container {
+  --bench-card-bg: var(--bg-card);
+  --bench-card-hover: var(--bg-hover);
+}
+
+.benchmark-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52px;
+  padding: 0 18px;
+  background: var(--page-header-bg);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.benchmark-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding: 16px 20px;
+  gap: 14px;
+}
+
+.benchmark-table-wrap {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--card-radius);
+  background: var(--bg-card);
+  border: var(--card-border);
+  box-shadow: var(--card-shadow), var(--card-rim);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  overflow: hidden;
+}
+
+.benchmark-table-head {
+  display: grid;
+  grid-template-columns: 2fr 1.2fr 100px 100px 120px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--table-divider);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--table-header-text);
+  background: var(--table-header-bg);
+  user-select: none;
+}
+
+.benchmark-table-row {
+  display: grid;
+  grid-template-columns: 2fr 1.2fr 100px 100px 120px;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--table-divider);
+  font-size: 12px;
+  color: var(--table-text);
+  transition: background var(--transition-fast);
+}
+
+.benchmark-table-head > span,
+.benchmark-table-row > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.benchmark-table-row:hover {
+  background: var(--table-hover-bg);
+  color: var(--table-text);
+}

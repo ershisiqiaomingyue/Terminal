@@ -1,0 +1,108 @@
+.home-view {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  color: var(--chrome-ink);
+}
+
+.home-title {
+  margin: 4px 0 28px;
+  color: inherit;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.home-tool-group + .home-tool-group { margin-top: 28px; }
+.home-tool-group h2 {
+  margin: 0 0 8px 10px;
+  color: var(--chrome-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.home-tool-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.home-tool-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  min-height: 68px;
+  padding: 14px 18px;
+  border-radius: var(--card-radius);
+  background: var(--bg-card);
+  border: var(--card-border);
+  box-shadow: var(--card-shadow), var(--card-rim);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--transition-base), border-color var(--transition-base), box-shadow var(--transition-base), transform var(--transition-base);
+}
+
+.home-tool-row::after {
+  display: none !important;
+}
+
+.home-tool-row:hover:not(:disabled) {
+  background: var(--bg-card-hover);
+  border-color: transparent;
+  transform: translateY(-2px);
+  box-shadow: var(--card-hover-shadow), var(--card-rim);
+}
+.home-tool-row:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.home-tool-row:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.home-tool-copy { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; }
+.home-tool-title { font-size: 13.5px; font-weight: 600; color: var(--text-primary); overflow-wrap: anywhere; }
+.home-tool-sub { color: var(--text-secondary); font-size: 12px; line-height: 1.45; overflow-wrap: anywhere; }
+
+.home-tool-status {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  right: 14px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-tertiary);
+}
+.home-tool-status.is-ready {
+  background: var(--success-text);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--success-text) 14%, transparent);
+}
+.home-tool-status.is-unavailable { background: var(--danger-text); }
+
+/* 状态点保持静态。
+   之前这里是 2.6s ease-in-out infinite 的呼吸动画（box-shadow 从 0 撑到 3px）：
+   一屏 15 个卡片同时无限动画，会逼着合成器一直出帧，实测空闲 CPU 从 ~1% 涨到 ~37%。
+   状态本身是"就绪/不可用"这种长期不变的信息，静态点 + 固定光圈足够表达。 */
+
+@media (max-width: 800px) {
+  .home-tool-list { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .home-title { margin-bottom: 22px; }
+}
+
+/* ==========================================================================
+   Home Tools View 悬停态
+   卡片底色/描边/阴影已由通用卡片规范统一（src/styles/index.css），
+   这里只保留悬停时的位移与阴影变化。
+   ========================================================================== */
+html[data-theme] .home-tool-row:hover:not(:disabled) {
+  background: var(--bg-card-hover);
+  border-color: transparent;
+  transform: translateY(-2px);
+  box-shadow: var(--card-hover-shadow), var(--card-rim);
+}

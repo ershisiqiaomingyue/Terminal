@@ -1,0 +1,28 @@
+.composer-project-popover {
+  position: fixed; z-index: 122; display: flex; flex-direction: column;
+  padding: 6px; box-sizing: border-box; border: 0; border-radius: var(--radius-base);
+  color: var(--text-primary); background: var(--popover-bg); box-shadow: var(--popover-shadow);
+  font-family: var(--font-sans); font-size: 11px;
+}
+.composer-project-select-all { flex: 0 0 auto; padding: 2px 0 5px; }
+.composer-project-list { min-height: 0; overflow-y: auto; scrollbar-gutter: stable; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) transparent; }
+.composer-project-popover .checkbox-row {
+  display: flex; align-items: center; gap: 9px; min-height: 32px; padding: 5px 8px;
+  margin: 0; box-sizing: border-box; border-radius: 6px; color: var(--text-primary); cursor: pointer;
+}
+.composer-project-popover .checkbox-row:hover { background: var(--chrome-hover); color: var(--chrome-hover-text); }
+.composer-project-popover .checkbox-row:has(input:disabled) { cursor: default; }
+.composer-project-popover .checkbox-row:has(input:focus-visible) { outline: 2px solid var(--accent-primary); outline-offset: -2px; }
+.composer-project-popover .checkbox-row > span { flex: 1; min-width: 0; }
+.composer-project-label { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.composer-project-label b { font-size: 11px; font-weight: 500; }
+.composer-project-label small { color: var(--text-secondary); font-size: 10px; }
+.composer-project-label :is(b, small) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.composer-project-empty { margin: 0; padding: 8px; color: var(--text-secondary); font-size: 10px; }
+.composer-project-divider { flex: 0 0 auto; height: 1px; margin: 6px 8px; background: var(--divider-color); }
+.composer-project-settings {
+  display: flex; align-items: center; gap: 7px; flex: 0 0 auto; min-height: 32px; padding: 0 8px;
+  border: 0; border-radius: 6px; color: var(--text-primary); background: transparent; font: inherit; cursor: pointer;
+}
+.composer-project-settings > svg:last-child { margin-left: auto; color: var(--text-secondary); }
+.composer-project-settings:hover { color: var(--chrome-hover-text); background: var(--chrome-hover); }

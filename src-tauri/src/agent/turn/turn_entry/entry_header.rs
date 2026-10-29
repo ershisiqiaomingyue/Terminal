@@ -1,0 +1,112 @@
+    app: AppHandle,
+    state: State<'a, AgentRuntimeState>,
+    mcp_state: State<'a, McpRuntimeState>,
+    request: AgentChatRequest,
+    session_id: String,
+    turn_id: String,
+    request_guard: AgentRequestGuard<'a>,
+) -> Result<AgentChatResponse, String> {
+    turn_entry::prepare_and_run(
+        app,
+        state,
+        mcp_state,
+        request,
+        session_id,
+        turn_id,
+        request_guard,
+    )
+    .await
+}
+
+#[allow(dead_code)]
+async fn legacy_run_agent_turn<'a>(
+    app: AppHandle,
+    state: State<'a, AgentRuntimeState>,
+    mcp_state: State<'a, McpRuntimeState>,
+    request: AgentChatRequest,
+    session_id: String,
+    turn_id: String,
+    mut request_guard: AgentRequestGuard<'a>,
+) -> Result<AgentChatResponse, String> {
+    let setup::TurnRequest {
+        mut request,
+        is_ssh_target,
+        is_wsl_target,
+        default_environment,
+    } = setup::prepare_input(request)?;
+    let _tool_group_cleanup = AgentToolGroupCleanup {
+        session_id: session_id.clone(),
+        turn_id: turn_id.clone(),
+    };
+    let cancellation = request_guard.cancellation();
+    let cancellation_reason = request_guard.cancellation_reason();
+    // P1-B：令牌与上面的标志同生同灭（见 `AgentRequestControl::request_cancellation`）。
+    // 准备阶段的 `await` 用它即时打断，不再依赖执行流自己走到下一个
+    // `is_cancelled` 检查点；轮循环内既有的标志检查点保持不变（P2 回归基线）。
+    let cancellation_token = request_guard.cancellation_token();
+    spawn_turn_idle_watchdog(&app, &session_id, &turn_id, &cancellation);
+    let mut steer_receiver = request_guard.take_steer_receiver();
+    // 准备阶段（本轮开头 → 首个模型请求）此前没有任何取消检查点：SSH 握手、
+    // WSL 探测、Skills 索引读取一旦卡住，「停止」就要等它们自然结束。这里用
+    // token 与准备 future 做 select：取消瞬间丢弃 future，卡住的 await 不再被
+    // 等待（被丢弃的连接任务照常在后台自行收尾）。
+    let environments = tokio::select! {
+        _ = cancellation_token.cancelled() => {
+            return Err(cancellation_message(&cancellation_reason));
+        }
+        environments = super::turn_prepare::prepare_with_timeout(
+            super::turn_prepare::DEFAULT_PREPARE_TIMEOUT,
+            &cancellation,
+            setup::prepare_turn_environments(
+                &app,
+                &request,
+                &session_id,
+                &turn_id,
+                &cancellation,
+                is_ssh_target,
+                is_wsl_target,
+            ),
+        ) => environments?,
+    };
+    let TurnEnvironments {
+        ssh_context,
+        ssh_connection_id: mut_ssh_connection_id,
+        wsl_root,
+        wsl_context,
+        default_ssh_host,
+        bound_ssh_hosts,
+    } = environments;
+    let mut ssh_connection_id = mut_ssh_connection_id;
+    let providers = load_providers(&app)?;
+    let (provider, selected_model) = agent_core::resolve_agent_model(&providers, &request.model_id)
+        .ok_or_else(|| {
+            format!(
+                "[model_not_found] 当前选择的模型 {} 不在已加载的供应商配置中，请重新选择模型。",
+                request.model_id
+            )
+        })?;
+    let protocol = model_protocol(provider, &selected_model);
+    crate::diagnostics::record(
+        "info",
+        "agent.turn_context",
+        "native.agent",
+        json!({
+            "session_id": session_id, "turn_id": turn_id,
+            "provider_id": provider.id, "model_id": selected_model.id, "protocol": protocol,
+            "context_window": agent_core::resolved_model_context_window(provider, &selected_model),
+            "execution_kind": if is_ssh_target { "ssh" } else if is_wsl_target { "wsl" } else { "local" },
+            "connection_id": ssh_connection_id,
+            "has_local_workspace": agent_core::local_workspace_path(&request).is_some(),
+            "has_ssh_workspace": ssh_context.is_some(),
+            "profile_id": request.execution_target.as_ref().and_then(|target| target.profile_id.as_deref()),
+            "has_workspace": request.workspace_path.as_deref().is_some_and(|path| !path.trim().is_empty()),
+            "has_execution_root": request.execution_target.as_ref().and_then(|target| target.root.as_deref()).is_some_and(|path| !path.trim().is_empty()),
+            // G4-D：hook 面是否启用（无 hooks.json 时为 false，接入点零开销直通）。
+            "turn_hooks_enabled": super::hooks::hooks_enabled(),
+            // G5-A：执行单元种类（turn/subagent/workflow_node）——协作 worker 的
+            // 控制块在 admission 时标记。
+            "unit_kind": state.requests.lock().ok()
+                .and_then(|requests| requests.get(&session_id).map(|control| control.unit_kind().as_str().to_string()))
+                .unwrap_or_else(|| "turn".to_string()),
+        }),
+    );

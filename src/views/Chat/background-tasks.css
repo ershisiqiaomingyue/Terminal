@@ -1,0 +1,85 @@
+.chat-background-anchor { display: flex; flex: 0 0 auto; }
+.composer-task-bar .chat-background-trigger { width: auto; height: 24px; gap: 5px; padding: 0 6px; color: var(--task-action); background: transparent; font-size: 11px; }
+.composer-task-bar .chat-background-trigger:hover,
+.composer-task-bar .chat-background-trigger.active { color: var(--task-title); background: var(--task-action-hover-bg); }
+.chat-background-trigger > svg:last-child { transition: transform .16s ease; }
+.chat-background-trigger > svg.is-open { transform: rotate(180deg); }
+.composer-background-card { border: 0; }
+.composer-background-card .composer-task-bar { cursor: pointer; }
+.composer-background-count { flex: 0 0 auto; color: var(--task-detail); font-size: 11px; }
+.chat-background-tasks {
+  position: fixed;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: 10px;
+  border: var(--popover-border);
+  border-radius: 10px;
+  background: var(--popover-bg);
+  box-shadow: var(--popover-shadow);
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.chat-background-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 8px; }
+.chat-background-heading > b { color: var(--text-primary); font-weight: 500; }
+.chat-background-heading > span { flex: 1; font-size: 11px; }
+.chat-background-heading > .btn { flex-shrink: 0; }
+.chat-background-list {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px;
+  min-width: 0; min-height: 0;
+}
+.chat-background-task {
+  min-width: 0;
+  border-radius: 8px;
+  background: transparent;
+}
+.chat-background-task > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 30px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  list-style: none;
+}
+.chat-background-task > summary::-webkit-details-marker { display: none; }
+.chat-background-task > summary:hover { background: var(--task-action-hover-bg); border-radius: 8px; }
+.chat-background-title { display: flex; flex: 1; align-items: center; gap: 8px; min-width: 0; overflow: hidden; color: var(--task-title); font-size: 13px; line-height: 1.4; white-space: nowrap; }
+.chat-background-title > span { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.chat-background-title small { flex: 1; min-width: 0; overflow: hidden; color: var(--task-detail); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.chat-background-state { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 6px; margin-left: auto; color: var(--task-detail); }
+.chat-background-chevron { flex: 0 0 auto; color: var(--task-detail); transition: transform .15s ease; }
+.chat-background-task[open] > summary .chat-background-chevron { transform: rotate(90deg); }
+.chat-background-state time { font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.chat-background-state.is-done { color: var(--status-success-text); }
+.chat-background-state:not(.is-running):not(.is-done),
+.chat-background-error { color: var(--status-danger-text); }
+.chat-background-metadata { margin: 0; color: var(--task-detail); font-size: 11px; }
+.chat-background-task-body { display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 6px 8px 10px; }
+.chat-background-code-block { min-width: 0; overflow: hidden; border-radius: 8px; background: var(--input-bg); }
+.chat-background-code-label { display: block; padding: 8px 10px 0; color: var(--text-secondary); font-size: 11px; }
+.chat-background-task-body pre {
+  box-sizing: border-box; margin: 0; padding: 8px 10px 10px; max-height: 140px;
+  overflow: auto; scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) transparent; overscroll-behavior: contain;
+  white-space: pre-wrap; overflow-wrap: anywhere; background: transparent;
+  color: var(--tool-code-text); border: 0; border-radius: 0;
+  font-family: var(--font-mono); font-size: 11px; line-height: 1.6;
+}
+.chat-background-task-body pre::-webkit-scrollbar { width: 8px; height: 8px; }
+.chat-background-task-body pre::-webkit-scrollbar-track { background: transparent; }
+.chat-background-task-body pre::-webkit-scrollbar-thumb { border: 2px solid transparent; border-radius: 99px; background: var(--scrollbar-thumb); background-clip: padding-box; }
+.chat-background-task-body pre::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); background-clip: padding-box; }
+.chat-background-task-body pre > code { padding: 0; color: inherit; background: transparent; border: 0; border-radius: 0; font: inherit; }
+.chat-background-task-body pre:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+.chat-background-task-body > small { display: block; color: var(--text-tertiary); font-size: 10px; overflow-wrap: anywhere; }
+.chat-background-actions { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.chat-background-actions > span { min-width: 0; font-size: 11px; }
+@media (max-width: 540px) {
+  .composer-background-count { display: none; }
+  .chat-background-task > summary { gap: 6px; }
+  .chat-background-title { font-size: 12px; }
+  .chat-background-state time { font-size: 10px; }
+}

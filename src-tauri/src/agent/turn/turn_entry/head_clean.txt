@@ -1,0 +1,75 @@
+use super::super::*;
+use super::setup::{prepare_input, prepare_turn_environments, prepare_turn_input, PreparedInput};
+
+pub(in crate::agent::turn) struct TurnInput<'a> {
+    pub app: AppHandle,
+    pub state: State<'a, AgentRuntimeState>,
+    pub mcp_state: State<'a, McpRuntimeState>,
+    pub request: AgentChatRequest,
+    pub session_id: String,
+    pub turn_id: String,
+    pub request_guard: AgentRequestGuard<'a>,
+    pub ssh_context: Option<agent_core::SshToolContext>,
+    pub ssh_connection_id: Option<String>,
+    pub wsl_root: Option<String>,
+    pub wsl_context: Option<LocalToolContext>,
+    pub default_ssh_host: Option<(String, String)>,
+    pub bound_ssh_hosts: Vec<BoundSshHost>,
+    pub is_ssh_target: bool,
+    pub is_wsl_target: bool,
+    pub default_environment: AgentToolEnvironment,
+}
+
+pub(in crate::agent::turn) async fn prepare_and_run<'a>(
+    app: AppHandle,
+    state: State<'a, AgentRuntimeState>,
+    mcp_state: State<'a, McpRuntimeState>,
+    request: AgentChatRequest,
+    session_id: String,
+    turn_id: String,
+    request_guard: AgentRequestGuard<'a>,
+) -> Result<AgentChatResponse, String> {
+    let input = prepare_turn_entry(TurnInput {
+        app,
+        state,
+        mcp_state,
+        request,
+        session_id,
+        turn_id,
+        request_guard,
+        ssh_context: None,
+        ssh_connection_id: None,
+        wsl_root: None,
+        wsl_context: None,
+        default_ssh_host: None,
+        bound_ssh_hosts: Vec::new(),
+        is_ssh_target: false,
+        is_wsl_target: false,
+        default_environment: AgentToolEnvironment::Windows,
+    })
+    .await?;
+    super::body::run_turn_body(input).await
+}
+
+async fn prepare_turn_entry<'a>(
+    input: TurnInput<'a>,
+) -> Result<TurnInput<'a>, String> {
+    let TurnInput {
+        mut app,
+        state,
+        mcp_state,
+        request,
+        session_id,
+        turn_id,
+        mut request_guard,
+        ssh_context: _,
+        ssh_connection_id: _,
+        wsl_root: _,
+        wsl_context: _,
+        default_ssh_host: _,
+        bound_ssh_hosts: _,
+        is_ssh_target: _,
+        is_wsl_target: _,
+        default_environment: _,
+    } = input;
+    let super::setup::TurnRequest {

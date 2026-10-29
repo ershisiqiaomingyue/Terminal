@@ -1,0 +1,140 @@
+/* ==========================================================================
+   CompactionProgress — context compaction strip above the composer.
+   A single status line plus an optional determinate track. No header, no
+   collapse: this is not a NoticePanel.
+   ========================================================================== */
+
+.ui-compaction {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--surface-inset-bg);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.ui-compaction-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.ui-compaction-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+}
+
+.ui-compaction-label { color: var(--text-primary); }
+
+/* The completed tick reuses the tool-status circle verbatim: a filled accent
+   disc with a white 2.8-stroke check. Without the disc the bare green glyph
+   reads as a different icon family from the tool rows. */
+.ui-compaction.is-completed .ui-compaction-icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  background: var(--accent-primary, #6366f1);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.4);
+}
+
+.ui-compaction.is-completed .ui-compaction-icon svg {
+  width: 11px;
+  height: 11px;
+  stroke: #ffffff;
+  stroke-width: 2.8;
+}
+
+.ui-compaction.is-running .ui-compaction-icon { color: var(--accent-primary); }
+.ui-compaction.is-interrupted .ui-compaction-icon { color: var(--status-warning-text); }
+.ui-compaction.is-failed .ui-compaction-icon { color: var(--status-danger-text); }
+
+/* Fixed-length track instead of a full-width bar: the strip shares its row with
+   the label and the token delta, so a flex-grown bar dominated the line. */
+.ui-compaction-track {
+  flex: 0 0 auto;
+  width: clamp(96px, 22%, 180px);
+  height: 4px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--text-primary) 12%, transparent);
+}
+
+.ui-compaction-track > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent-primary);
+  transition: width var(--transition-base);
+}
+
+/* No percentage yet (a running compaction before the backend reports one):
+   the same track sweeps instead of standing empty, then hands over to the
+   determinate fill as soon as a value arrives. */
+.ui-compaction-track.is-indeterminate > span {
+  width: 38%;
+  animation: ui-compaction-sweep 1.15s ease-in-out infinite;
+}
+
+@keyframes ui-compaction-sweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(265%); }
+}
+
+/* The bar stays accent blue in every state, including completed. */
+.ui-compaction.is-completed .ui-compaction-track > span { background: var(--accent-primary); }
+
+.ui-compaction-percent {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-tertiary);
+}
+
+.ui-compaction-detail {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+/* --- 行内形态：时间线里的一行，与「执行指令」工具组行同高、同缩进 --------------
+   去掉外框与孤立卡片感：没有底色、没有进度轨，只留图标 + 标签 + 明细 + 百分比
+   文字。这一行的几何与字色必须和 `.agent-tool-group-summary` 逐项相同，否则
+   压缩行会像个外来户：左边多缩进 8px、标签更黑更粗、行更高（见
+   conversation-surfaces.css 里工具组行的实际生效值：padding 0 / gap 7px /
+   min-height 24px / font-size 12.5px / color text-secondary / 标签 weight 500）。 */
+.ui-compaction.is-row {
+  gap: 7px;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 24px;
+  padding: 0;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.ui-compaction.is-row .ui-compaction-copy { gap: 7px; }
+
+/* 标签跟着整行取色（不用 --text-primary），这样「已完成」的行和最下面的
+   工具行一样是次级字色，只有进行中那行才吃强调色。 */
+.ui-compaction.is-row .ui-compaction-label { color: inherit; font-weight: 500; }
+.ui-compaction.is-row.is-running { color: var(--accent-primary); }
+
+.ui-compaction.is-row .ui-compaction-detail,
+.ui-compaction.is-row .ui-compaction-percent { font-size: 10px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-compaction-track > span { transition: none; }
+  .ui-compaction-track.is-indeterminate > span { animation: none; width: 100%; opacity: 0.6; }
+}

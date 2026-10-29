@@ -1,0 +1,92 @@
+.context-usage-control { position: relative; display: inline-flex; align-items: center; gap: 3px; flex: 0 0 auto; color: var(--composer-muted); }
+html[data-theme] .conversation-page .context-usage-control button.context-usage-indicator { flex: 0 0 32px; width: 32px; height: 32px; min-width: 32px; padding: 0; border-radius: var(--radius-base); color: inherit; background: transparent !important; box-shadow: none !important; }
+html[data-theme] .conversation-page .context-usage-control button.context-usage-indicator:is(:hover, .open) { color: var(--composer-control-text); background: transparent !important; box-shadow: none !important; }
+.context-usage-ring-hit { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; }
+.context-usage-control button.context-usage-indicator:is(:hover, .open) .context-usage-ring-hit { background: var(--composer-control-hover); }
+.context-usage-circle { width: 20px; height: 20px; fill: none; stroke-width: 2; transform: rotate(-90deg); }
+.context-usage-track { stroke: var(--composer-ring-track); }
+.context-usage-fill { stroke: currentColor; }
+.context-usage-control.warning { color: var(--composer-warning); }
+.context-usage-control.danger { color: var(--composer-danger); }
+.conversation-page .context-usage-control .context-usage-percent { width: 30px; min-width: 30px; font-size: 11px; color: inherit; }
+.context-usage-panel { position: absolute; z-index: 122; right: 0; bottom: calc(100% + 8px); width: min(320px, calc(100vw - 48px)); padding: 14px; box-sizing: border-box; border: 0; border-radius: 14px; color: var(--text-primary); background: var(--popover-bg); box-shadow: var(--shadow-sm); font-size: 12px; }
+.context-usage-panel header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.context-usage-panel header > span { color: var(--text-secondary); }
+.context-usage-panel header b { margin-left: 5px; color: var(--text-primary); font-weight: 500; }
+.context-usage-panel header strong { font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.context-usage-meter { display: flex; height: 4px; margin: 14px 0 18px; overflow: hidden; border-radius: 3px; background: var(--composer-ring-track); }
+.context-usage-meter i { display: block; flex: 0 1 auto; }
+.context-usage-panel .is-system { background: var(--text-tertiary); }
+.context-usage-panel .is-tools { background: var(--inference-fill); }
+.context-usage-panel .is-messages { background: var(--accent-primary); }
+.context-usage-breakdown { display: flex; flex-direction: column; gap: 12px; }
+.context-usage-breakdown > div, .context-usage-breakdown > div > span { display: flex; align-items: center; gap: 8px; }
+.context-usage-breakdown > div { justify-content: space-between; }
+.context-usage-breakdown span { color: var(--text-secondary); }
+.context-usage-breakdown i { width: 8px; height: 8px; border-radius: 2px; }
+.context-usage-breakdown b { font-weight: 400; font-variant-numeric: tabular-nums; }
+
+/* ==========================================================================
+   Opal Frost Light Theme Overrides (图4：上下文已用浮层)
+   ========================================================================== */
+html[data-theme] .context-usage-panel {
+  background: var(--popover-bg);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid transparent !important;
+  box-shadow: var(--card-shadow), var(--card-rim);
+  border-radius: 16px;
+  padding: 16px;
+  color: var(--text-primary);
+}
+
+html[data-theme] .context-usage-panel header > span {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+html[data-theme] .context-usage-panel header b {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+html[data-theme] .context-usage-panel header strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+html[data-theme] .context-usage-panel .context-usage-meter {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--progress-track-bg);
+  margin: 12px 0 16px;
+}
+
+html[data-theme] .context-usage-panel .is-system {
+  background: var(--text-tertiary);
+}
+
+html[data-theme] .context-usage-panel .is-tools {
+  background: var(--accent-hover);
+}
+
+html[data-theme] .context-usage-panel .is-messages {
+  background: var(--accent-primary);
+}
+
+html[data-theme] .context-usage-panel .context-usage-breakdown span {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+html[data-theme] .context-usage-panel .context-usage-breakdown b {
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+html[data-theme] .context-usage-panel .context-usage-breakdown i {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+}

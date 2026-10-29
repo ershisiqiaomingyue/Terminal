@@ -1,0 +1,98 @@
+/* ==========================================================================
+   ArchivedSessionsDialog - 归档对话列表（自建弹窗，不再经设置面板）
+   ========================================================================== */
+
+.archive-dialog-error {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--status-danger-text);
+  overflow-wrap: anywhere;
+}
+
+.archive-dialog-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 26px 12px 30px;
+  text-align: center;
+  color: var(--text-tertiary);
+}
+
+.archive-dialog-empty svg { color: var(--text-quaternary); }
+
+.archive-dialog-empty span {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.archive-dialog-empty small {
+  max-width: 34ch;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--text-tertiary);
+}
+
+.archive-dialog-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.archive-dialog-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  transition: background-color var(--transition-fast);
+}
+
+.archive-dialog-item:hover,
+.archive-dialog-item:focus-within { background: var(--popover-item-hover, var(--bg-hover)); }
+
+.archive-dialog-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.archive-dialog-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.archive-dialog-meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+}
+
+.archive-dialog-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+/* 悬停或键盘进入才浮出动作：一屏几十条时全是按钮会很吵。触屏没有 hover，常显。 */
+.archive-dialog-item:hover .archive-dialog-actions,
+.archive-dialog-item:focus-within .archive-dialog-actions { opacity: 1; }
+
+@media (hover: none) {
+  .archive-dialog-actions { opacity: 1; }
+}

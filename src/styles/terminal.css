@@ -1,0 +1,51 @@
+/* xterm's DOM rows have an inline overflow:hidden that can crop the last glyph
+   when font measurements round to fractional pixels. The fitted grid reserves
+   a spare cell inside the host, so these glyphs stay clear of the scrollbar. */
+:is(.chat-terminal-host, .terminal-xterm-host) .xterm-rows > div {
+  overflow: visible !important;
+}
+
+/* 终端实例的宿主容器（见 src/platform/terminalPool.ts）：内核的 canvas/textarea 挂在
+   容器下，而不是直接挂在视图宿主上；容器绝对铺满视图宿主，因此内核测量到的尺寸
+   就是视图给终端的空间，两个内核都是同一套挂载方式。 */
+.terminal-engine-host {
+  position: absolute;
+  inset: 0;
+  /* 内核把 tabindex/contenteditable 设在容器上，浏览器会给它画焦点框。 */
+  outline: none;
+  /* 撑满宿主，但不许反过来把宿主撑大（见下面 .terminal-xterm-fit 的说明）。 */
+  contain: layout size;
+}
+
+.terminal-engine-host > canvas {
+  display: block;
+}
+
+.terminal-engine-host > textarea {
+  outline: none;
+}
+
+/* SGR 2（dim）文字：xterm 固定按 50% 不透明度混色，亮色底上会淡到看不清。
+   这里按 --terminal-dim-strength 重新混色，暗色保持 50% 与 xterm 默认一致。
+   !important 是必需的：xterm 会把主题样式表插入 head，加载顺序晚于本文件。 */
+:is(.chat-terminal-host, .terminal-xterm-host) .xterm-rows .xterm-dim {
+  color: color-mix(in srgb, var(--terminal-foreground) var(--terminal-dim-strength), var(--terminal-canvas-bg)) !important;
+}
+
+:is(.chat-terminal-host, .terminal-xterm-host) .xterm-rows .xterm-fg-0.xterm-dim { color: color-mix(in srgb, var(--terminal-black) var(--terminal-dim-ansi-strength), var(--terminal-canvas-bg)) !important; }
+:is(.chat-terminal-host, .terminal-xterm-host) .xterm-rows .xterm-fg-1.xterm-dim { color: color-mix(in srgb, var(--terminal-red) var(--terminal-dim-ansi-strength), var(--terminal-canvas-bg)) !important; }
+:is(.chat-terminal-host, .terminal-xterm-host) .xterm-rows .xterm-fg-2.xterm-dim { color: color-mix(in srgb, var(--terminal-green) var(--terminal-dim-ansi-strength), var(--terminal-canvas-bg)) !important; }
+:is(.chat-terminal-host, .terminal-xterm-host) .xterm-rows .xterm-fg-3.xterm-dim { color: color-mix(in srgb, var(--terminal-yellow) var(--terminal-dim-ansi-strength), var(--terminal-canvas-bg)) !important; }
+:is(.chat-terminal-host, .terminal-xterm-host) .xterm-rows .xterm-fg-4.xterm-dim { color: color-mix(in srgb, var(--terminal-blue) var(--terminal-dim-ansi-strength), var(--terminal-canvas-bg)) !important; }
+:is(.chat-terminal-host, .terminal-xterm-host) .xterm-rows .xterm-fg-5.xterm-dim { color: color-mix(in srgb, var(--terminal-magenta) var(--terminal-dim-ansi-strength), var(--terminal-canvas-bg)) !important; }
+:is(.chat-terminal-host, .terminal-xterm-host) .xterm-rows .xterm-fg-6.xterm-dim { color: color-mix(in srgb, var(--terminal-cyan) var(--terminal-dim-ansi-strength), var(--terminal-canvas-bg)) !important; }
+:is(.chat-terminal-host, .terminal-xterm-host) .xterm-rows .xterm-fg-7.xterm-dim { color: color-mix(in srgb, var(--terminal-white) var(--terminal-dim-ansi-strength), var(--terminal-canvas-bg)) !important; }
+:is(.chat-terminal-host, .terminal-xterm-host) .xterm-rows .xterm-fg-8.xterm-dim { color: color-mix(in srgb, var(--terminal-bright-black) var(--terminal-dim-ansi-strength), var(--terminal-canvas-bg)) !important; }
+:is(.chat-terminal-host, .terminal-xterm-host) .xterm-rows .xterm-fg-9.xterm-dim { color: color-mix(in srgb, var(--terminal-bright-red) var(--terminal-dim-ansi-strength), var(--terminal-canvas-bg)) !important; }
+:is(.chat-terminal-host, .terminal-xterm-host) .xterm-rows .xterm-fg-10.xterm-dim { color: color-mix(in srgb, var(--terminal-bright-green) var(--terminal-dim-ansi-strength), var(--terminal-canvas-bg)) !important; }
+:is(.chat-terminal-host, .terminal-xterm-host) .xterm-rows .xterm-fg-11.xterm-dim { color: color-mix(in srgb, var(--terminal-bright-yellow) var(--terminal-dim-ansi-strength), var(--terminal-canvas-bg)) !important; }
+:is(.chat-terminal-host, .terminal-xterm-host) .xterm-rows .xterm-fg-12.xterm-dim { color: color-mix(in srgb, var(--terminal-bright-blue) var(--terminal-dim-ansi-strength), var(--terminal-canvas-bg)) !important; }
+:is(.chat-terminal-host, .terminal-xterm-host) .xterm-rows .xterm-fg-13.xterm-dim { color: color-mix(in srgb, var(--terminal-bright-magenta) var(--terminal-dim-ansi-strength), var(--terminal-canvas-bg)) !important; }
+:is(.chat-terminal-host, .terminal-xterm-host) .xterm-rows .xterm-fg-14.xterm-dim { color: color-mix(in srgb, var(--terminal-bright-cyan) var(--terminal-dim-ansi-strength), var(--terminal-canvas-bg)) !important; }
+:is(.chat-terminal-host, .terminal-xterm-host) .xterm-rows .xterm-fg-15.xterm-dim { color: color-mix(in srgb, var(--terminal-bright-white) var(--terminal-dim-ansi-strength), var(--terminal-canvas-bg)) !important; }
+

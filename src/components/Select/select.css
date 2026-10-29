@@ -1,0 +1,287 @@
+/* ==========================================================================
+   Select Component Styles - 下拉选择器规范
+   - 100% 还原 modern-ui-showcase.html 原生高阶悬浮板 (High Elevation Popover)
+   - 彻底解决横向滚动条 Bug + 半透明实心阻隔
+   - 支持 .modern-select / .select-pod 以及 .select-trigger / .select-trigger-bar 双别名
+   ========================================================================== */
+
+.modern-select,
+.select-pod {
+  position: relative;
+  width: 100%;
+}
+
+/* The trigger is the same recessed slot as a text input: identical fill,
+   identical hairline, identical inner shadow. A select and an input sitting
+   side by side must be indistinguishable at rest. */
+.select-trigger,
+.select-trigger-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: var(--control-height);
+  padding: 0 11px 0 13px;
+  background: var(--input-bg-sunken);
+  color: var(--input-text);
+  border: var(--input-border);
+  border-radius: var(--control-radius);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+  box-shadow: var(--input-glass);
+  backdrop-filter: blur(14px);
+  transition: background-color var(--transition-fast), color var(--transition-fast),
+    border-color var(--transition-fast), box-shadow var(--transition-fast);
+  box-sizing: border-box;
+}
+
+.select-trigger:hover:not(:disabled),
+.select-trigger-bar:hover:not(:disabled) {
+  background: var(--input-bg-hover);
+  color: var(--input-hover-text);
+  box-shadow: var(--input-lift-hover), var(--input-glass);
+}
+
+/* Opening the menu does not repaint the field.
+   A text input lifts to the page surface on focus because you are about to
+   type into it. A select is different: the trigger stays anchored exactly
+   where it was while the menu floats above it, so the fill and the hairline
+   hold still and only the accent halo marks the open state. Without this the
+   trigger jumped to `--input-bg-focus` (pure white in light mode) the moment
+   it was clicked. */
+.modern-select.is-open .select-trigger,
+.select-pod.is-open .select-trigger-bar {
+  background: var(--input-bg-sunken);
+  color: var(--input-hover-text);
+  border-color: var(--input-focus-border);
+  box-shadow: var(--input-focus-ring), var(--input-glass);
+}
+
+/* Keyboard focus on a closed trigger uses the same halo. */
+.select-trigger:focus-visible {
+  background: var(--input-bg-sunken);
+  color: var(--input-hover-text);
+  border-color: var(--input-focus-border);
+  box-shadow: var(--input-focus-ring), var(--input-glass);
+}
+
+.select-value-text,
+.select-echo-box {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  text-align: left;
+}
+
+.select-arrow,
+.select-chevron-icon {
+  width: 14px;
+  height: 14px;
+  color: var(--input-muted);
+  transition: transform 0.2s var(--ease-spring), color 0.2s;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modern-select.is-open .select-arrow,
+.select-pod.is-open .select-chevron-icon {
+  transform: rotate(180deg);
+  color: var(--input-text);
+}
+
+/* 弹出菜单面板 (POPOVER) - 核心重点：高阶实心浮空板，彻底告别与卡片重合！ */
+.select-dropdown,
+.select-glass-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 999999;
+  background: var(--popover-bg);
+  border: var(--popover-border);
+  border-radius: 14px;
+  box-shadow: var(--popover-shadow);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  padding: 6px;
+  display: none;
+  overflow-x: hidden;
+  animation: popoverFadeIn 0.16s var(--ease-spring);
+  box-sizing: border-box;
+}
+
+.select-dropdown.is-portaled {
+  position: fixed !important;
+  z-index: 999999 !important;
+  max-height: calc(100dvh - 16px);
+}
+
+@keyframes popoverFadeIn {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modern-select.is-open .select-dropdown,
+.select-pod.is-open .select-glass-menu,
+.select-dropdown.is-portaled {
+  display: block;
+}
+
+.select-options-list,
+.menu-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: min(240px, var(--select-list-max-height, 240px));
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  overflow-x: hidden; /* 杜绝横向滚动条 */
+}
+
+.select-search {
+  padding: 2px 2px 8px;
+}
+
+.select-search .input-shell {
+  width: 100%;
+}
+
+.select-search-empty {
+  padding: 12px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.select-option:focus-visible {
+  background: var(--popover-item-hover);
+}
+
+/* 选项条目 */
+.select-option,
+.select-item-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 34px;
+  height: auto;
+  padding: 7px 12px;
+  gap: 10px;
+  background: transparent;
+  color: var(--text-primary);
+  border: 0;
+  border-radius: calc(var(--control-radius) - 2px);
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+  text-align: left;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.select-option-text {
+  flex: 1;
+  text-align: left;
+  white-space: normal;
+  overflow: visible;
+  word-break: break-word;
+  line-height: 1.35;
+}
+
+.select-option-row { display: flex; align-items: center; gap: 4px; border-radius: 9px; }
+/* 悬停高亮落在整行：右侧删除按钮与选项共享同一块底色，不再各占一半 */
+.select-option-row:hover,
+.select-option-row:focus-within { background: var(--popover-item-hover); }
+.select-option-row:hover > .select-option,
+.select-option-row:focus-within > .select-option { background: transparent; color: var(--text-primary); }
+.select-option-row:hover > .select-option.selected,
+.select-option-row:hover > .select-option.is-active,
+.select-option-row:focus-within > .select-option.selected,
+.select-option-row:focus-within > .select-option.is-active { background: var(--popover-item-active-bg) !important; }
+.select-option-row:hover > .select-option-remove { color: var(--text-secondary); }
+.select-group-label { padding: 9px 12px 3px; color: var(--text-secondary); font-size: 11px; font-weight: 600; }
+.select-option-row.is-grouped { padding-left: 10px; }
+.select-option-row > .select-option { flex: 1; min-width: 0; }
+.select-option-remove { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 26px; height: 26px; margin-right: 4px; padding: 0; border: 0; border-radius: var(--radius-sm); color: var(--text-secondary); background: transparent; cursor: pointer; }
+.select-option-remove:hover, .select-option-remove:focus-visible { color: var(--danger-text); background: transparent; }
+
+.select-option:hover,
+.select-item-pill:hover {
+  background: var(--popover-item-hover);
+  color: var(--text-primary);
+}
+/* row 内部的选项不再单独铺底色，避免和整行高亮叠成两块 */
+.select-option-row > .select-option:hover,
+.select-option-row > .select-item-pill:hover {
+  background: transparent;
+}
+.select-option-row > .select-option.selected:hover,
+.select-option-row > .select-option.is-active:hover,
+.select-option-row > .select-item-pill.is-active:hover {
+  background: var(--popover-item-active-bg) !important;
+}
+
+/* 选中项：采用高亮强调色药丸底板，字色高反白，极其醒目！ */
+.select-option.selected,
+.select-option.is-active,
+.select-item-pill.is-active {
+  background: var(--popover-item-active-bg) !important;
+  color: var(--popover-item-active-text) !important;
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+html[data-theme] :is(.select-arrow, .select-chevron-icon) {
+  color: var(--control-text);
+}
+
+html[data-theme] :is(.modern-select.is-open .select-arrow, .select-pod.is-open .select-chevron-icon) {
+  color: var(--text-primary);
+}
+
+html[data-theme] .select-option.selected svg {
+  color: inherit !important;
+}
+
+/* ==========================================================================
+   Select option extensions: description rows, trailing actions, nested menus
+   ========================================================================== */
+.select-option-copy { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
+.select-option-copy .select-option-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.select-option-description { overflow: hidden; color: var(--text-tertiary); font-size: 10.5px; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+
+.select-option.has-description { align-items: flex-start; min-height: 44px; padding-top: 7px; padding-bottom: 7px; }
+/* 右侧紧凑徽标：让选项保持单行，不再为了上下文另起一行 */
+/* 右侧紧凑徽标：--chrome-hover 在浅色下接近纯白，会和弹层底色糊在一起，
+   这里改用实底 + 内描边，保证任何主题下都能看清胶囊轮廓 */
+.select-option-trailing { flex: 0 0 auto; padding: 1px 7px; border-radius: 6px; background: var(--input-bg-sunken, var(--bg-card)); box-shadow: inset 0 0 0 1px var(--divider-color); color: var(--text-secondary); font-size: 10.5px; font-weight: 500; line-height: 15px; white-space: nowrap; }
+.select-option.selected .select-option-trailing,
+.select-option.is-active .select-option-trailing { background: color-mix(in srgb, currentColor 14%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 24%, transparent); color: inherit; }
+.select-option.is-disabled { opacity: 0.45; cursor: not-allowed; }
+
+.select-option-action,
+.select-option-expand { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 26px; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 7px; background: transparent; color: var(--text-tertiary); cursor: pointer; transition: color var(--transition-fast), background-color var(--transition-fast); }
+.select-option-action:hover,
+.select-option-expand:hover { color: var(--text-primary); background: var(--chrome-hover); }
+.select-option-action.is-danger:hover { color: var(--status-danger-text); background: var(--status-danger-bg); }
+.select-option-expand svg { transition: transform var(--transition-fast); }
+.select-option-expand.is-open svg { transform: rotate(180deg); }
+
+.select-option-row.is-submenu-open { background: var(--chrome-hover); border-radius: 9px; }
+
+/* Nested panel anchored under the row, so a menu can host a second level. */
+.select-submenu { margin: 4px 6px 8px 14px; padding: 8px; border: var(--popover-border); border-radius: 10px; background: var(--popover-bg); box-shadow: var(--popover-shadow); animation: select-submenu-in var(--transition-fast) both; }
+@keyframes select-submenu-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .select-submenu { animation: none; } }
+
+.select-menu-header { padding: 8px 10px 6px; color: var(--text-tertiary); font-size: 10.5px; font-weight: 700; }
+.select-menu-footer { margin-top: 4px; padding: 8px 10px 4px; border-top: 1px solid var(--divider-color); }

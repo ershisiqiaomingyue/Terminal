@@ -1,0 +1,381 @@
+
+
+/* 棰勮鑺墖鎸夐挳琛?(Preset Chips) */
+.preset-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--divider-color);
+}
+
+.preset-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 6px 12px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background: color-mix(in srgb, var(--provider-accent, var(--text-secondary)) 8%, var(--bg-card));
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  user-select: none;
+}
+
+.preset-chip:hover {
+  background: var(--provider-tint, var(--bg-hover));
+  color: var(--text-primary);
+  border-color: transparent;
+}
+
+/* Each preset keeps a quiet brand cue without turning the settings page into a
+   collection of saturated cards. The same tokens work in both themes. */
+.preset-chip[data-brand="openai"] { --provider-accent: #0a84ff; --provider-tint: rgba(10, 132, 255, 0.12); }
+.preset-chip[data-brand="grok"] { --provider-accent: #171717; --provider-tint: rgba(23, 23, 23, 0.09); }
+.preset-chip[data-brand="anthropic"] { --provider-accent: #d97757; --provider-tint: rgba(217, 119, 87, 0.14); }
+.preset-chip[data-brand="deepseek"] { --provider-accent: #4d6bfe; --provider-tint: rgba(77, 107, 254, 0.14); }
+.preset-chip[data-brand="kimi"] { --provider-accent: #2f3138; --provider-tint: rgba(47, 49, 56, 0.1); }
+.preset-chip[data-brand="glm"] { --provider-accent: #59616d; --provider-tint: rgba(89, 97, 109, 0.12); }
+.preset-chip[data-brand="qwen"] { --provider-accent: #2456ff; --provider-tint: rgba(36, 86, 255, 0.12); }
+.preset-chip[data-brand="mimo"] { --provider-accent: #151515; --provider-tint: rgba(21, 21, 21, 0.09); }
+.preset-chip[data-brand="custom"] { --provider-accent: #64748b; --provider-tint: rgba(100, 116, 139, 0.12); }
+
+html[data-theme] .preset-chip.active {
+  background: color-mix(in srgb, var(--provider-accent, var(--text-secondary)) 20%, var(--bg-card));
+  color: color-mix(in srgb, var(--provider-accent, var(--text-primary)) 65%, #000);
+  border-color: transparent;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--provider-accent, transparent) 14%, transparent);
+  font-weight: 600;
+}
+
+html[data-theme="dark"] .preset-chip.active {
+  color: color-mix(in srgb, var(--provider-accent, var(--text-primary)) 80%, #fff);
+}
+
+html[data-theme="dark"] .preset-chip[data-brand="openai"] {
+  --provider-accent: #69b1ff;
+  --provider-tint: rgba(105, 177, 255, 0.14);
+}
+
+html[data-theme="dark"] .preset-chip[data-brand="deepseek"] {
+  --provider-accent: #809bff;
+  --provider-tint: rgba(128, 155, 255, 0.14);
+}
+
+html[data-theme="dark"] .preset-chip[data-brand="anthropic"] {
+  --provider-accent: #eca78e;
+  --provider-tint: rgba(236, 167, 142, 0.14);
+}
+
+html[data-theme="dark"] .preset-chip[data-brand="qwen"] {
+  --provider-accent: #85a2ff;
+  --provider-tint: rgba(133, 162, 255, 0.14);
+}
+
+html[data-theme="dark"] .preset-chip[data-brand="glm"],
+html[data-theme="dark"] .preset-chip[data-brand="custom"] {
+  --provider-accent: #bdc9da;
+  --provider-tint: rgba(189, 201, 218, 0.12);
+}
+
+html[data-theme="dark"] .preset-chip[data-brand="grok"],
+html[data-theme="dark"] .preset-chip[data-brand="kimi"],
+html[data-theme="dark"] .preset-chip[data-brand="mimo"] {
+  --provider-accent: #d7dbe2;
+  --provider-tint: rgba(215, 219, 226, 0.12);
+}
+
+.provider-saved-card {
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Muted shared Cards distinguish records from the outer surface. The container
+   itself is not an action; hover feedback belongs to its shared Buttons. */
+.provider-saved-list {
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  gap: 8px;
+}
+
+.provider-saved-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.provider-saved-identity {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: 10px;
+}
+
+.provider-saved-details {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.provider-saved-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+}
+
+.provider-saved-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.provider-saved-meta {
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+}
+
+.provider-default-model-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 22px;
+  min-width: 0;
+  padding-left: 32px;
+  margin-top: 0;
+}
+
+.provider-default-model { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.provider-default-model > .badge { flex: 0 0 auto; font-size: 10px; }
+.provider-default-model > code { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-primary); font: 11.5px/1.5 var(--font-mono); }
+.provider-default-model-row > .btn { flex: 0 0 auto; }
+
+.provider-model-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  min-width: 0;
+  margin-top: 2px;
+  padding-left: 32px;
+}
+
+.provider-model-list {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.provider-model-chip.btn {
+  min-width: 0;
+  max-width: 100%;
+  font-family: var(--font-mono);
+  height: auto;
+  min-height: 24px;
+  padding-block: 3px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+.provider-model-expand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.provider-model-expand:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.provider-config-form {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.provider-model-setting {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.provider-model-choice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
+}
+
+.provider-editor-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--overlay-bg);
+}
+
+.provider-editor-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(720px, 100%);
+  /* Capped so a provider with many models keeps a stable window size and the
+     model catalog scrolls internally instead of stretching the dialog. */
+  max-height: min(720px, calc(100dvh - 40px));
+  min-width: 0;
+  background: var(--popover-bg);
+  color: var(--text-primary);
+  border-radius: 12px;
+  box-shadow: var(--popover-shadow);
+  overflow: hidden;
+}
+
+.provider-editor-header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+}
+
+.provider-editor-header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.provider-editor-content {
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+  padding: 0 18px 18px;
+}
+
+.model-discovery-dialog { width: min(660px, 100%); }
+.model-discovery-toolbar { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+.model-discovery-toolbar > .input-shell { flex: 1; min-width: 0; }
+.model-discovery-toolbar .checkbox-row { flex: 0 0 auto; white-space: nowrap; }
+.model-discovery-list { max-height: min(380px, 50dvh); overflow-y: auto; scrollbar-gutter: stable; overscroll-behavior: contain; }
+.model-discovery-option { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 8px; border-radius: 6px; }
+.model-discovery-option:hover { background: var(--bg-hover); }
+/* 勾选区是 label，两个数字输入框在它外面，点输入框不会误触勾选。 */
+.model-discovery-toggle { display: flex; flex: 1 1 auto; align-items: center; gap: 10px; min-width: 0; cursor: pointer; }
+.model-discovery-limit { flex: 0 0 88px; }
+.model-discovery-limit .desk-input { text-align: center; font-size: 11px; }
+.model-discovery-name { display: flex; flex: 1; flex-direction: column; gap: 3px; min-width: 0; overflow-wrap: anywhere; }
+.model-discovery-name b { font-size: 12px; font-weight: 500; }
+.model-discovery-name small, .model-discovery-empty { color: var(--text-tertiary); font-size: 11px; }
+.model-discovery-empty { padding: 24px 8px; text-align: center; }
+.model-discovery-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+.model-discovery-actions > span { margin-right: auto; color: var(--text-secondary); font-size: 11px; }
+/* 妯″瀷鐩綍锛欳ard 澶栧眰涓庝笂鏂硅〃鍗曢」鍚屽瀵归綈锛屾爣棰樺拰鍒楄〃鍚屽涓€涓?Surface 鍐?*/
+.provider-model-catalog { padding: 12px 16px; border-top: 1px solid var(--divider-color); }
+.provider-model-catalog .provider-model-catalog-heading { padding: 0 0 10px; margin: 0; }
+/* 鍒楄〃鍦?Card 鍐呴儴婊氬姩锛?6 涓ā鍨嬩篃涓嶄細鎶婅缃脊绐楁拺闀?*/
+.provider-model-catalog-list { max-height: min(300px, 34dvh); overflow-y: auto; scrollbar-gutter: stable; overscroll-behavior: contain; padding: 10px 12px; }
+.provider-model-catalog-card { padding: 0; }
+.provider-model-catalog-list::-webkit-scrollbar { width: 6px; }
+.provider-model-catalog-list::-webkit-scrollbar-thumb { border-radius: var(--radius-full); background: var(--tool-scrollbar-thumb); }
+.provider-model-catalog-heading { margin-bottom: 10px; font-size: 12px; font-weight: 600; }
+.provider-model-catalog-heading span { margin-left: 6px; color: var(--text-tertiary); font-weight: 400; }
+.provider-model-catalog-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 88px 88px 28px; align-items: center; gap: 8px; margin-top: 8px; }
+.provider-model-catalog-row .input-shell { min-width: 0; width: 100%; }
+.provider-model-catalog-limit .desk-input { text-align: center; font-size: 11.5px; }
+.provider-model-catalog-hint { float: right; color: var(--text-tertiary); font-size: 10.5px; font-weight: 400; }
+/* 涓婁笅鏂囧窘鏍囦笌鍙戠幇寮圭獥淇濇寔鍚屼竴瑙嗚璇█锛岀獎灞忔椂鏁磋鎹㈣閬垮厤鎸ゅ帇杈撳叆妗?*/
+/* 涓婁笅鏂囧窘鏍囷細--bg-hover 鍙湁 6% 閫忔槑搴︼紝浼氬拰搴曡壊绯婂湪涓€璧凤紝杩欓噷鐢ㄥ彲杈ㄨ瘑鐨勫疄搴?*/
+.provider-model-catalog-window { flex: 0 0 auto; justify-self: end; min-width: 46px; padding: 2px 7px; border-radius: 6px; background: var(--input-bg-sunken, var(--bg-card)); box-shadow: inset 0 0 0 1px var(--divider-color); color: var(--text-secondary); font-size: 10.5px; font-weight: 500; font-style: normal; line-height: 15px; text-align: center; white-space: nowrap; }
+.provider-model-catalog-window.is-missing { background: color-mix(in srgb, var(--danger-text) 10%, var(--input-bg-sunken, var(--bg-card))); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--danger-text) 28%, transparent); color: var(--danger-text); }
+/* 涓嬫媺妗嗗簳閮ㄧ殑鍐呰仈娣诲姞琛岋細杈撳叆妗嗗悆鎺夊墿浣欏搴?*/
+.select-inline-add { display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; }
+.select-inline-add > .input-shell { flex: 1; min-width: 0; }
+.select-inline-add > .btn { flex: 0 0 auto; }
+
+@media (max-width: 720px) {
+  .provider-editor-dialog .setting-row-item {
+    padding: 12px 14px;
+  }
+
+  .provider-model-choice {
+    flex-wrap: wrap;
+  }
+
+  .provider-editor-dialog .provider-model-choice .select-pod {
+    flex-basis: 100% !important;
+  }
+
+  .provider-model-catalog-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 72px 72px 28px;
+  }
+
+  .model-discovery-limit {
+    flex-basis: 74px;
+  }
+}
+
+/* ==========================================================================
+   Opal Frost Light Theme Overrides (妯″瀷鏈嶅姟鍟嗛潰鏉夸笌瀵硅瘽妗?
+   ========================================================================== */
+html[data-theme] .preset-chips-row {
+  background: var(--bg-surface) !important;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+html[data-theme] .preset-chip {
+  background: var(--surface-action-bg) !important;
+  border: 1px solid transparent !important;
+  box-shadow: var(--shadow-sm) !important;
+  color: var(--text-secondary);
+}
+
+html[data-theme] .preset-chip:hover {
+  background: var(--bg-hover) !important;
+  box-shadow: var(--shadow-sm) !important;
+  color: var(--text-primary);
+  transform: translateY(-0.5px);
+}
+
+html[data-theme] .preset-chip.active {
+  background: var(--bg-selected) !important;
+  box-shadow: var(--shadow-sm) !important;
+  color: var(--accent-primary) !important;
+  font-weight: 600;
+}
+
+html[data-theme] .provider-editor-dialog {
+  background: var(--popover-bg) !important;
+  border: 1px solid transparent !important;
+  box-shadow: var(--card-shadow), var(--card-rim) !important;
+}

@@ -1,0 +1,190 @@
+
+
+/* Queue items are real composer controls. Keep their compact card treatment
+   on the same tokens as the rest of the chat surface instead of falling back
+   to browser buttons when a turn is already running. */
+html[data-theme] .conversation-page .composer-queue {
+  width: 100%;
+  gap: 6px;
+  margin: 0 0 8px;
+}
+
+html[data-theme] .conversation-page .composer-queue-summary {
+  padding: 0 2px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+html[data-theme] .conversation-page .queued-message {
+  min-height: 40px;
+  padding: 6px 8px 6px 11px;
+  border-color: transparent;
+  border-radius: var(--radius-base);
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
+}
+
+html[data-theme] .conversation-page .queued-message::before {
+  background: color-mix(in srgb, var(--bg-card) 78%, var(--text-primary));
+}
+
+html[data-theme] .conversation-page .queued-message.guiding {
+  border-color: transparent;
+  background: var(--accent-subtle);
+  box-shadow: var(--focus-glow);
+  transform: none;
+}
+
+html[data-theme] .conversation-page .queued-message-copy {
+  gap: 8px;
+}
+
+html[data-theme] .conversation-page .queued-message-icon,
+html[data-theme] .conversation-page .queued-message-guide,
+html[data-theme] .conversation-page .queued-message-more {
+  color: var(--text-secondary);
+}
+
+html[data-theme] .conversation-page .queued-message-copy p {
+  max-width: min(560px, 58vw);
+  color: var(--text-primary);
+}
+
+html[data-theme] .conversation-page .queued-message.editing {
+  align-items: flex-start;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+html[data-theme] .conversation-page .queued-message-copy textarea {
+  width: 100%;
+  min-height: 64px;
+  max-height: 180px;
+  resize: vertical;
+  box-sizing: border-box;
+  padding: 7px 9px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-base);
+  outline: none;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+html[data-theme] .conversation-page .queued-message-copy textarea:focus {
+  border-color: transparent;
+  box-shadow: var(--focus-glow);
+}
+
+html[data-theme] .conversation-page .queued-message-guide,
+html[data-theme] .conversation-page .queued-message-edit,
+html[data-theme] .conversation-page .queued-message-remove,
+html[data-theme] .conversation-page .queued-message-more,
+html[data-theme] .conversation-page .queued-message-cancel,
+html[data-theme] .conversation-page .queued-message-save {
+  width: 27px;
+  min-width: 27px;
+  height: 27px;
+  padding: 0;
+  border-color: transparent;
+  box-shadow: none;
+  transform: none;
+}
+
+html[data-theme] .conversation-page .queued-message-guide:hover,
+html[data-theme] .conversation-page .queued-message-edit:hover,
+html[data-theme] .conversation-page .queued-message-cancel:hover,
+html[data-theme] .conversation-page .queued-message-more:hover {
+  border-color: transparent;
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  transform: none;
+}
+
+html[data-theme] .conversation-page .queued-message-remove {
+  color: var(--status-danger-text);
+}
+
+html[data-theme] .conversation-page .queued-message-remove:hover {
+  border-color: transparent;
+  color: var(--status-danger-text);
+  background: color-mix(in srgb, var(--status-danger-text) 9%, var(--bg-card));
+  transform: none;
+}
+
+html[data-theme] .conversation-page .queued-message-guide:active,
+html[data-theme] .conversation-page .queued-message-edit:active,
+html[data-theme] .conversation-page .queued-message-remove:active,
+html[data-theme] .conversation-page .queued-message-more:active,
+html[data-theme] .conversation-page .queued-message-cancel:active,
+html[data-theme] .conversation-page .queued-message-save:active {
+  transform: none;
+}
+
+html[data-theme] .conversation-page .queued-message-guide:focus-visible,
+html[data-theme] .conversation-page .queued-message-edit:focus-visible,
+html[data-theme] .conversation-page .queued-message-remove:focus-visible,
+html[data-theme] .conversation-page .queued-message-more:focus-visible,
+html[data-theme] .conversation-page .queued-message-cancel:focus-visible,
+html[data-theme] .conversation-page .queued-message-save:focus-visible,
+html[data-theme] .conversation-page .queued-message-menu button:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 1px;
+}
+
+html[data-theme] .conversation-page .queued-message-guide .inline-spin {
+  margin: 0;
+  vertical-align: inherit;
+}
+
+html[data-theme] .conversation-page .queued-message-menu {
+  border: var(--popover-border);
+  background: var(--popover-bg);
+  box-shadow: var(--popover-shadow);
+}
+
+html[data-theme] .conversation-page .queued-message-menu button {
+  color: var(--text-secondary);
+}
+
+html[data-theme] .conversation-page .queued-message-menu button:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.agent-turn-inline-user {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 5px 0;
+  padding: 7px 9px;
+  border-left: 2px solid var(--accent-border);
+  color: var(--text-primary);
+  background: var(--accent-subtle);
+  font-size: 12px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.agent-turn-inline-user > svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--accent-primary);
+}
+
+@media (max-width: 680px) {
+  html[data-theme] .conversation-page .queued-message.editing {
+    flex-direction: column;
+  }
+  html[data-theme] .conversation-page .queued-message.editing .queued-message-copy,
+  html[data-theme] .conversation-page .queued-message.editing .queued-message-actions {
+    width: 100%;
+  }
+  html[data-theme] .conversation-page .queued-message.editing .queued-message-actions {
+    justify-content: flex-end;
+  }
+}

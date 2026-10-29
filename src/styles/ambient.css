@@ -1,0 +1,104 @@
+/**
+ * ============================================================================
+ * Android Toolkit 全局背景：浅冷灰 / 石墨灰。
+ * 输入框的动态炫光独立保留在 BorderGlow 中。
+ * ============================================================================
+ */
+
+.ambient-wallpaper,
+.ambient-wrapper {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--bg-app);
+  transition: background var(--transition-base);
+}
+
+.ambient-blob {
+  display: none;
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px); /* 从 100px 降低到 80px 以优化性能 */
+  will-change: transform;
+  transition: background 0.5s ease;
+}
+
+/* Showcase uses a clean base; ambient light stays inside the glass cards. */
+html[data-theme="light"] .ambient-wallpaper,
+html[data-theme="light"] .ambient-wrapper {
+  background: var(--bg-ambient);
+}
+
+html[data-theme="light"] .ambient-blob {
+  display: none;
+  mix-blend-mode: normal;
+  opacity: 0.65;
+}
+
+/* 暗色模式下：采用 screen 柔和深邃漫射，不刺眼 */
+html[data-theme="dark"] .ambient-blob {
+  mix-blend-mode: screen;
+  opacity: 0.35;
+}
+
+/* 形状 1: 冰蓝光斑 (Soft blue) */
+.ambient-blob.blob-1 {
+  top: -10%;
+  left: -10%;
+  width: 520px;
+  height: 520px;
+  background: var(--blob-1);
+  animation: float-blob-1 20s infinite alternate ease-in-out;
+}
+
+/* 形状 2: 天蓝光斑 (Sky blue) */
+.ambient-blob.blob-2 {
+  bottom: -15%;
+  right: 15%;
+  width: 560px;
+  height: 560px;
+  background: var(--blob-2);
+  animation: float-blob-2 25s infinite alternate-reverse ease-in-out;
+}
+
+/* 形状 3: 深蓝弥散 (Deep blue) */
+.ambient-blob.blob-3 {
+  top: 20%;
+  right: -10%;
+  width: 440px;
+  height: 440px;
+  background: var(--blob-3);
+  animation: float-blob-3 20s infinite alternate ease-in-out;
+}
+
+/* 形状 4: 淡薰衣草紫/温暖流体 (Subtle Lavender) */
+.ambient-blob.blob-4 {
+  bottom: 10%;
+  left: 20%;
+  width: 480px;
+  height: 480px;
+  background: var(--blob-4);
+  animation: float-blob-4 22s infinite alternate-reverse ease-in-out;
+}
+
+@keyframes float-blob-1 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(40px, 30px) scale(1.08); }
+}
+
+@keyframes float-blob-2 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-35px, -25px) scale(1.1); }
+}
+
+@keyframes float-blob-3 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-25px, 35px) scale(0.95); }
+}
+
+@keyframes float-blob-4 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(30px, -20px) scale(1.05); }
+}

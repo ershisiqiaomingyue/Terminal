@@ -1,0 +1,71 @@
+/* ==========================================================================
+   右栏（主机 / 版本控制 / 文件）补充样式
+   --------------------------------------------------------------------------
+   只放两件事：
+     1. 竖排 rail 入口按钮的**激活态**（用户要求：要能看出当前选中哪个面板）。
+     2. 空态 / 错误文案的排版细节。
+
+   为什么单独开一个文件：`terminal-workspace.css` 已经被 Lead 划定了几段
+   禁止改动的区域（底部指令栏、AI 智能区、CLI 区），在同一个文件里继续追加
+   会不断制造冲突；新文件由 `TerminalDrawer.tsx` 自己 import，责任边界清晰。
+
+   样式手法照抄菜单栏标签的激活态（`src/components/Topbar/topbar.css` 的
+   `html[data-theme] .topbar-tab.is-active`）：
+     background: var(--bg-selected); color: var(--text-primary); box-shadow: var(--shadow-sm);
+   也就是**外阴影 + 实色填充**，而不是描边或流光。用户二选一里选的就是这个。
+
+   注意选择器都带 `.terminal-drawer-rail` 前缀提高特异性：本文件比
+   `terminal-workspace.css` 先进入打包结果（index.tsx 先 import TerminalDrawer
+   才 import terminal-workspace.css），靠同特异性后写覆盖是不可靠的。
+   ========================================================================== */
+
+.terminal-drawer-rail .terminal-rail-btn {
+  /* 激活态加了外阴影，过渡里必须带上 box-shadow，否则切换会"跳"一下。 */
+  transition:
+    color 0.14s,
+    background 0.14s,
+    border-color 0.14s,
+    box-shadow 0.14s;
+}
+
+.terminal-drawer-rail .terminal-rail-btn.active {
+  background: var(--bg-selected);
+  border-color: transparent;
+  color: var(--text-primary);
+  /* 菜单栏标签激活态用的就是这一档外阴影。 */
+  box-shadow: var(--shadow-sm);
+}
+
+.terminal-drawer-rail .terminal-rail-btn.active:hover {
+  /* 激活态悬停时保持同样的阴影与填充，避免指针移上去又"掉"回未选中观感。 */
+  background: var(--bg-selected);
+  border-color: transparent;
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.terminal-drawer-rail .terminal-rail-btn:focus-visible {
+  outline: var(--focus-ring, 2px solid var(--accent-primary));
+  outline-offset: 1px;
+}
+
+/* 浅色主题（data-theme 存在）下 accent 太淡，激活态的图标用强调色点一下。 */
+html[data-theme] .terminal-drawer-rail .terminal-rail-btn.active {
+  background: var(--bg-selected);
+  border-color: transparent;
+  color: var(--accent-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+html[data-theme] .terminal-drawer-rail .terminal-rail-btn.active:hover {
+  background: var(--bg-selected);
+  border-color: transparent;
+  color: var(--accent-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+/* 空态里的长文案（例如"当前会话没有绑定 SSH 连接"）允许换行，不要截断。 */
+.terminal-drawer-body .terminal-drawer-empty {
+  line-height: 1.55;
+  word-break: break-word;
+}

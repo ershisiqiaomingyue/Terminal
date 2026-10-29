@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "bundle": {
+    "windows": {
+      "webviewInstallMode": { "type": "downloadBootstrapper", "silent": true },
+      "wix": {
+        "language": "zh-CN",
+        "upgradeCode": "1ac8786c-89d8-570c-ba05-320014dda9bd"
+      },
+      "nsis": {
+        "installMode": "currentUser",
+        "languages": ["SimpChinese"],
+        "displayLanguageSelector": false,
+        "compression": "lzma",
+        "startMenuFolder": "Terminal"
+      }
+    }
+  }
+}

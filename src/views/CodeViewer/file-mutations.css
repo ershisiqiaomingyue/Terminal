@@ -1,0 +1,10 @@
+.code-mutation-confirm .confirm-dialog-modal { width:min(440px,94vw); max-height:85vh; overflow:auto; border:0; box-shadow:var(--popover-shadow); background:var(--popover-bg); }
+.code-mutation-confirm .confirm-dialog-body { min-width:0; }
+.code-mutation-confirm .confirm-dialog-message { color:var(--text-secondary); line-height:1.6; }
+.code-mutation-confirm:has(.confirm-dialog-acknowledge) .confirm-dialog-message,
+.code-mutation-warning { color:var(--status-danger-text); line-height:1.6; }
+.code-mutation-name-field { display:flex; flex-direction:column; gap:4px; }
+.code-mutation-name-error { min-height:18px; margin:0; color:var(--status-danger-text); font-size:12px; line-height:18px; }
+.code-mutation-operation { color:var(--text-secondary); }
+.code-mutation-warning { margin:0; font-size:12px; }
+.code-mutation-confirm .confirm-dialog-actions { flex-wrap:wrap; }

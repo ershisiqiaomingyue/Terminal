@@ -1,0 +1,21 @@
+node_modules/
+dist/
+target/
+*.log
+*.tmp
+*.tsbuildinfo
+.env
+.DS_Store
+Thumbs.db
+
+# Tauri regenerates capability schemas during cargo build.
+/src-tauri/gen/schemas/
+
+# Downloaded offline Android toolchain (~630 MB of upstream binaries), fetched
+# locally instead of being versioned. Same convention as ../Android-Tool.
+/src-tauri/resources/environment-tools/
+
+# Local build/test scratch output.
+/.cache/
+/.tmp/
+/.idea/

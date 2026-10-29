@@ -1,0 +1,885 @@
+/* Resolve these once at the page boundary, before menus redefine local tokens. */
+/* White composer surfaces need a darker hover fill to remain visible. */
+html[data-theme="light"]:not([data-custom-theme]) .conversation-page {
+  --composer-control-hover: color-mix(in srgb, var(--text-primary) 9%, transparent);
+}
+
+html[data-theme] .conversation-page {
+  --chat-surface: var(--bg-card);
+  --chat-ink: var(--text-primary);
+  --chat-muted: var(--text-secondary);
+  --chat-hover: var(--bg-hover);
+  --chat-line: var(--divider-color);
+  --chat-frame: color-mix(in srgb, var(--text-primary) 4%, transparent);
+  --chat-divider: color-mix(in srgb, var(--text-primary) 8%, transparent);
+  --chat-bubble: var(--input-bg);
+  --chat-accent: var(--accent-primary);
+  --chat-accent-hover: var(--accent-hover);
+  --chat-selected: var(--bg-selected);
+  --chat-selected-ink: var(--text-primary);
+  --chat-on-accent: var(--send-button-text);
+  --chat-ring: var(--text-secondary);
+  --chat-warning: var(--warning-text);
+  --chat-danger: var(--danger-text);
+}
+
+html[data-theme] .conversation-page {
+  --chat-page: var(--bg-canvas);
+  --chat-toolbar: var(--page-header-bg);
+  --chat-canvas: var(--bg-canvas);
+  --chat-message-shadow: var(--shadow-sm);
+  --chat-framed-heading: color-mix(in srgb, var(--chat-bubble) 40%, var(--chat-surface));
+  --composer-surface: var(--composer-bg);
+  --composer-shadow: var(--shadow-md);
+  color: var(--chat-ink);
+  background: var(--chat-page);
+  border-radius: 0;
+}
+
+/* One shell for the input and its notices. An opaque base prevents message
+   text showing through theme colors that contain alpha. */
+html[data-theme] .conversation-page .composer-card-surface {
+  position: relative;
+  isolation: isolate;
+  border: 0 !important;
+  border-radius: var(--composer-card-radius, 24px);
+  background: var(--bg-canvas);
+  box-shadow: var(--composer-shadow);
+}
+html[data-theme] .conversation-page .composer-card-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--composer-surface);
+  pointer-events: none;
+}
+html[data-theme] .conversation-page :is(.composer-notice-row, .changed-files-card) {
+  --composer-card-radius: 12px;
+}
+
+html[data-theme] .conversation-page .page-shell {
+  background: var(--chat-page);
+}
+
+html[data-theme] .conversation-page .conversation-toolbar {
+  justify-content: space-between;
+  padding-left: 12px;
+}
+
+html[data-theme] .conversation-page .conversation-toolbar > .session-header-actions {
+  margin-left: auto;
+}
+
+html[data-theme] .conversation-page .conversation-content-area {
+  border-top: 1px solid var(--divider-color);
+  background: var(--chat-canvas);
+}
+
+html[data-theme] .conversation-page :is(.conversation-toolbar, .session-header) {
+  background: var(--chat-toolbar);
+}
+html[data-theme] .conversation-page .conversation-toolbar { border-bottom: 1px solid var(--divider-color); box-shadow: none; }
+
+html[data-theme] .conversation-page :is(.chat-file-preview-source, .chat-file-preview-content .ui-file-diff, .chat-file-preview-content .code-viewer-markdown) {
+  color: var(--code-foreground);
+  background: var(--code-background);
+}
+
+/* Menus own their palette without changing the composer's inherited tokens. */
+html[data-theme] .conversation-page :is(.agent-model-menu, .agent-model-options, .execution-target-popover, .environment-popover, .chat-history-popover, .composer-menu, .sandbox-menu, .slash-menu) {
+  --text-primary: var(--chat-ink);
+  --text-secondary: var(--chat-muted);
+  --text-tertiary: var(--chat-muted);
+  --bg-card: var(--chat-surface);
+  --bg-surface: var(--chat-bubble);
+  --bg-hover: var(--chat-hover);
+  --popover-bg: var(--chat-surface);
+  --border-subtle: var(--chat-line);
+  --accent-primary: var(--chat-selected-ink);
+  --accent-subtle: var(--chat-selected);
+  border-color: transparent;
+  color: var(--chat-ink);
+  background: var(--chat-surface);
+}
+
+html[data-theme] .conversation-page .environment-popover {
+  background: var(--bg-panel);
+}
+
+html[data-theme] .conversation-page :is(.agent-model-option.selected, .execution-target-option.selected) {
+  color: var(--chat-selected-ink);
+  background: var(--chat-selected);
+}
+
+html[data-theme] .conversation-page .queued-message-menu {
+  width: 164px;
+  max-width: calc(100vw - 32px);
+  padding: 5px;
+  border: 0;
+  border-radius: 8px;
+}
+
+html[data-theme] .conversation-page .queued-message-menu .btn {
+  height: 32px;
+  padding: 0 9px;
+  gap: 9px;
+  justify-content: flex-start;
+  border: 0;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--chat-ink);
+}
+
+html[data-theme] .conversation-page .queued-message-menu .btn:hover {
+  color: var(--chat-ink);
+  background: var(--button-hover-bg);
+}
+
+/* Keep streaming and settled messages on the same typography. */
+html[data-theme] .conversation-page .message-content,
+html[data-theme] .conversation-page .message-timeline .message-text-block,
+html[data-theme] .conversation-page .markdown-body {
+  color: var(--chat-ink);
+  font-size: 13px;
+  font-family: var(--font-sans);
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.65;
+}
+
+html[data-theme] .conversation-page .message-row.user .message-content {
+  color: var(--chat-ink);
+  background: var(--chat-user-message-bg);
+}
+
+html[data-theme] .conversation-page .markdown-body :is(h1, h2, h3, h4, h5, h6, strong) {
+  color: var(--chat-ink);
+  font-weight: 600;
+}
+html[data-theme] .conversation-page .markdown-body :is(h1, h2, h3, h4, h5, h6) { margin:12px 0 6px;line-height:1.35; }
+html[data-theme] .conversation-page .markdown-body input[type="checkbox"] { accent-color:var(--chat-ink); }
+html[data-theme] .conversation-page .markdown-body img { max-width:100%;height:auto; }
+
+html[data-theme] .conversation-page .markdown-body h1 { font-size: 16px; }
+html[data-theme] .conversation-page .markdown-body h2 { font-size: 14px; }
+html[data-theme] .conversation-page .markdown-body :is(h3, h4, h5, h6) { font-size: 13px; }
+html[data-theme] .conversation-page .markdown-body pre { font-size: 12px; line-height: 1.6; }
+html[data-theme] .conversation-page .markdown-body pre code { font-size: inherit; }
+html[data-theme] .conversation-page .markdown-body code {
+  padding: 0 5px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+html[data-theme] .conversation-page .markdown-body code {
+  color: var(--markdown-code-text);
+  background: var(--markdown-inline-code-bg);
+  border: 0;
+}
+/* Inline padding paints outside the line box. Keep vertical fill within the
+   text metrics, and give wrapped fragments their own rounded edges. */
+html[data-theme] .conversation-page .markdown-body :not(pre) > code {
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+html[data-theme] .conversation-page .markdown-body pre {
+  padding: 8px 42px 8px 12px;
+  border-radius: 10px;
+  line-height: 1.6;
+}
+html[data-theme] .conversation-page .markdown-body pre {
+  border: var(--card-border);
+  color: var(--markdown-code-text);
+  background: var(--markdown-code-surface);
+  box-shadow: var(--shadow-md), var(--card-rim);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+html[data-theme] .conversation-page .markdown-body pre code { padding:0;border:0;border-radius:0;color:inherit;background:transparent;box-shadow:none; }
+html[data-theme] .conversation-page :is(.code-copy-button, .markdown-body .code-copy-button) {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  background: var(--btn-secondary-bg);
+  backdrop-filter: blur(10px);
+}
+html[data-theme] .conversation-page :is(.code-copy-button:hover, .markdown-body .code-copy-button:hover) {
+  color: var(--accent-primary);
+  border-color: transparent;
+  background: var(--btn-secondary-hover);
+  box-shadow: var(--shadow-sm);
+}
+html[data-theme] .conversation-page .message-local-path {
+  border: 0;
+  color: var(--markdown-code-text);
+  background: var(--markdown-inline-code-bg);
+  box-shadow: none;
+}
+html[data-theme] .conversation-page .message-local-path:hover {
+  color: var(--chrome-hover-text);
+  background: var(--chrome-hover);
+  box-shadow: none;
+}
+html[data-theme] .conversation-page .markdown-body blockquote {
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--markdown-quote-text);
+  background: var(--markdown-quote-bg);
+}
+html[data-theme] .conversation-page .markdown-body hr { background:var(--markdown-divider); }
+html[data-theme] .conversation-page .markdown-table-container { margin:9px 0;overflow-x:auto;border:0;border-inline:1px solid var(--table-divider);border-radius:6px;background:var(--table-bg);box-shadow:none; }
+html[data-theme] .conversation-page .markdown-body table {
+  --markdown-inline-code-bg: color-mix(in srgb, var(--table-bg) 94%, var(--table-text));
+  --markdown-code-text: var(--table-text);
+  margin: 0;
+  font-size: 12px;
+}
+html[data-theme] .conversation-page .markdown-body :is(th, td) { padding:7px 10px;border:0;text-align:left;vertical-align:top;overflow-wrap:anywhere; }
+html[data-theme] .conversation-page .markdown-body :is(th, td)[align="center"] { text-align:center; }
+html[data-theme] .conversation-page .markdown-body :is(th, td)[align="right"] { text-align:right; }
+html[data-theme] .conversation-page .markdown-body th {
+  position:relative;
+  color: var(--table-header-text);
+  background: var(--table-header-bg);
+  font-weight: 600;
+}
+html[data-theme] .conversation-page .markdown-body td { border-top:1px solid var(--table-divider);color:var(--table-text); }
+html[data-theme] .conversation-page .markdown-body tbody tr:nth-child(even) { background:var(--table-stripe-bg); }
+html[data-theme] .conversation-page .markdown-body tbody tr:hover { background:var(--table-hover-bg); }
+.markdown-table-resize{position:absolute;z-index:1;top:0;right:-4px;bottom:0;width:8px;cursor:col-resize;user-select:none}
+.markdown-table-resize::after{position:absolute;top:5px;bottom:5px;left:3px;width:2px;background:var(--chat-muted);opacity:0;content:""}
+.markdown-table-resize:hover::after{opacity:.45}
+
+html[data-theme] .conversation-page .message-file-changes-card { margin: 14px 0; }
+html[data-theme] .conversation-page :is(.turn-file-changes-card, .composer-task-card)::after {
+  content: "";
+  position: absolute;
+  right: -10px;
+  bottom: -15px;
+  width: 120px;
+  height: 90px;
+  background: var(--ambient-glow);
+  pointer-events: none;
+  filter: blur(20px);
+  opacity: 0.5;
+  z-index: 0;
+  transition: background 0.3s ease;
+}
+html[data-theme] .conversation-page :is(.turn-file-changes-card, .composer-task-card) > * {
+  position: relative;
+  z-index: 1;
+}
+html[data-theme] .conversation-page .message-file-changes-card > header {
+  border-bottom: 1px solid var(--divider-color);
+  background: transparent;
+  padding: 14px 18px;
+}
+html[data-theme] .conversation-page .message-file-changes-card .message-file-changes-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--accent-primary);
+  border: 1px solid transparent;
+}
+html[data-theme] .conversation-page .message-file-changes-card .message-file-changes-heading b {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+html[data-theme] .conversation-page .message-file-changes-card .message-file-changes-files {
+  padding: 6px 8px;
+}
+html[data-theme] .conversation-page .message-file-changes-card .message-file-changes-file {
+  border-radius: 8px;
+  margin: 2px 0;
+  padding: 6px 10px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+html[data-theme] .conversation-page .message-file-changes-card .message-file-changes-file { color: var(--text-secondary); }
+html[data-theme] .conversation-page .message-file-changes-card .message-file-changes-file:hover { color: var(--text-primary); background: var(--bg-hover); }
+html[data-theme] .conversation-page .message-file-changes-expand { margin: 6px 12px 12px; border-radius: var(--radius-full); }
+
+html[data-theme] .conversation-page .message-avatar {
+  color: var(--chat-selected-ink);
+  background: var(--chat-bubble);
+}
+
+html[data-theme] .conversation-page :is(.message-meta, .message-actions-time, .message-duration) {
+  color: var(--chat-muted);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+html[data-theme] .conversation-page .agent-turn-summary {
+  color: var(--chat-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+html[data-theme] .conversation-page :is(.message-actions button, .code-copy-button) {
+  border-color: transparent;
+  color: var(--chat-muted);
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+  transition: color .15s ease, background-color .15s ease;
+}
+
+html[data-theme] .conversation-page :is(.message-actions button, .code-copy-button):hover:not(:disabled) {
+  border-color: transparent;
+  color: var(--chat-ink);
+  background: var(--button-hover-bg);
+  box-shadow: none;
+  transform: none;
+}
+
+html[data-theme] .conversation-page .markdown-body .code-copy-button[data-copied="true"],
+html[data-theme] .conversation-page .markdown-body .code-copy-button[data-copied="true"]:hover:not(:disabled),
+html[data-theme] .conversation-page .markdown-body .code-copy-button[data-copied="true"]:focus-visible {
+  color:var(--success-text);
+  background:color-mix(in srgb,var(--success-text) 12%,transparent);
+}
+
+html[data-theme] .conversation-page .conversation-toolbar .session-header-actions { gap: 6px; }
+
+html[data-theme] .conversation-page .conversation-toolbar .chat-icon-button.btn {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  backdrop-filter: none;
+  background: transparent;
+  color: var(--text-secondary);
+  box-shadow: none;
+}
+
+html[data-theme] .conversation-page .conversation-toolbar .chat-icon-button.btn:is(:hover, :focus-visible):not(:disabled) {
+  background: var(--button-hover-bg);
+  color: var(--text-primary);
+}
+
+html[data-theme] .conversation-page .conversation-toolbar .chat-icon-button.btn:is(.active, [aria-pressed="true"]):not(:disabled) {
+  background: transparent;
+  color: var(--accent-primary);
+}
+
+html[data-theme] .conversation-page .conversation-toolbar .chat-icon-button .btn-icon {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+html[data-theme] .conversation-page .conversation-toolbar .chat-icon-button .btn-icon > svg {
+  display: block;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  stroke-width: 1.7;
+}
+
+html[data-theme] .conversation-page .conversation-toolbar .lucide-square-terminal > rect {
+  rx: 3px;
+  ry: 3px;
+}
+
+html[data-theme] .conversation-page .conversation-toolbar .chat-icon-button.btn:focus-visible {
+  outline-color: var(--control-text);
+}
+
+html[data-theme] .conversation-page .markdown-body a:not([data-local-path]):not(.local-path-link) {
+  color: var(--chat-selected-ink);
+}
+
+html[data-theme] .conversation-page .agent-turn-inline-user {
+  border-left-color: var(--chat-accent);
+  color: var(--chat-ink);
+  background: var(--chat-bubble);
+}
+
+html[data-theme] .conversation-page .message-processing-status {
+  color: var(--chat-muted);
+}
+
+html[data-theme] .conversation-page .chat-scroll {
+  scrollbar-color: color-mix(in srgb, var(--chat-muted) 45%, transparent) transparent;
+}
+
+html[data-theme] .conversation-page .chat-scroll::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--chat-muted) 45%, transparent);
+}
+
+html[data-theme] .conversation-page .chat-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: var(--chat-muted);
+}
+
+html[data-theme] .conversation-page .chat-icon-button.is-connecting { color: var(--chat-accent); }
+html[data-theme] .conversation-page .chat-icon-button.is-failed { color: var(--chat-danger); }
+html[data-theme] .conversation-page .message-actions button.copied { color: var(--status-success, #16a34a); }
+
+html[data-theme] .conversation-page :is(.chat-icon-button, .composer-icon, .message-actions button) > svg {
+  stroke-width: 1.7;
+}
+
+html[data-theme] .conversation-page :is(.composer-icon, .agent-model-trigger, .sandbox-badge:not(.full), button.context-usage-indicator) {
+  border: 0;
+  border-color: transparent;
+  color: var(--composer-muted);
+  background: transparent;
+  box-shadow: none;
+}
+
+html[data-theme] .conversation-page :is(.composer-icon, .agent-model-trigger, .sandbox-badge:not(.full), button.context-usage-indicator):is(:hover, .open):not(:disabled) {
+  color: var(--composer-control-text);
+  background: var(--composer-control-hover);
+  box-shadow: none;
+}
+
+html[data-theme] .conversation-page :is(.ssh-status-trigger, .usage-trigger):hover:not(:disabled) {
+  background: var(--button-hover-bg);
+}
+
+html[data-theme] .conversation-page .composer-input { color: var(--composer-text); }
+html[data-theme] .conversation-page .composer-input:empty::before { color: var(--composer-muted); }
+html[data-theme] .conversation-page .agent-model-trigger :is(svg:last-child, .agent-model-trigger-effort) { color: inherit; }
+html[data-theme] .conversation-page .agent-model-trigger .agent-model-context-badge {
+  color: var(--composer-control-text);
+  background: var(--composer-control-bg);
+}
+html[data-theme] .conversation-page .agent-model-trigger:is(:hover, .open):not(:disabled) .agent-model-context-badge {
+  background: var(--composer-surface);
+}
+html[data-theme] .conversation-page .sandbox-badge.full {
+  color: var(--composer-danger);
+  background: var(--composer-permission-bg);
+}
+html[data-theme] .conversation-page .sandbox-badge.full:hover {
+  color: var(--composer-danger);
+  background: var(--composer-permission-hover);
+}
+
+html[data-theme] .conversation-page :is(.agent-model-menu-row, .agent-model-option, .agent-provider-option b, .agent-model-option-with-meta b) {
+  font-size: 12px;
+}
+
+html[data-theme] .conversation-page .agent-provider-option small { font-size: 10px; }
+
+html[data-theme] .conversation-page .composer-send.btn {
+  border: 0;
+  border-radius: 50%;
+  color: var(--composer-send-text);
+  background: var(--composer-send-bg);
+  box-shadow: none;
+  transform: none;
+  transition: background-color .15s ease, color .15s ease;
+}
+
+html[data-theme] .conversation-page .composer-send .btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+html[data-theme] .conversation-page .composer-send .btn-icon > svg {
+  display: block;
+}
+
+html[data-theme] .conversation-page .composer-send.btn:hover:not(:disabled) {
+  background: var(--composer-send-hover);
+  box-shadow: none;
+  transform: none;
+}
+
+html[data-theme] .conversation-page .composer-send.btn.is-stop {
+  color: var(--composer-danger);
+  background: var(--composer-permission-bg);
+}
+
+html[data-theme] .conversation-page .composer-send.btn.is-stop:hover:not(:disabled) {
+  color: var(--composer-danger);
+  background: var(--composer-permission-hover);
+}
+
+html[data-theme] .conversation-page .composer-send.btn:disabled {
+  color: var(--composer-disabled-text);
+  background: var(--composer-disabled-bg);
+  opacity: 1;
+}
+
+html[data-theme="light"] .conversation-page .agent-model-trigger > svg {
+  color: inherit;
+}
+
+html[data-theme="light"]:not([data-custom-theme]) .conversation-page :is(.agent-model-option.selected, .execution-target-option.selected) {
+  color: var(--text-primary);
+  background: var(--bg-selected);
+}
+
+html[data-theme] .conversation-page button.context-usage-indicator {
+  border-radius: var(--radius-base);
+  transition: background-color .15s ease;
+}
+
+html[data-theme] .conversation-page .context-usage-ring {
+  --context-ring-color: var(--composer-muted);
+  background: conic-gradient(var(--context-ring-color) var(--context-progress, 0%), var(--composer-ring-track) 0);
+}
+
+html[data-theme] .conversation-page .composer-shell .context-usage-ring::after { inset: 2px; background: var(--composer-surface); }
+html[data-theme] .conversation-page .context-usage-indicator:hover:not(:disabled) .context-usage-ring::after { background: var(--composer-control-hover); }
+html[data-theme] .conversation-page .context-usage-indicator.warning .context-usage-ring { --context-ring-color: var(--composer-warning); }
+html[data-theme] .conversation-page .context-usage-indicator.danger .context-usage-ring { --context-ring-color: var(--composer-danger); }
+html[data-theme] .conversation-page .context-usage-indicator.unknown .context-usage-ring {
+  --context-ring-color: var(--composer-muted);
+}
+
+html[data-theme] .conversation-page :is(.chat-icon-button.btn, .composer-icon.btn, .message-actions button, .code-copy-button, .composer-send.btn, .agent-model-trigger, button.context-usage-indicator):focus-visible {
+  outline: 2px solid var(--chat-accent);
+  outline-offset: 2px;
+}
+
+/* Imported themes must not inherit the old built-in light/dark overrides.
+   Keep every conversation surface on the imported palette, including the
+   parts that are rendered outside the main message card. */
+html[data-custom-theme] .app-rail,
+html[data-custom-theme] .app-sidebar,
+html[data-custom-theme] .app-topbar,
+html[data-custom-theme] .app-main {
+  color: var(--text-primary) !important;
+}
+
+html[data-custom-theme] .app-main {
+  background: var(--bg-canvas) !important;
+}
+
+html[data-custom-theme] .conversation-page,
+html[data-custom-theme] .conversation-page .page-shell,
+html[data-custom-theme] .conversation-page .conversation-content-area,
+html[data-custom-theme] .conversation-page .conversation-toolbar {
+  color: var(--text-primary) !important;
+  background: var(--chat-page) !important;
+}
+
+html[data-custom-theme] .app-rail {
+  background: var(--context-navigation-bg) !important;
+}
+
+html[data-custom-theme] .app-sidebar {
+  background: var(--context-navigation-bg) !important;
+}
+
+html[data-custom-theme] .app-topbar {
+  background: var(--topbar-bg) !important;
+}
+
+html[data-custom-theme] .conversation-page .conversation-side {
+  background: var(--workspace-panel-bg) !important;
+}
+
+html[data-custom-theme] .conversation-page .message-content,
+html[data-custom-theme] .conversation-page .message-row.user .message-content,
+html[data-custom-theme] .conversation-page .attachment-card,
+html[data-custom-theme] .conversation-page .file-attachment-card {
+  border-color: transparent !important;
+  color: var(--text-primary) !important;
+  background: var(--bg-card) !important;
+  box-shadow: none !important;
+}
+
+html[data-custom-theme] .conversation-page .message-row.assistant .message-content {
+  border-color: transparent !important;
+  color: var(--text-primary) !important;
+  background: transparent !important;
+}
+
+html[data-custom-theme] .conversation-page .message-row.user .message-content {
+  background: color-mix(in srgb, var(--accent-primary) 13%, var(--bg-canvas)) !important;
+  border-color: color-mix(in srgb, var(--accent-primary) 28%, var(--divider-color)) !important;
+}
+
+html[data-custom-theme] .conversation-page .message-body.error .message-content,
+html[data-custom-theme] .conversation-page .message-terminal-diagnostic,
+html[data-custom-theme] .conversation-page .composer-error {
+  color: var(--danger-text) !important;
+  background: color-mix(in srgb, var(--danger-text) 12%, var(--bg-card)) !important;
+  border-color: transparent !important;
+}
+
+html[data-custom-theme] .conversation-page .analysis-progress-popover,
+html[data-custom-theme] .conversation-page .ssh-status-popover,
+html[data-custom-theme] .conversation-page .analysis-progress-panel,
+html[data-custom-theme] .conversation-page .ssh-status-metric {
+  border-color: transparent !important;
+  color: var(--text-primary) !important;
+  background: var(--bg-card) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+html[data-custom-theme] .conversation-page .analysis-progress-popover .analysis-step.current,
+html[data-custom-theme] .conversation-page .analysis-progress-popover .analysis-step.running {
+  color: var(--text-primary) !important;
+  background: var(--bg-surface) !important;
+}
+
+html[data-custom-theme] .conversation-page .analysis-file-changes,
+html[data-custom-theme] .conversation-page .history-archive-section,
+html[data-custom-theme] .conversation-page .environment-status-grid,
+html[data-custom-theme] .conversation-page .environment-actions {
+  border-color: var(--divider-color) !important;
+}
+
+html[data-custom-theme] .conversation-page .composer-card-surface {
+  color: var(--composer-text) !important;
+  background: var(--bg-canvas) !important;
+  box-shadow: var(--composer-shadow) !important;
+}
+
+html[data-custom-theme] .conversation-page .composer-shell textarea,
+html[data-custom-theme] .conversation-page .composer-input {
+  color: var(--composer-text) !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-custom-theme] .conversation-page .model-search,
+html[data-custom-theme] .conversation-page .model-search input,
+html[data-custom-theme] .conversation-page .model-trigger,
+html[data-custom-theme] .conversation-page .ssh-status-metric {
+  color: var(--text-primary) !important;
+  background: var(--input-bg) !important;
+  border-color: transparent !important;
+}
+
+html[data-custom-theme] .conversation-page .composer-shell textarea::placeholder,
+html[data-custom-theme] .conversation-page .composer-input:empty::before {
+  color: var(--composer-muted) !important;
+}
+html[data-custom-theme] .conversation-page .model-menu-value,
+html[data-custom-theme] .conversation-page .agent-provider-option small {
+  color: var(--input-placeholder) !important;
+}
+
+html[data-custom-theme] .conversation-page .agent-model-menu,
+html[data-custom-theme] .conversation-page .agent-model-options,
+html[data-custom-theme] .conversation-page .composer-menu,
+html[data-custom-theme] .conversation-page .sandbox-menu,
+html[data-custom-theme] .conversation-page .slash-menu,
+html[data-custom-theme] .conversation-page .environment-popover,
+html[data-custom-theme] .conversation-page .chat-history-popover {
+  color: var(--text-primary) !important;
+  background: var(--popover-bg) !important;
+  border-color: transparent !important;
+  box-shadow: var(--popover-shadow) !important;
+}
+
+html[data-custom-theme] .conversation-page .agent-model-option:hover,
+html[data-custom-theme] .conversation-page .agent-model-menu-row:hover,
+html[data-custom-theme] .conversation-page .composer-menu-row:hover,
+html[data-custom-theme] .conversation-page .sandbox-menu-row:hover,
+html[data-custom-theme] .conversation-page .slash-menu-row:hover {
+  color: var(--text-primary) !important;
+  background: var(--popover-item-hover) !important;
+}
+
+/* Menu selection is a separate state from pointer hover. Imported themes
+   provide their own active fill, so selected rows do not inherit the global
+   button hover color or the built-in indigo fallback. */
+html[data-custom-theme] .conversation-page .agent-model-option.selected {
+  color: var(--popover-item-active-text) !important;
+  background: var(--popover-item-active-bg) !important;
+}
+
+html[data-custom-theme] .conversation-page .agent-model-option.selected:hover {
+  color: var(--popover-item-active-text) !important;
+  background: color-mix(in srgb, var(--popover-item-active-bg) 88%, var(--text-primary)) !important;
+}
+
+/* Full access is distinguished by its label and icon. Keep the surface
+   neutral so the permission control does not become a red pill. */
+html[data-custom-theme] .conversation-page .sandbox-badge.full {
+  color: color-mix(in srgb, var(--danger-text) 76%, #7f1d1d 24%) !important;
+  background: transparent !important;
+}
+
+html[data-custom-theme] .conversation-page .sandbox-badge.full:hover {
+  color: color-mix(in srgb, var(--danger-text) 76%, #7f1d1d 24%) !important;
+  background: var(--composer-control-hover) !important;
+}
+
+html[data-custom-theme] .conversation-page .sandbox-menu-row.full-option,
+html[data-custom-theme] .conversation-page .sandbox-menu-row.full-option b,
+html[data-custom-theme] .conversation-page .sandbox-menu-row.full-option > svg {
+  color: color-mix(in srgb, var(--danger-text) 76%, #7f1d1d 24%) !important;
+}
+
+html[data-custom-theme] .conversation-page .sandbox-menu-row.full-option:hover {
+  background: var(--popover-item-hover) !important;
+}
+
+html[data-custom-theme] .conversation-page .sandbox-menu-row.full-option.selected,
+html[data-custom-theme] .conversation-page .sandbox-menu-row.full-option.selected:hover {
+  background: var(--popover-item-active-bg) !important;
+}
+
+html[data-custom-theme] .conversation-page .conversation-rail-preview,
+html[data-custom-theme] .conversation-page .analysis-progress-popover {
+  color: var(--text-primary) !important;
+  background: var(--popover-bg) !important;
+  border-color: transparent !important;
+}
+
+html[data-custom-theme] .conversation-page .ui-file-diff-row.is-added {
+  background: var(--code-diff-added-bg) !important;
+}
+
+html[data-custom-theme] .conversation-page .ui-file-diff-row.is-removed {
+  background: var(--code-diff-removed-bg) !important;
+}
+
+html[data-custom-theme] .conversation-page .ui-file-diff-row.is-meta {
+  color: var(--text-tertiary) !important;
+  background: var(--bg-hover) !important;
+}
+
+/* Task surfaces share one palette in built-in and imported themes. */
+html[data-theme] .conversation-page .composer-task-card {
+  color: var(--task-detail);
+  background: var(--task-surface);
+  border-color: transparent;
+}
+html[data-theme] .conversation-page .composer-task-steps {
+  color: var(--task-title);
+  background: var(--popover-bg);
+  border-color: transparent;
+}
+
+/* A faint separator defines the workspace panel without framing it. */
+.chat-side-panel-resizer {
+  position: relative;
+  z-index: 26;
+  flex: 0 0 8px;
+  width: 8px;
+  margin-inline: -4px;
+  min-height: 0;
+  background: transparent;
+  cursor: col-resize;
+  touch-action: none;
+  outline: none;
+}
+.chat-side-panel-resizer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 4px;
+  width: 2px;
+  border-radius: 0;
+  background: var(--pane-divider-color);
+  transition: background var(--transition-fast), width var(--transition-fast);
+}
+.chat-side-panel-resizer:hover::after,
+.chat-side-panel-resizer:focus-visible::after,
+.chat-side-panel-resizer.is-dragging::after {
+  background: var(--pane-divider-active-color);
+  width: 3px;
+  margin-left: -0.5px;
+}
+.chat-main-layout:has(.chat-side-panel-resizer.is-dragging) { user-select: none; cursor: col-resize; }
+@media (max-width: 860px) {
+  .chat-side-panel-resizer { position: absolute; top: 0; bottom: 0; right: var(--chat-side-panel-width); margin: 0; transform: translateX(4px); }
+}
+
+/* Keep the reading column and composer on the same horizontal center. */
+.conversation-page {
+  --chat-reading-width: 790px;
+  --chat-reading-inset: 48px;
+  --chat-composer-clearance: 32px;
+  /* 对话正文与右侧分隔条之间留出的固定距离：分隔条会跟着侧栏宽度滑动，
+     没有这段留白时，正文在窄窗口下会贴着那条线，看起来处处不齐。 */
+  --chat-pane-gutter: 28px;
+}
+/* The composer occupies its own row; only its notices overlay the transcript. */
+html[data-theme] .conversation-page .chat-scroll {
+  width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  padding-inline: 0;
+  padding-bottom: calc(var(--composer-notice-height, 0px) + var(--chat-composer-clearance));
+  scroll-padding-bottom: calc(var(--composer-notice-height, 0px) + var(--chat-composer-clearance));
+}
+html[data-theme] .conversation-page .chat-scroll > .message-list {
+  width: min(var(--chat-reading-width), calc(100% - var(--chat-reading-inset) - 12px)) !important;
+  margin-inline: auto;
+}
+html[data-theme] .conversation-page .markdown-body {
+  overflow-wrap: anywhere;
+}
+html[data-theme] .conversation-page .markdown-body :not(pre) > code {
+  white-space: break-spaces;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+html[data-theme] .conversation-page .chat-workspace.is-empty .chat-scroll {
+  padding-bottom: 0;
+  scroll-padding-bottom: 0;
+}
+html[data-theme] .conversation-page .chat-footer,
+html[data-theme] .conversation-page .chat-workspace.is-empty .chat-footer {
+  width: min(var(--chat-reading-width), calc(100% - var(--chat-reading-inset))) !important;
+  margin-inline: auto;
+  box-sizing: border-box;
+}
+html[data-theme] .conversation-page .chat-workspace.is-empty .chat-footer { margin-inline: auto; }
+html[data-theme] .conversation-page .chat-footer,
+html[data-theme] .conversation-page .chat-workspace.is-empty .chat-footer {
+  width: min(var(--chat-reading-width), calc(100% - var(--chat-reading-inset) - 12px)) !important;
+}
+html[data-theme] .conversation-page .chat-workspace { position: relative; }
+html[data-theme] .conversation-page .chat-footer {
+  position: relative;
+  z-index: 12;
+  inset: auto;
+  margin-inline: auto;
+  transform: none;
+}
+
+/* Style the actual scroll containers: no native arrow buttons or gutter beside the split. */
+html[data-theme] .conversation-page :is(.chat-scroll, .collaboration-side-scroll, .workspace-changes-list) {
+  scrollbar-width: auto;
+  scrollbar-color: auto;
+}
+html[data-theme] .conversation-page .chat-scroll { scrollbar-gutter: stable; }
+/* 分隔条两侧固定留白：正文永远和那条线保持同样的距离，不会随侧栏宽度忽远忽近。 */
+html[data-theme] .conversation-page .chat-side-panel-resizer { margin-inline: -4px calc(var(--chat-pane-gutter) - 4px); }
+html[data-theme] .conversation-page .chat-workspace { padding-inline-end: var(--chat-pane-gutter); }
+html[data-theme] .conversation-page .chat-workspace .chat-scroll > .message-list,
+html[data-theme] .conversation-page .chat-workspace .chat-footer {
+  width: min(var(--chat-reading-width), calc(100% - var(--chat-reading-inset))) !important;
+}
+html[data-theme] .conversation-page .collaboration-side-scroll { flex: 1; scrollbar-gutter: stable; }
+html[data-theme] .conversation-page .workspace-changes-list { scrollbar-gutter: stable; }
+html[data-theme] .conversation-page :is(.chat-scroll, .collaboration-side-scroll, .workspace-changes-list)::-webkit-scrollbar { width: 6px; height: 6px; }
+html[data-theme] .conversation-page :is(.chat-scroll, .collaboration-side-scroll, .workspace-changes-list)::-webkit-scrollbar-track { background: transparent; }
+html[data-theme] .conversation-page :is(.chat-scroll, .collaboration-side-scroll, .workspace-changes-list)::-webkit-scrollbar-thumb {
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  background: var(--scrollbar-thumb);
+  background-clip: padding-box;
+}
+html[data-theme] .conversation-page :is(.chat-scroll, .collaboration-side-scroll, .workspace-changes-list)::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+html[data-theme] .conversation-page :is(.chat-scroll, .collaboration-side-scroll, .workspace-changes-list)::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+@media (max-width: 680px) { .conversation-page { --chat-reading-inset: 32px; --chat-pane-gutter: 16px; } }

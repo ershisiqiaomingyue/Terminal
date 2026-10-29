@@ -1,0 +1,244 @@
+/* ==========================================================================
+   Card Component Styles - 卡片组件规范
+   - 包含标准卡片与 9 大工具卡片
+   - 结构之间带很虚的分割线 (border-bottom: var(--divider-subtle))
+   ========================================================================== */
+
+.card,
+.glass-card-surface {
+  position: relative;
+  background: var(--bg-card);
+  border: var(--card-border);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow), var(--card-rim);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  transition: background-color var(--transition-base), border-color var(--transition-base), box-shadow var(--transition-base), transform var(--transition-base);
+  overflow: hidden;
+}
+
+.card { display: flex; flex-direction: column; }
+
+.card::after,
+.card-tool::after,
+.glass-card-surface::after {
+  content: "";
+  position: absolute;
+  right: -10px;
+  bottom: -15px;
+  width: 120px;
+  height: 90px;
+  background: var(--ambient-glow);
+  pointer-events: none;
+  filter: blur(20px);
+  opacity: 0.5;
+  z-index: 0;
+  transition: background 0.3s ease;
+}
+
+.card > *,
+.card-tool > *,
+.glass-card-surface > * {
+  position: relative;
+  z-index: 1;
+}
+
+.card:hover {
+  border-color: transparent;
+  box-shadow: var(--card-shadow), var(--card-rim);
+}
+
+/* Nested component cards use an inset fill instead of a second floating shell. */
+html[data-theme] :is(.card, .glass-card-surface) :is(.card, .glass-card-surface, .property-grid-card):not([class*="card-tone-"]),
+html[data-theme] .archive-telemetry-panel :is(.property-grid-card, .archive-hash-box) {
+  background: var(--surface-inset-bg) !important;
+  box-shadow: none !important;
+  border-radius: var(--radius-base);
+}
+
+/* 卡片头部、主体、底部 (上下结构间带很虚的分割线) */
+.card-header {
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--divider-color);
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0;
+}
+
+.card-subtitle {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+.card-body {
+  padding: 20px;
+  flex: 1;
+}
+
+.card-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--divider-color);
+  background: var(--card-footer-bg);
+  display: flex;
+  align-items: center;
+}
+
+/* 9 大核心工具卡片 (.card-tool) */
+.card-tool {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-card);
+  border: var(--card-border);
+  border-radius: var(--card-radius);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: var(--card-shadow), var(--card-rim);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+  cursor: default;
+}
+
+.card-tool:hover {
+  background: var(--bg-card-hover);
+  border-color: transparent;
+  transform: translateY(-2px);
+  box-shadow: var(--card-hover-shadow), var(--card-rim);
+}
+
+.card-tool-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.card-tool-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-base);
+  background: var(--bg-input);
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-primary);
+  flex-shrink: 0;
+}
+
+.card-tool-icon svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.card-tool-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0;
+}
+
+.card-tool-desc {
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+  margin-top: 1px;
+}
+
+.card-tool-body {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  flex: 1;
+}
+
+.card-tool-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid var(--divider-color);
+  margin-top: 4px;
+}
+
+
+
+/* ==========================================================================
+   Card surface levels (neutral only, for page layout)
+   surface : plainest white panel, the default look
+   muted   : one step back, light gray
+   subtle  : two steps back, mid gray
+   deep    : three steps back, deepest gray
+   Each level also tints its own section hairlines to stay readable.
+   ========================================================================== */
+html[data-theme] .card.card-tone-surface {
+  background: var(--bg-surface) !important;
+}
+
+html[data-theme] .card.card-tone-muted {
+  background: color-mix(in srgb, var(--bg-surface) 97%, var(--text-primary)) !important;
+}
+
+html[data-theme] .card.card-tone-subtle {
+  background: color-mix(in srgb, var(--bg-surface) 93%, var(--text-primary)) !important;
+}
+
+html[data-theme] .card.card-tone-deep {
+  background: color-mix(in srgb, var(--bg-surface) 88%, var(--text-primary)) !important;
+}
+
+/* Hairlines: each level gets a divider that stays visible on its own surface. */
+html[data-theme] .card.card-tone-surface.card-divided > .card-header,
+html[data-theme] .card.card-tone-surface.card-divided > .card-body + .card-footer { border-color: var(--divider-color) !important; }
+html[data-theme] .card.card-tone-muted.card-divided > .card-header,
+html[data-theme] .card.card-tone-muted.card-divided > .card-body + .card-footer { border-color: color-mix(in srgb, var(--text-primary) 7%, transparent) !important; }
+html[data-theme] .card.card-tone-subtle.card-divided > .card-header,
+html[data-theme] .card.card-tone-subtle.card-divided > .card-body + .card-footer { border-color: color-mix(in srgb, var(--text-primary) 10%, transparent) !important; }
+html[data-theme] .card.card-tone-deep.card-divided > .card-header,
+html[data-theme] .card.card-tone-deep.card-divided > .card-body + .card-footer { border-color: color-mix(in srgb, var(--text-primary) 13%, transparent) !important; }
+
+/* Titled hairlines stay neutral; no colored glow behind gray surfaces. */
+html[data-theme] .card[class*="card-tone-"]::after { display: none; }
+
+/* Hairline separators between card sections (neutral default). */
+html[data-theme] .card.card-divided > .card-header { border-bottom: 1px solid var(--divider-color); }
+html[data-theme] .card.card-divided > .card-body + .card-footer { border-top: 1px solid var(--divider-color); }
+
+/* Property rows: icon + label left, value right, hairline between rows. */
+.card-property-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 44px; padding: 10px 20px; }
+.card-property-row + .card-property-row { border-top: 1px solid var(--divider-color); }
+.card-property-label { display: inline-flex; align-items: center; gap: 9px; min-width: 0; color: var(--text-secondary); font-size: 12.5px; }
+.card-property-label svg { flex: 0 0 auto; color: var(--text-tertiary); }
+.card-property-value { flex: 0 0 auto; color: var(--text-primary); font-size: 12.5px; font-weight: 600; }
+
+/* Toned cards inherit the standard card shell (soft shadow + inner rim +
+   glass blur) and only swap the surface fill. Nothing else is overridden,
+   so a toned card looks exactly like a default card in a different shade. */
+
+/* Toned cards keep the standard shadow but replace the white inner rim with a
+/* Toned cards keep a shadow-only edge, exactly like the large panel. The base
+   card shadow is tuned for a white surface, so tinted levels get a slightly
+   tighter contact shadow to keep the silhouette readable. No border, no ring. */
+html[data-theme] .card[class*="card-tone-"] {
+  border: 0 !important;
+  box-shadow: var(--card-shadow), 0 1px 3px color-mix(in srgb, var(--text-primary) 10%, transparent) !important;
+}
+
+html[data-theme] .card[class*="card-tone-"]:hover {
+  border: 0 !important;
+  box-shadow: var(--card-shadow), 0 1px 3px color-mix(in srgb, var(--text-primary) 12%, transparent) !important;
+}
+/* Property-row separators follow the surface level too: the neutral divider is
+   tuned for white panels and disappears on the deeper shades. */
+html[data-theme] .card.card-tone-surface .card-property-row + .card-property-row { border-top-color: var(--divider-color); }
+html[data-theme] .card.card-tone-muted .card-property-row + .card-property-row { border-top-color: color-mix(in srgb, var(--text-primary) 8%, transparent); }
+html[data-theme] .card.card-tone-subtle .card-property-row + .card-property-row { border-top-color: color-mix(in srgb, var(--text-primary) 12%, transparent); }
+html[data-theme] .card.card-tone-deep .card-property-row + .card-property-row { border-top-color: color-mix(in srgb, var(--text-primary) 16%, transparent); }

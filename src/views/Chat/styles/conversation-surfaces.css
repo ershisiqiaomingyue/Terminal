@@ -1,0 +1,256 @@
+/* ==========================================================================
+   Shared conversation surfaces — palette changes never change layout
+   Shared geometry for built-in and imported themes; composer owns its surface.
+   ========================================================================== */
+html[data-theme] .conversation-page {
+  --chat-page: var(--bg-canvas);
+  --chat-canvas: var(--bg-canvas);
+  --chat-toolbar: var(--page-header-bg);
+  background: var(--bg-canvas);
+}
+
+html[data-theme] .conversation-page .conversation-content-area {
+  background: var(--bg-canvas);
+  border-top: 1px solid var(--divider-color) !important;
+}
+
+/* Keep user messages distinct from the conversation canvas across themes. */
+html[data-theme] .conversation-page .message-row.user .message-content {
+  background: var(--chat-user-message-bg);
+  border: 1px solid color-mix(in srgb, var(--accent-primary) 28%, var(--divider-color));
+  box-shadow: var(--shadow-sm), var(--card-rim);
+  border-radius: 16px 16px 4px 16px;
+  color: var(--text-primary);
+}
+
+/* 命令与工具调用展开区域 (Detail) */
+html[data-theme] .conversation-page .agent-command-detail,
+html[data-theme] .conversation-page .agent-tool-group-detail {
+  background: var(--bg-card);
+  border: 0;
+  box-shadow: var(--shadow-sm), var(--card-rim);
+  border-radius: 14px;
+  padding: 10px 14px;
+  margin-top: 6px;
+}
+
+html[data-theme] .conversation-page .agent-command-result {
+  position: static;
+  margin-top: 8px;
+  text-align: right;
+}
+
+/* 会话轮次总结：不加背景与边框，不要铺满，保持默认简洁文本展示 */
+html[data-theme] .conversation-page .agent-turn-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content !important;
+  max-width: 100%;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+html[data-theme] .conversation-page .agent-turn-summary:hover {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: var(--text-primary);
+  transform: none !important;
+}
+
+/* Toolbar actions use the shared Button surface variant. */
+
+/* 消息操作悬浮按钮组与复制按钮 */
+html[data-theme] .conversation-page :is(.message-actions button, .code-copy-button) {
+  border-radius: 6px;
+  color: var(--text-tertiary);
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+html[data-theme] .conversation-page :is(.message-actions button, .code-copy-button):hover:not(:disabled) {
+  background: var(--button-hover-bg);
+  border-color: transparent;
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+html[data-theme] .conversation-page .message-actions button.copied,
+html[data-theme] .conversation-page .code-copy-button[data-copied="true"] {
+  background: color-mix(in srgb, var(--success-text) 12%, transparent) !important;
+  color: var(--success-text) !important;
+  border-color: transparent !important;
+}
+
+/* 工具与执行时间线摘要 (操作/指令/搜索/取消等：纯净内联排版，无背景/无卡片底色/无边框，仅保留优雅字色与微提示) */
+html[data-theme] .conversation-page :is(.agent-tool-group-summary, .agent-command-summary) {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 24px;
+  padding: 0;
+  border-radius: 0;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: var(--text-tertiary);
+  font-size: 12.5px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+html[data-theme] .conversation-page :is(.agent-tool-group-summary, .agent-command-summary) b {
+  color: inherit;
+  font-weight: 500;
+}
+
+html[data-theme] .conversation-page :is(.agent-tool-group-summary, .agent-command-summary):hover {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: var(--text-secondary);
+  transform: none !important;
+}
+
+html[data-theme] .conversation-page :is(.agent-tool-group-summary, .agent-command-summary) > svg:last-child {
+  opacity: 0.55;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+html[data-theme] .conversation-page :is(.agent-tool-group-summary, .agent-command-summary):hover > svg:last-child {
+  opacity: 0.9;
+}
+
+/* 状态色修饰：不加背景底色，仅改变字体与图标颜色 */
+html[data-theme] .conversation-page :is(.agent-tool-group, .agent-command)[data-state="done"] > :is(.agent-tool-group-summary, .agent-command-summary) {
+  background: transparent !important;
+  border: 0 !important;
+  color: var(--text-secondary);
+}
+
+html[data-theme] .conversation-page :is(.agent-tool-group, .agent-command)[data-state="done"] > :is(.agent-tool-group-summary, .agent-command-summary) .agent-activity-status {
+  color: var(--success-text);
+}
+
+html[data-theme] .conversation-page :is(.agent-tool-group, .agent-command):is([data-state="error"], [data-state="cancelled"], [data-state="interrupted"]) > :is(.agent-tool-group-summary, .agent-command-summary) {
+  background: transparent !important;
+  border: 0 !important;
+  color: var(--danger-text);
+}
+
+html[data-theme] .conversation-page :is(.agent-tool-group, .agent-command):is([data-state="error"], [data-state="cancelled"], [data-state="interrupted"]) > :is(.agent-tool-group-summary, .agent-command-summary) .agent-activity-status {
+  color: var(--danger-text);
+}
+
+html[data-theme] .conversation-page :is(.agent-tool-group, .agent-command)[data-state="running"] > :is(.agent-tool-group-summary, .agent-command-summary) {
+  background: transparent !important;
+  border: 0 !important;
+  color: var(--accent-primary);
+}
+
+/* 左侧导航点 (Rail Dots - 图2左侧点阵) */
+html[data-theme] .conversation-page .conversation-rail-dot {
+  background: color-mix(in srgb, var(--text-tertiary) 45%, transparent);
+  border: 0 !important;
+  height: 1px !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  clip-path: inset(0);
+}
+
+html[data-theme] .conversation-page .conversation-rail-marker.active .conversation-rail-dot,
+html[data-theme] .conversation-page .conversation-rail-marker:hover .conversation-rail-dot {
+  background: var(--accent-primary);
+}
+
+/* 浮动工作区环境卡片 (图3：工作区环境 Popover) */
+html[data-theme] .conversation-page .environment-popover {
+  background: var(--popover-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: var(--popover-border);
+  box-shadow: var(--popover-shadow), var(--card-rim);
+  border-radius: 16px;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+html[data-theme] .conversation-page .environment-popover .popover-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+html[data-theme] .conversation-page .environment-popover .popover-readonly {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-subtle);
+  color: var(--accent-primary);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+html[data-theme] .conversation-page .environment-workspace-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  background: var(--bg-surface);
+  border: 1px solid transparent;
+  color: var(--text-primary);
+}
+
+html[data-theme] .conversation-page .environment-workspace-card > svg {
+  color: var(--accent-primary);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+html[data-theme] .conversation-page .environment-workspace-card b {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+html[data-theme] .conversation-page .environment-workspace-card small {
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-family: var(--font-mono);
+}
+
+html[data-theme] .conversation-page .environment-popover .popover-muted {
+  padding: 6px 0;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+html[data-theme] .conversation-page .environment-actions {
+  margin: 12px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--divider-color);
+}
+
+html[data-theme] .conversation-page .environment-actions .btn {
+  border-radius: 8px;
+}

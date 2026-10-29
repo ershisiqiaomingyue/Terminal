@@ -1,0 +1,4 @@
+            // 控制块在 admission 时标记。
+            "unit_kind": state.requests.lock().ok()
+                .and_then(|requests| requests.get(&session_id).map(|control| control.unit_kind().as_str().to_string()))
+                .unwrap_or_else(|| "turn".to_string()),

@@ -1,0 +1,95 @@
+/* 帮助弹窗：正文是 Markdown，宽度比通用弹窗宽一档，表格才排得开。 */
+.ui-modal-overlay.help-modal-dialog .ui-modal {
+  width: min(840px, 94vw);
+  max-height: min(86vh, 900px);
+}
+
+.help-dialog .markdown-body {
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.help-dialog .markdown-body > :first-child {
+  margin-top: 0;
+}
+
+.help-dialog .markdown-body h2 {
+  margin: 20px 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.help-dialog .markdown-body h2:first-child {
+  margin-top: 4px;
+}
+
+/* 对话页的 markdown 基础样式是随 Chat 视图懒加载的，弹窗可能比它先出现，
+   所以列表符号、段落间距、链接色这些基础项在这里自带一份，不依赖加载顺序。 */
+.help-dialog .markdown-body p {
+  margin: 7px 0;
+}
+
+.help-dialog .markdown-body strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.help-dialog .markdown-body a {
+  color: var(--accent-primary);
+  text-decoration: none;
+}
+
+.help-dialog .markdown-body a:hover {
+  text-decoration: underline;
+}
+
+.help-dialog .markdown-body ul,
+.help-dialog .markdown-body ol {
+  margin: 7px 0;
+  padding-left: 20px;
+}
+
+.help-dialog .markdown-body ul {
+  list-style: disc;
+}
+
+.help-dialog .markdown-body ol {
+  list-style: decimal;
+}
+
+.help-dialog .markdown-body li + li {
+  margin-top: 4px;
+}
+
+.help-dialog .markdown-body table {
+  width: 100%;
+  margin: 8px 0 4px;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.help-dialog .markdown-body th,
+.help-dialog .markdown-body td {
+  padding: 6px 10px;
+  border: 0;
+  border-bottom: 1px solid var(--border-subtle);
+  text-align: left;
+  vertical-align: top;
+}
+
+.help-dialog .markdown-body th {
+  font-weight: 600;
+  color: var(--text-secondary);
+  /* 对话页的 th 底色是浅色主题写死的浅灰，暗色主题下会变成一条亮带、字也读不出来。 */
+  background: var(--bg-hover);
+  white-space: nowrap;
+}
+
+.help-dialog .markdown-body code {
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--bg-hover);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}

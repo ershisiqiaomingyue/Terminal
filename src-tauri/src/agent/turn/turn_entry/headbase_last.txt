@@ -1,0 +1,13 @@
+    let tool_definitions = registry
+        .list_public()
+        .into_iter()
+        .cloned()
+        .collect::<Vec<_>>();
+    let context_window = agent_core::resolved_model_context_window(provider, &selected_model);
+    let context_window_resolution = agent_core::resolve_context_window(context_window);
+    let context_window_estimated = !context_window_resolution.is_known();
+    let provider_capabilities = ProviderCapabilities::for_kind(protocol);
+    let model_supports_tools = selected_model
+        .supports_tools
+        .unwrap_or(provider_capabilities.supports_tools);
+    let model_supports_usage = selected_model

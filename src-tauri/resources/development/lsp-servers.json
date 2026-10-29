@@ -1,0 +1,220 @@
+{
+  "servers": [
+    {
+      "id": "rust",
+      "command": "rust-analyzer",
+      "args": [],
+      "languages": {
+        "rs": "rust"
+      }
+    },
+    {
+      "id": "cpp",
+      "command": "clangd",
+      "args": [],
+      "languages": {
+        "c": "c",
+        "h": "c",
+        "cc": "cpp",
+        "cpp": "cpp",
+        "cxx": "cpp",
+        "hh": "cpp",
+        "hpp": "cpp",
+        "hxx": "cpp"
+      }
+    },
+    {
+      "id": "python",
+      "command": "pyright-langserver",
+      "args": [
+        "--stdio"
+      ],
+      "languages": {
+        "py": "python",
+        "pyi": "python"
+      }
+    },
+    {
+      "id": "typescript",
+      "command": "typescript-language-server",
+      "args": [
+        "--stdio"
+      ],
+      "languages": {
+        "ts": "typescript",
+        "tsx": "typescriptreact",
+        "js": "javascript",
+        "jsx": "javascriptreact",
+        "mjs": "javascript",
+        "cjs": "javascript"
+      }
+    },
+    {
+      "id": "go",
+      "command": "gopls",
+      "args": [],
+      "languages": {
+        "go": "go",
+        "mod": "gomod",
+        "sum": "gosum"
+      }
+    },
+    {
+      "id": "java",
+      "command": "jdtls",
+      "args": [],
+      "languages": {
+        "java": "java"
+      }
+    },
+    {
+      "id": "csharp",
+      "command": "csharp-ls",
+      "args": [],
+      "languages": {
+        "cs": "csharp"
+      }
+    },
+    {
+      "id": "php",
+      "command": "intelephense",
+      "args": [
+        "--stdio"
+      ],
+      "languages": {
+        "php": "php"
+      }
+    },
+    {
+      "id": "ruby",
+      "command": "solargraph",
+      "args": [
+        "stdio"
+      ],
+      "languages": {
+        "rb": "ruby",
+        "rake": "ruby"
+      }
+    },
+    {
+      "id": "lua",
+      "command": "lua-language-server",
+      "args": [],
+      "languages": {
+        "lua": "lua"
+      }
+    },
+    {
+      "id": "shell",
+      "command": "bash-language-server",
+      "args": [
+        "start"
+      ],
+      "languages": {
+        "sh": "shellscript",
+        "bash": "shellscript"
+      }
+    },
+    {
+      "id": "swift",
+      "command": "sourcekit-lsp",
+      "args": [],
+      "languages": {
+        "swift": "swift"
+      }
+    },
+    {
+      "id": "dart",
+      "command": "dart",
+      "args": [
+        "language-server",
+        "--protocol=lsp"
+      ],
+      "languages": {
+        "dart": "dart"
+      }
+    },
+    {
+      "id": "kotlin",
+      "command": "kotlin-language-server",
+      "args": [],
+      "languages": {
+        "kt": "kotlin",
+        "kts": "kotlin"
+      }
+    },
+    {
+      "id": "vue",
+      "command": "vue-language-server",
+      "args": [
+        "--stdio"
+      ],
+      "languages": {
+        "vue": "vue"
+      }
+    },
+    {
+      "id": "svelte",
+      "command": "svelteserver",
+      "args": [
+        "--stdio"
+      ],
+      "languages": {
+        "svelte": "svelte"
+      }
+    },
+    {
+      "id": "css",
+      "command": "vscode-css-language-server",
+      "args": [
+        "--stdio"
+      ],
+      "languages": {
+        "css": "css",
+        "scss": "scss",
+        "less": "less"
+      }
+    },
+    {
+      "id": "html",
+      "command": "vscode-html-language-server",
+      "args": [
+        "--stdio"
+      ],
+      "languages": {
+        "html": "html",
+        "htm": "html"
+      }
+    },
+    {
+      "id": "json",
+      "command": "vscode-json-language-server",
+      "args": [
+        "--stdio"
+      ],
+      "languages": {
+        "json": "json",
+        "jsonc": "jsonc"
+      }
+    },
+    {
+      "id": "yaml",
+      "command": "yaml-language-server",
+      "args": [
+        "--stdio"
+      ],
+      "languages": {
+        "yaml": "yaml",
+        "yml": "yaml"
+      }
+    },
+    {
+      "id": "zig",
+      "command": "zls",
+      "args": [],
+      "languages": {
+        "zig": "zig"
+      }
+    }
+  ]
+}

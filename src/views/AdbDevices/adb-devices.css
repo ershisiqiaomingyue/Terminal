@@ -1,0 +1,1138 @@
+/* ==========================================================================
+   ADB Devices Management View Styles (设备工作台)
+   - 100% 对齐原版 AdbDevicesView.vue 全部业务模块
+   - 严格遵循设计 Tokens 体系 (Design Tokens System)
+   - 默认态加肉眼可见微冷灰底座 (--dev-item-bg)
+   - 激活态纯背景平滑切换，彻底杜绝外框线 (No Border Outline)
+   - 仅限内部滚动区域呈现高对比度墨灰独立滚动条，避免外层嵌套滚动
+   - 顶部悬浮 Toast 胶囊通知与标准 ConfirmDialog 弹窗配合
+   ========================================================================== */
+
+.adb-dev-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  background: var(--bg-canvas);
+  overflow: hidden;
+
+  /* 基础微灰底色 Tokens */
+  --dev-item-bg: var(--bg-card);
+  --dev-item-hover: var(--bg-hover);
+  --dev-item-active: var(--bg-selected);
+  --dev-item-active-text: var(--text-primary);
+  --dev-slot-bg: var(--bg-surface);
+}
+
+/* 深色模式自适应 */
+html[data-theme="dark"] .adb-dev-container,
+[data-theme="dark"] .adb-dev-container {
+  --dev-item-bg: var(--bg-card);
+  --dev-item-hover: var(--bg-hover);
+  --dev-item-active: var(--bg-selected);
+  --dev-item-active-text: var(--text-primary);
+  --dev-slot-bg: var(--bg-surface);
+}
+
+/* ─── 顶部悬浮 Toast 胶囊通知 ────────────────────────────── */
+.adb-dev-toast-pill {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  background: var(--toast-bg);
+  color: var(--toast-text);
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: var(--toast-shadow);
+  backdrop-filter: blur(8px);
+  animation: adbToastSlideDown 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes adbToastSlideDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -10px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+.adb-dev-toast-pill.success {
+  background: var(--status-success-bg);
+  color: var(--status-success-text);
+}
+
+.adb-dev-toast-pill.error {
+  background: var(--status-danger-bg);
+  color: var(--status-danger-text);
+}
+
+.adb-dev-toast-pill.info {
+  background: var(--toast-bg);
+}
+
+.adb-dev-toast-icon {
+  flex-shrink: 0;
+}
+
+.adb-dev-toast-text {
+  max-width: 480px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adb-dev-toast-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+}
+
+.adb-dev-toast-close:hover {
+  color: inherit;
+  background: color-mix(in srgb, currentColor 10%, transparent);
+}
+
+/* ─── 页面顶部 Header ────────────────────────────────────── */
+.adb-dev-top-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52px;
+  padding: 0 18px;
+  background: var(--page-header-bg);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.adb-dev-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.adb-dev-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.adb-dev-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.25;
+}
+
+.adb-dev-subtitle {
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+}
+
+.adb-dev-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ─── 无线调试工具条 ─────────────────────────────────────── */
+.adb-dev-wireless-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 18px;
+  background: var(--page-header-bg);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  height: 44px;
+  min-width: 0;
+}
+
+.adb-dev-wireless-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.adb-dev-wireless-label strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.adb-dev-wireless-label small {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-left: 2px;
+}
+
+.adb-dev-wireless-right-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.adb-dev-endpoint-input-wrap {
+  width: 240px !important;
+  max-width: 240px !important;
+  flex: 0 0 240px !important;
+}
+
+.adb-dev-pairing-input-wrap {
+  width: 96px !important;
+  max-width: 96px !important;
+  flex: 0 0 96px !important;
+}
+
+.adb-dev-endpoint-input-wrap input,
+.adb-dev-pairing-input-wrap input {
+  height: 28px !important;
+  font-size: 12px !important;
+}
+
+.adb-dev-wireless-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* ─── 空状态 ─────────────────────────────────────────────── */
+.adb-dev-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 40px 20px;
+  color: var(--text-tertiary);
+  gap: 12px;
+  text-align: center;
+}
+
+.adb-dev-empty-icon {
+  opacity: 0.45;
+  color: var(--text-secondary);
+}
+
+.adb-dev-empty-state h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.adb-dev-empty-state p {
+  margin: 0;
+  font-size: 12.5px;
+  max-width: 440px;
+  line-height: 1.6;
+}
+
+/* ─── 主分栏工作区 ───────────────────────────────────────── */
+.adb-dev-body-split {
+  display: grid;
+  grid-template-columns: minmax(260px, 28%) 1fr;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ─── 左侧：已连接设备侧边栏 ─────────────────────────────── */
+.adb-dev-aside {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  overflow: hidden;
+  min-height: 0;
+}
+
+.adb-dev-aside-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: var(--divider-subtle);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.adb-dev-badge-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 9999px;
+  background: var(--dev-item-bg);
+  color: var(--text-primary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.adb-dev-device-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  overflow-x: hidden;
+  flex: 1;
+  min-height: 0;
+}
+
+/* 设备列表条目：默认态灰底底座，激活态纯背景切换，无任何边框线 */
+.adb-dev-item-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: var(--dev-item-bg);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.adb-dev-item-row:hover:not(.selected) {
+  background: var(--dev-item-hover);
+}
+
+.adb-dev-item-row.selected {
+  background: var(--dev-item-active) !important;
+}
+
+.adb-dev-item-lamp-col {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.adb-dev-lamp {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  background: var(--warning-text);
+}
+
+.adb-dev-lamp.ok {
+  background: var(--status-success-text);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--success-text) 45%, transparent);
+}
+
+.adb-dev-lamp.warn {
+  background: var(--status-danger-text);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--danger-text) 40%, transparent);
+}
+
+.adb-dev-item-info-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  gap: 2px;
+}
+
+.adb-dev-item-model {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adb-dev-item-row.selected .adb-dev-item-model {
+  color: var(--dev-item-active-text);
+  font-weight: 700;
+}
+
+.adb-dev-item-serial {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono, monospace);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adb-dev-item-status-col {
+  flex-shrink: 0;
+}
+
+/* ─── 右侧：设备详情主卡片 ───────────────────────────────── */
+.adb-dev-article {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 20px;
+  overflow: hidden;
+  min-width: 0;
+  min-height: 0;
+  background: var(--bg-canvas);
+}
+
+@media (max-width: 900px) {
+  .adb-dev-top-header { height: auto; min-height: 52px; flex-wrap: wrap; padding: 10px 14px; }
+  .adb-dev-header-left { min-width: 0; }
+  .adb-dev-wireless-bar { height: auto; min-height: 44px; flex-wrap: wrap; padding: 8px 14px; }
+  .adb-dev-wireless-right-group { flex-wrap: wrap; flex-shrink: 1; min-width: 0; width: 100%; }
+  .adb-dev-body-split { grid-template-columns: minmax(160px, 30%) minmax(0, 1fr); }
+  .adb-dev-card-header { flex-wrap: wrap; gap: 8px; }
+  .adb-dev-actions-matrix { flex-wrap: wrap; gap: 8px; }
+  .adb-dev-actions-buttons { flex-wrap: wrap; }
+}
+
+@media (max-width: 600px) {
+  .adb-dev-body-split { grid-template-columns: minmax(0, 1fr); grid-template-rows: 180px minmax(0, 1fr); }
+  .adb-dev-wireless-label { white-space: normal; }
+  .adb-dev-wireless-label small { display: none; }
+  .adb-dev-endpoint-input-wrap { width: 100% !important; max-width: none !important; flex: 1 1 100% !important; }
+  .adb-dev-article { padding: 12px 14px; }
+  .adb-dev-tabs-container { overflow-x: auto; flex-shrink: 0; }
+  .adb-dev-seg-group { width: max-content; }
+  .adb-dev-apps-split { grid-template-columns: minmax(0, 1fr); grid-template-rows: 180px minmax(0, 1fr); }
+}
+
+/* 设备详情卡片头部 */
+.adb-dev-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.adb-dev-card-title-col h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.25;
+}
+
+.adb-dev-card-meta {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.adb-dev-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 胶囊分段导航栏 */
+.adb-dev-tabs-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 14px;
+  flex-shrink: 0;
+}
+
+.adb-dev-seg-group {
+  display: inline-flex;
+}
+
+/* 服务警告条 */
+.adb-dev-service-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--status-warning-bg);
+  border: 1px solid transparent;
+  color: var(--warning-text);
+  font-size: 12px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+/* ─── Tab 面板通用容器 ───────────────────────────────────── */
+.adb-dev-tab-pane {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ─── TAB 1: 设备总览 ────────────────────────────────────── */
+.adb-dev-pane-overview {
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  overflow-x: hidden;
+  padding-right: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.adb-dev-telemetry-box {
+  /* transparent wrapper — PropertyGrid 自带卡片样式，此处不再套外层卡片 */
+}
+
+.adb-dev-actions-matrix {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 4px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.adb-dev-actions-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.adb-dev-actions-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.adb-dev-fingerprint-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.adb-dev-code-block {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.adb-dev-code-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+
+.adb-dev-code-block code {
+  display: block;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--dev-slot-bg);
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-mono, monospace);
+  font-size: 11.5px;
+  line-height: 1.5;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* ─── TAB 2: 应用包 ──────────────────────────────────────── */
+.adb-dev-pane-apps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.adb-dev-pane-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 4px 2px;
+  flex-shrink: 0;
+  overflow: visible !important;
+}
+
+.adb-dev-search-box {
+  width: 380px;
+  max-width: 480px;
+  flex: 0 1 380px;
+  overflow: visible !important;
+}
+
+.adb-dev-search-box .input-wrapper,
+.adb-dev-search-box .input-shell {
+  overflow: visible !important;
+}
+
+.adb-dev-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.adb-dev-stats-text {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.adb-dev-apps-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 32%);
+  border: 1px solid transparent;
+  border-radius: var(--radius-base);
+  overflow: hidden;
+  flex: 1;
+  min-height: 0;
+  background: var(--bg-surface);
+}
+
+.adb-dev-apps-list-box {
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  overflow-x: hidden;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.adb-dev-app-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--dev-item-bg);
+  cursor: pointer;
+  border: 0 !important;
+  outline: 0 !important;
+  transition: background var(--transition-fast);
+}
+
+.adb-dev-app-row:hover:not(.selected) {
+  background: var(--dev-item-hover);
+}
+
+.adb-dev-app-row.selected {
+  background: var(--dev-item-active) !important;
+}
+
+.adb-dev-app-icon {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+}
+
+.adb-dev-app-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  gap: 2px;
+}
+
+.adb-dev-app-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adb-dev-app-path {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono, monospace);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adb-dev-app-tag {
+  display: inline-flex;
+  padding: 2px 6px;
+  border-radius: 9999px;
+  background: var(--dev-slot-bg);
+  color: var(--text-secondary);
+  font-size: 10.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.adb-dev-app-detail-card {
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  border-left: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  gap: 10px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.adb-dev-card-hint {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.adb-dev-selected-app-name {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.adb-dev-selected-app-path {
+  display: block;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--dev-slot-bg);
+  border: 1px solid transparent;
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono, monospace);
+  word-break: break-all;
+  line-height: 1.5;
+}
+
+.adb-dev-app-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.adb-dev-app-actions-row button {
+  width: auto !important;
+  flex: 0 0 auto !important;
+}
+
+.adb-dev-list-blank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  text-align: center;
+  flex: 1;
+}
+
+/* ─── TAB 3: 运行进程 ───────────────────────────────────── */
+.adb-dev-pane-processes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.adb-dev-proc-table {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid transparent;
+  border-radius: var(--radius-base);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  overflow-x: hidden;
+  flex: 1;
+  min-height: 0;
+  background: var(--bg-surface);
+}
+
+.adb-dev-proc-tr {
+  display: grid;
+  grid-template-columns: 80px 120px 1fr;
+  gap: 12px;
+  padding: 8px 14px;
+  align-items: center;
+  border-bottom: var(--divider-subtle);
+  font-size: 12px;
+}
+
+.adb-dev-proc-tr:last-child {
+  border-bottom: 0;
+}
+
+.adb-dev-proc-th {
+  position: sticky;
+  top: 0;
+  background: var(--bg-card);
+  font-weight: 700;
+  color: var(--text-secondary);
+  font-size: 11.5px;
+  z-index: 10;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.adb-dev-col-pid {
+  font-family: var(--font-mono, monospace);
+  color: var(--accent-primary);
+}
+
+.adb-dev-col-user {
+  color: var(--text-tertiary);
+}
+
+.adb-dev-col-name {
+  color: var(--text-primary);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ─── TAB 4: 系统诊断 ───────────────────────────────────── */
+.adb-dev-pane-diagnostics {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.adb-dev-diagnostics-top {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.adb-dev-diag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.adb-dev-diag-chip {
+  height: 28px;
+  padding: 0 11px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid transparent;
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.adb-dev-diag-chip:hover:not(.active) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.adb-dev-diag-chip.active {
+  background: var(--accent-subtle) !important;
+  color: var(--accent-primary) !important;
+  border-color: transparent !important;
+  font-weight: 650;
+  box-shadow: none;
+}
+
+.adb-dev-diag-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.adb-dev-graphics-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--dev-slot-bg);
+  border: 1px solid transparent;
+  flex-shrink: 0;
+}
+
+.adb-dev-graphics-filter-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.adb-dev-graphics-filter-input {
+  width: 240px;
+}
+
+/* 性能矩阵卡片 */
+.adb-dev-perf-matrix-box {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid transparent;
+  border-radius: var(--radius-base);
+  overflow: hidden;
+  flex: 1;
+  min-height: 0;
+  background: var(--bg-surface);
+}
+
+.adb-dev-perf-matrix-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+}
+
+.adb-dev-perf-matrix-header strong {
+  font-size: 12.5px;
+  color: var(--text-primary);
+}
+
+.adb-dev-perf-matrix-header small {
+  display: block;
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.adb-dev-perf-serial {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.adb-dev-perf-list {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  overflow-x: hidden;
+  flex: 1;
+  min-height: 0;
+}
+
+.adb-dev-perf-row {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: var(--divider-subtle);
+  align-items: flex-start;
+}
+
+.adb-dev-perf-row:last-child {
+  border-bottom: 0;
+}
+
+.adb-dev-perf-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.adb-dev-perf-badge.ok {
+  background: var(--status-success-bg);
+  color: var(--status-success-text);
+}
+
+.adb-dev-perf-badge.fail {
+  background: var(--status-danger-bg);
+  color: var(--status-danger-text);
+}
+
+.adb-dev-perf-info strong {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 3px;
+}
+
+.adb-dev-perf-info p {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  font-family: var(--font-mono, monospace);
+}
+
+/* 诊断终端输出 Pre 卡片 */
+.adb-dev-terminal-output-box {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid transparent;
+  border-radius: var(--radius-base);
+  overflow: hidden;
+  flex: 1;
+  min-height: 0;
+}
+
+/* 新款无外框命令行 + One Dark Pro 风格 Pre（与原版 Vue 对齐） */
+.adb-dev-diag-terminal-wrap {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.adb-dev-diag-command {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 12px;
+  background: transparent;
+  color: var(--text-tertiary);
+  font-size: 11.5px;
+  font-family: var(--font-mono, monospace);
+  flex-shrink: 0;
+}
+
+.adb-dev-diag-cmd-prompt {
+  color: var(--accent-primary);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.adb-dev-diag-cmd-text {
+  color: var(--text-secondary);
+}
+
+.adb-dev-diag-pre {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-base);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-family: var(--font-mono, monospace);
+  font-size: 11.5px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  overflow-x: hidden;
+  flex: 1;
+  min-height: 0;
+}
+
+.adb-dev-terminal-cmd-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-tertiary);
+  font-size: 12px;
+  font-family: var(--font-mono, monospace);
+  flex-shrink: 0;
+}
+
+.adb-dev-terminal-cmd-bar code {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.adb-dev-terminal-cmd-bar svg {
+  color: var(--accent-primary);
+}
+
+.adb-dev-terminal-pre {
+  margin: 0;
+  padding: 14px 16px;
+  background: var(--terminal-canvas-bg);
+  color: var(--text-primary);
+  font-family: var(--font-mono, monospace);
+  font-size: 11.5px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  overflow-x: hidden;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ─── 统一墨灰高对比度滚动条 (custom-scrollbar) ─────────────── */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--bg-hover);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+html[data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-track,
+[data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--bg-hover);
+}
+
+html[data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-thumb,
+[data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+}
+
+html[data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* Spin 动画辅助 */
+.spin {
+  animation: adbSpin 0.9s linear infinite;
+}
+
+@keyframes adbSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

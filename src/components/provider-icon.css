@@ -1,0 +1,24 @@
+.provider-icon-monochrome {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-color: #4d6bfe;
+  mask-size: contain;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+}
+
+html[data-theme="dark"] .provider-icon[data-brand="deepseek"] .provider-icon-monochrome {
+  background-color: #809bff;
+}
+
+.provider-icon[data-brand="openai"] .provider-icon-monochrome {
+  background-color: var(--text-primary);
+}
+
+.provider-icon[data-brand^="workbuddy-"] .provider-icon-monochrome {
+  background-color: var(--text-primary);
+}

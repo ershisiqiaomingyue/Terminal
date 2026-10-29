@@ -1,0 +1,49 @@
+.chat-terminal-panel { display: flex; align-self: stretch; min-width: 0; min-height: 0; flex: 0 0 var(--chat-terminal-height, 250px); flex-direction: column; margin: 0 16px 12px; overflow: hidden; border: 0; border-radius: var(--radius-lg); background: var(--bg-surface); box-shadow: var(--shadow-md); }
+.chat-terminal-panel.is-hidden { display: none; }
+/* 终端面板上沿的横向分隔条：拖动改高度，视觉上只在悬停时露出一条细线 */
+.pane-height-resizer { position: relative; display: flex; align-items: center; justify-content: center; flex: 0 0 6px; min-height: 6px; margin: 0 16px; border: 0; outline: none; cursor: row-resize; }
+.pane-height-resizer::before { content: ""; width: 42px; height: 3px; border-radius: 99px; background: var(--border-subtle); opacity: 0; transition: opacity 120ms ease; }
+.pane-height-resizer:hover::before,
+.pane-height-resizer:focus-visible::before,
+.pane-height-resizer.is-dragging::before { opacity: 1; background: var(--text-tertiary); }
+.pane-height-resizer:focus-visible { box-shadow: inset 0 0 0 2px var(--accent-border, var(--border-subtle)); }
+body:has(.pane-height-resizer.is-dragging) { cursor: row-resize; user-select: none; }
+.chat-terminal-panel header { display: flex; align-items: center; gap: 4px; min-height: 32px; padding: 0 7px; border: 0; background: var(--terminal-tabs-bg); }
+.chat-terminal-tabs { min-width: 0; flex: 1; --session-tab-height: 24px; --session-tab-font-size: 10px; }
+.chat-terminal-panel header > button,
+.chat-terminal-add-anchor > button { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 7px; border: 1px solid transparent; border-radius: 5px; color: var(--text-secondary); background: transparent; font: inherit; font-size: 10px; white-space: nowrap; cursor: pointer; }
+.chat-terminal-add-anchor { position: relative; flex: 0 0 auto; }
+.chat-terminal-add-anchor > button { gap: 1px; padding: 0 5px; }
+.chat-terminal-panel header > button:hover,
+.chat-terminal-add-anchor > button:hover { color: var(--text-primary); background: var(--bg-hover); }
+.chat-terminal-add-menu { position: absolute; z-index: 4; top: 29px; right: 0; display: flex; flex-direction: column; min-width: 180px; max-width: 250px; max-height: min(360px, calc(100dvh - 160px)); padding: 5px; overflow-x: hidden; overflow-y: auto; scrollbar-gutter: stable; border: var(--popover-border); border-radius: 7px; background: var(--popover-bg); box-shadow: var(--popover-shadow); }
+.chat-terminal-add-menu::-webkit-scrollbar { width: 7px; }
+.chat-terminal-add-menu::-webkit-scrollbar-thumb { border-radius: 8px; background: var(--scrollbar-thumb); }
+.chat-terminal-add-menu > span { padding: 6px 7px 3px; color: var(--text-tertiary); font-size: 9px; font-weight: 700; }
+.chat-terminal-add-menu > button { display: flex; align-items: center; gap: 7px; min-width: 0; min-height: 27px; padding: 0 7px; border: 0; border-radius: 5px; color: var(--text-secondary); background: transparent; font: inherit; font-size: 10px; text-align: left; white-space: nowrap; cursor: pointer; }
+.chat-terminal-add-menu > button:hover { color: var(--text-primary); background: var(--bg-hover); }
+.chat-terminal-add-menu > button svg { flex: 0 0 auto; color: var(--text-tertiary); }
+/* 迁移定稿：内核宿主整体换成终端页的 TerminalPane 组件（自带画布/滚动条/
+   主题样式）。chromeless 模式下外框/标题栏由聊天面板自己提供，这里零内边距，
+   画布的呼吸空间交给终端视口自身的 padding。 */
+.chat-terminal-host { min-width: 0; min-height: 0; flex: 1; display: flex; overflow: hidden; }
+.chat-terminal-host > .terminal-pane { flex: 1; }
+.chat-terminal-empty { display: flex; align-items: center; justify-content: center; gap: 6px; flex: 1; border: 0; color: var(--text-tertiary); background: transparent; font: inherit; font-size: 11px; cursor: pointer; }
+
+/* Opal Frost Light Theme */
+html[data-theme] .chat-terminal-panel {
+  background: var(--bg-card);
+  border: 1px solid transparent;
+  box-shadow: var(--shadow-sm);
+  border-radius: 14px;
+}
+html[data-theme] .chat-terminal-panel header {
+  background: var(--terminal-tabs-bg);
+  border-bottom: 1px solid var(--border-subtle);
+}
+html[data-theme] .chat-terminal-host {
+  background: var(--terminal-canvas-bg);
+}
+html[data-theme] .chat-terminal-host .xterm-viewport {
+  background-color: var(--terminal-canvas-bg) !important;
+}

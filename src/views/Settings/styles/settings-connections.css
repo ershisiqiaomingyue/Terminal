@@ -1,0 +1,81 @@
+
+
+/* 列表条目卡片 (已保存 SSH / WSL / 目录条目) */
+.setting-item-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 15px;
+  border-radius: 9px;
+  background: var(--surface-inset-bg);
+  border: 1px solid transparent;
+  transition: all var(--transition-fast);
+}
+
+.setting-item-pill:hover {
+  border-color: transparent;
+  background: var(--surface-action-hover-bg);
+}
+
+/* 小图标按钮通用 Hover 修复 (绝不消失或变暗) */
+.icon-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.icon-action-btn:hover {
+  color: var(--text-primary) !important;
+  background: var(--bg-hover) !important;
+  border-color: transparent !important;
+}
+
+.icon-action-btn.danger:hover {
+  color: var(--status-danger-text) !important;
+  background: var(--status-danger-bg) !important;
+  border-color: transparent !important;
+}
+
+.provider-saved-actions .provider-icon-action {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.provider-saved-actions .provider-icon-action:hover:not(:disabled),
+.provider-saved-actions .provider-icon-action:focus-visible {
+  background: var(--bg-selected);
+  color: var(--text-primary);
+}
+
+/* MCP 列表单项 */
+.mcp-row-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  background: var(--surface-inset-bg);
+  border: 1px solid transparent;
+  border-radius: 8px;
+}
+
+.mcp-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--status-success-text);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--success-text) 15%, transparent);
+  flex-shrink: 0;
+}

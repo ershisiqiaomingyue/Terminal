@@ -1,0 +1,8 @@
+    let mut reported_usage_compacted = false;
+    // Provider count over the local estimate of the same request, times 100. The
+    // estimator runs under the real charge on tool-heavy transcripts, so the
+    // compaction trigger is scaled by this measured drift; `None` until a round
+    // has reported usage.
+    let mut context_charge_percent: Option<usize> = None;
+    // P9-E：本轮之前压缩改写过请求前缀，缓存读数要从头起算（只置一次）。
+    let mut cache_baseline_reset = false;

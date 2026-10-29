@@ -1,0 +1,105 @@
+/* ==========================================================================
+   Native 符号化分析工作台 (NativeSymbolizerView) - 现代原生桌面规范
+   ========================================================================== */
+
+.native-sym-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  background: var(--bg-canvas);
+  overflow: hidden;
+
+  --sym-card-bg: var(--bg-card);
+  --sym-card-hover: var(--bg-hover);
+}
+
+html[data-theme="dark"] .native-sym-container,
+[data-theme="dark"] .native-sym-container {
+  --sym-card-bg: var(--bg-card);
+  --sym-card-hover: var(--bg-hover);
+}
+
+.native-sym-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52px;
+  padding: 0 18px;
+  background: var(--page-header-bg);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.native-sym-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding: 16px 20px;
+  gap: 14px;
+}
+
+.native-sym-config-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 20px;
+  border-radius: var(--card-radius);
+  background: var(--bg-card);
+  border: var(--card-border);
+  box-shadow: var(--card-shadow), var(--card-rim);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.native-sym-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 12px; align-items: end; }
+@media (max-width: 720px) {
+  .native-sym-fields { grid-template-columns: minmax(0, 1fr); }
+}
+
+.native-sym-viewport {
+  flex: 1;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  background: var(--bg-card);
+  border: var(--card-border);
+  box-shadow: var(--card-shadow), var(--card-rim);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.native-sym-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 12px;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.native-sym-logs {
+  margin: 0;
+  padding: 12px 14px;
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  overflow-x: hidden;
+  flex: 1;
+}

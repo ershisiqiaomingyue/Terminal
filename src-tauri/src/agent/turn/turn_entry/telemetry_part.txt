@@ -1,0 +1,9 @@
+    };
+    let image_token_reserve =
+        AtomicUsize::new(estimate_image_attachment_tokens(&image_attachments));
+    let estimate_context_tokens =
+        |messages: &[AgentMessage], system: &str, tools: &[ToolDefinition]| {
+            estimate_agent_request_tokens(messages, system, tools)
+                .saturating_add(image_token_reserve.load(Ordering::Relaxed))
+        };
+    let mut text = String::new();

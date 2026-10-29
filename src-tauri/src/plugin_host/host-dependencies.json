@@ -1,0 +1,250 @@
+{
+  "categories": [
+    {
+      "id": "pluginPeers",
+      "note": "插件自己声明的 12 个 peer（report.md §11.4 表 line 515、§11.2）＋「其余」24 条里未被 line 508 判为「primitives 里零引用」的 11 条 = 23 条。pin 它们的理由是版本统一：无 pin（变体 A）时 @deepseek-ai/cordis 4.0.4 → 4.0.5、yaml 2.8.1 → 2.9.1（§11.4 line 523），带清单（变体 B）时 57/57 与 pin 精确一致、零漂移。"
+    },
+    {
+      "id": "externalizedImports",
+      "note": "上游 @deepseek-ai/dsh-client-ui-primitives/lib/index.js 静态引用的运行时 import，恰好 21 个包名（report.md §11.4 表 line 516 的汇总名单）。不带这些 pin 时（变体 A）其中 20 条 MODULE_NOT_FOUND；clsx 靠父目录 node_modules 误报（line 506），实际同样不在插件目录内。"
+    },
+    {
+      "id": "hostEntryPoints",
+      "note": "report.md line 508 严格判据复核后「在 primitives 里查不到任何引用」的 13 条（12 个 @deepseek-ai/* ＋ esbuild@0.25.12），服务宿主/其它插件入口；另加 1 条 @deepseek-ai/dsh-attachment —— 宿主 services.mjs 要挂 AttachmentStore（插件 inject 'attachments'），而它只是 dsh-commands 的普通依赖、不会出现在顶层，必须显式 pin。line 509 的限制：扫描范围只有被测插件树、宿主本体不在其中，「命中 0」只等于「该树内无引用」，不能作为删除依据。"
+    }
+  ],
+  "packages": [
+    {
+      "specifier": "@deepseek-ai/cordis@4.0.4",
+      "category": "pluginPeers"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-client-store@0.1.2-alpha.2",
+      "category": "externalizedImports"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-tools@0.2.0-rc.2",
+      "category": "hostEntryPoints"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-scope@0.2.0-rc.2",
+      "category": "pluginPeers"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-system-prompt@0.2.0-rc.2",
+      "category": "pluginPeers"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-subprocess@0.2.0-rc.2",
+      "category": "hostEntryPoints"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-subprocess-local@0.2.0-rc.2",
+      "category": "hostEntryPoints"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-llm@0.2.0-rc.2",
+      "category": "pluginPeers"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-sandbox@0.2.0-rc.2",
+      "category": "hostEntryPoints"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-http-proxy@0.2.0-rc.2",
+      "category": "hostEntryPoints"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-session@0.2.0-rc.2",
+      "category": "pluginPeers"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-session-projection@0.2.0-rc.2",
+      "category": "pluginPeers"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-agent@0.2.0-rc.2",
+      "category": "pluginPeers"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-invariants@0.2.0-rc.2",
+      "category": "pluginPeers"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-ptc-runtime@0.2.0-rc.2",
+      "category": "hostEntryPoints"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-sandbox-policy@0.2.0-rc.2",
+      "category": "hostEntryPoints"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-user-approval@0.2.0-rc.2",
+      "category": "hostEntryPoints"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-workspace@0.2.0-rc.2",
+      "category": "hostEntryPoints"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-util-values@0.2.0-rc.2",
+      "category": "pluginPeers"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-typert-protocol@0.2.0-rc.2",
+      "category": "pluginPeers"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-brand@0.2.0-rc.2",
+      "category": "pluginPeers"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-storage@0.2.0-rc.2",
+      "category": "hostEntryPoints"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-storage-domain@0.2.0-rc.2",
+      "category": "hostEntryPoints"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-session-persistence@0.2.0-rc.2",
+      "category": "hostEntryPoints"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-attachment@0.2.0-rc.2",
+      "category": "hostEntryPoints"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-timeout@0.2.0-rc.2",
+      "category": "pluginPeers"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-home-paths@0.2.0-rc.2",
+      "category": "pluginPeers"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-credentials@0.2.0-rc.2",
+      "category": "pluginPeers"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-client-connection@0.2.0-rc.2",
+      "category": "pluginPeers"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-client-ui-slots@0.2.0-rc.2",
+      "category": "pluginPeers"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-commands@0.2.0-rc.2",
+      "category": "pluginPeers"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-host-webserver@0.2.0-rc.2",
+      "category": "pluginPeers"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-agent-default-model@0.2.0-rc.2",
+      "category": "pluginPeers"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-client-ui-primitives@0.2.0-rc.2",
+      "category": "pluginPeers"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-util-code-language@0.2.0-rc.2",
+      "category": "externalizedImports"
+    },
+    {
+      "specifier": "@deepseek-ai/dsh-util-workspace-path@0.2.0-rc.2",
+      "category": "externalizedImports"
+    },
+    {
+      "specifier": "clsx@2.1.1",
+      "category": "externalizedImports"
+    },
+    {
+      "specifier": "diff@9.0.0",
+      "category": "externalizedImports"
+    },
+    {
+      "specifier": "anser@2.3.5",
+      "category": "externalizedImports"
+    },
+    {
+      "specifier": "katex@0.16.47",
+      "category": "externalizedImports"
+    },
+    {
+      "specifier": "shiki@4.3.1",
+      "category": "externalizedImports"
+    },
+    {
+      "specifier": "@shikijs/langs@4.3.1",
+      "category": "externalizedImports"
+    },
+    {
+      "specifier": "simple-icons@16.31.0",
+      "category": "externalizedImports"
+    },
+    {
+      "specifier": "mdast-util-from-markdown@2.0.3",
+      "category": "externalizedImports"
+    },
+    {
+      "specifier": "mdast-util-gfm@3.1.0",
+      "category": "externalizedImports"
+    },
+    {
+      "specifier": "mdast-util-math@3.0.0",
+      "category": "externalizedImports"
+    },
+    {
+      "specifier": "micromark-core-commonmark@2.0.3",
+      "category": "externalizedImports"
+    },
+    {
+      "specifier": "micromark-util-character@2.1.1",
+      "category": "externalizedImports"
+    },
+    {
+      "specifier": "micromark-util-classify-character@2.0.1",
+      "category": "externalizedImports"
+    },
+    {
+      "specifier": "micromark-util-symbol@2.0.1",
+      "category": "externalizedImports"
+    },
+    {
+      "specifier": "micromark-factory-space@2.0.1",
+      "category": "externalizedImports"
+    },
+    {
+      "specifier": "micromark-extension-math@3.1.0",
+      "category": "externalizedImports"
+    },
+    {
+      "specifier": "micromark-extension-gfm@3.0.0",
+      "category": "externalizedImports"
+    },
+    {
+      "specifier": "micromark-util-sanitize-uri@2.0.1",
+      "category": "externalizedImports"
+    },
+    {
+      "specifier": "react@18.3.1",
+      "category": "pluginPeers"
+    },
+    {
+      "specifier": "react-dom@18.3.1",
+      "category": "pluginPeers"
+    },
+    {
+      "specifier": "esbuild@0.25.12",
+      "category": "hostEntryPoints"
+    },
+    {
+      "specifier": "yaml@2.8.1",
+      "category": "pluginPeers"
+    }
+  ]
+}

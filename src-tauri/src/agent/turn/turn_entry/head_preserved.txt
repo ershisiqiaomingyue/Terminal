@@ -1,0 +1,28 @@
+use super::setup::{prepare_input, prepare_turn_environments, prepare_turn_input, PreparedInput};
+use super::super::*;
+
+
+pub(in crate::agent::turn) struct TurnInput<'a> {
+    pub app: AppHandle,
+    pub state: State<'a, AgentRuntimeState>,
+    pub mcp_state: State<'a, McpRuntimeState>,
+    pub request: AgentChatRequest,
+    pub session_id: String,
+    pub turn_id: String,
+    pub request_guard: AgentRequestGuard<'a>,
+    pub ssh_context: Option<AgentCoreSshToolContext>,
+    pub ssh_connection_id: Option<String>,
+    pub wsl_root: Option<String>,
+    pub wsl_context: Option<LocalToolContext>,
+    pub default_ssh_host: Option<String>,
+    pub bound_ssh_hosts: Vec<String>,
+    pub is_ssh_target: bool,
+    pub is_wsl_target: bool,
+    pub default_environment: AgentToolEnvironment,
+}
+use super::super::*;
+    } = self::setup::prepare_input(request)?;
+use super::strategy::{context_window_budget_exceeded, tool_permission_timeout};
+
+mod finalization;
+use finalization::{finalize_usage, save_transcript, CheckpointState, UsageFinalization};

@@ -1,0 +1,218 @@
+/* ==========================================================================
+   设备文件互传与存储管理 (DeviceFilesView) - 现代原生桌面规范
+   ========================================================================== */
+
+.device-files-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  background: var(--bg-canvas);
+  overflow: hidden;
+
+  --file-item-bg: var(--bg-card);
+  --file-item-hover: var(--bg-hover);
+  --file-item-active: var(--bg-selected);
+  --file-slot-bg: var(--bg-surface);
+}
+
+html[data-theme="dark"] .device-files-container,
+[data-theme="dark"] .device-files-container {
+  --file-item-bg: var(--bg-card);
+  --file-item-hover: var(--bg-hover);
+  --file-item-active: var(--bg-selected);
+  --file-slot-bg: var(--bg-surface);
+}
+
+/* 顶部导航与操作工具条 */
+.device-files-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52px;
+  padding: 0 18px;
+  background: var(--page-header-bg);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+.device-files-path-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 18px;
+  background: var(--page-header-bg);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  min-height: 44px;
+}
+
+.device-files-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.device-files-crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  border: 0 !important;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.device-files-crumb:hover {
+  background: var(--file-item-hover);
+  color: var(--text-primary);
+}
+
+.device-files-crumb.active {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* 主体分栏：文件列表 + 侧边预览/详情面板 */
+.device-files-body {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 960px) {
+  .device-files-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.device-files-list-col {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  border-right: 1px solid var(--border-subtle);
+}
+
+.device-files-list-header {
+  display: grid;
+  grid-template-columns: 2fr 100px 140px 110px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  background: var(--bg-surface);
+  user-select: none;
+}
+
+.device-files-scroll-list {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  min-height: 0;
+  padding: 4px 8px;
+  gap: 2px;
+}
+
+.device-files-row {
+  display: grid;
+  grid-template-columns: 2fr 100px 140px 110px;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: 0 !important;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.device-files-row:hover {
+  background: var(--file-item-hover);
+  color: var(--text-primary);
+}
+
+.device-files-row.selected {
+  background: var(--file-item-active) !important;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.device-files-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.device-files-actions-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 侧边详情与文本快速编辑器面板 */
+.device-files-aside-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--page-pane-bg);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding: 16px;
+  gap: 14px;
+}
+
+.device-files-preview-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border-radius: var(--card-radius);
+  background: var(--bg-card);
+  border: var(--card-border);
+  box-shadow: var(--card-shadow), var(--card-rim);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.device-files-editor-area {
+  width: 100%;
+  min-height: 180px;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+  border: 0;
+  color: var(--text-primary);
+  font-family: var(--font-mono, monospace);
+  font-size: 11.5px;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+}
+
+@media (max-width: 600px) {
+  .device-files-path-bar { flex-wrap: wrap; padding: 8px 14px; }
+  .device-files-list-header, .device-files-row { grid-template-columns: minmax(0, 1fr) 60px 76px; }
+  .device-files-list-header > :nth-child(3), .device-files-row > :nth-child(3) { display: none; }
+}

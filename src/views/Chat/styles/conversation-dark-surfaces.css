@@ -1,0 +1,381 @@
+
+
+/* The chat workspace follows the shared dark component palette. Older chat
+   rules used a separate violet palette, which made overlays and controls
+   visually diverge from the rest of the application. */
+html[data-theme="dark"] .conversation-page {
+  --bg-muted: var(--bg-surface);
+  --accent: var(--accent-primary);
+  color: var(--text-primary);
+  background: var(--bg-canvas);
+}
+
+html[data-theme="dark"] .conversation-page .page-shell {
+  background: var(--bg-app);
+  box-shadow: none;
+}
+
+html[data-theme="dark"] .conversation-page .conversation-content-area {
+  border-top-color: var(--border-subtle);
+  background: var(--bg-canvas);
+  box-shadow: inset 0 3px 14px rgba(0, 0, 0, .18);
+}
+
+html[data-theme="dark"] .conversation-side {
+  border-right-color: var(--border-subtle);
+  color: var(--text-primary);
+  background: var(--page-pane-bg);
+}
+
+html[data-theme="dark"] .conversation-side-card,
+html[data-theme="dark"] .conversation-side-item,
+html[data-theme="dark"] .conversation-side-add,
+html[data-theme="dark"] .conversation-side-remove {
+  color: var(--text-secondary);
+}
+
+html[data-theme="dark"] .conversation-side-card:hover,
+html[data-theme="dark"] .conversation-side-item:hover,
+html[data-theme="dark"] .conversation-side-add:hover,
+html[data-theme="dark"] .conversation-side-remove:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+html[data-theme="dark"] .conversation-side-card.active,
+html[data-theme="dark"] .conversation-side-item.active {
+  color: var(--accent-primary);
+  background: var(--accent-subtle);
+}
+
+html[data-theme="dark"] .conversation-page .session-title-card {
+  border-color: transparent;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
+}
+
+html[data-theme="dark"] .conversation-page .session-title,
+html[data-theme="dark"] .conversation-page .workspace-context-label,
+html[data-theme="dark"] .conversation-page .chat-empty h1 {
+  color: var(--text-primary);
+}
+
+html[data-theme="dark"] .conversation-page .session-folder-icon,
+html[data-theme="dark"] .conversation-page .header-icon-button,
+html[data-theme="dark"] .conversation-page .terminal-header-toggle,
+html[data-theme="dark"] .conversation-page .ssh-inspector-toggle,
+html[data-theme="dark"] .conversation-page .execution-target-button,
+html[data-theme="dark"] .conversation-page .environment-button {
+  color: var(--text-secondary);
+}
+
+html[data-theme="dark"] .conversation-page .header-icon-button:hover,
+html[data-theme="dark"] .conversation-page .terminal-header-toggle:hover,
+html[data-theme="dark"] .conversation-page .terminal-header-toggle.active,
+html[data-theme="dark"] .conversation-page .ssh-inspector-toggle:hover,
+html[data-theme="dark"] .conversation-page .ssh-inspector-toggle.active,
+html[data-theme="dark"] .conversation-page .execution-target-button:hover,
+html[data-theme="dark"] .conversation-page .execution-target-button.open,
+html[data-theme="dark"] .conversation-page .environment-button:hover,
+html[data-theme="dark"] .conversation-page .environment-button.active {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+html[data-theme="dark"] .conversation-page .execution-target-popover,
+html[data-theme="dark"] .conversation-page .environment-popover,
+html[data-theme="dark"] .conversation-page .history-popover,
+html[data-theme="dark"] .conversation-page .usage-popover,
+html[data-theme="dark"] .conversation-page .model-menu,
+html[data-theme="dark"] .conversation-page .model-options,
+html[data-theme="dark"] .conversation-page .slash-menu,
+html[data-theme="dark"] .conversation-page .composer-menu,
+html[data-theme="dark"] .conversation-page .sandbox-menu,
+html[data-theme="dark"] .conversation-page .ssh-status-popover,
+html[data-theme="dark"] .conversation-page .analysis-progress-popover,
+html[data-theme="dark"] .conversation-page .queued-message-menu {
+  border: var(--popover-border);
+  color: var(--text-primary);
+  background: var(--popover-bg);
+  box-shadow: var(--popover-shadow);
+}
+
+html[data-theme="dark"] .conversation-page .popover-heading,
+html[data-theme="dark"] .conversation-page .history-heading,
+html[data-theme="dark"] .conversation-page .usage-popover-heading,
+html[data-theme="dark"] .conversation-page .analysis-progress-popover-heading,
+html[data-theme="dark"] .conversation-page .ssh-status-popover-heading,
+html[data-theme="dark"] .conversation-page .environment-workspace-card b,
+html[data-theme="dark"] .conversation-page .popover-detail b,
+html[data-theme="dark"] .conversation-page .popover-row strong,
+html[data-theme="dark"] .conversation-page .environment-status-cell strong {
+  color: var(--text-primary);
+}
+
+html[data-theme="dark"] .conversation-page .popover-readonly,
+html[data-theme="dark"] .conversation-page .popover-muted,
+html[data-theme="dark"] .conversation-page .popover-detail span,
+html[data-theme="dark"] .conversation-page .history-heading small,
+html[data-theme="dark"] .conversation-page .history-row-copy small,
+html[data-theme="dark"] .conversation-page .history-row time,
+html[data-theme="dark"] .conversation-page .usage-popover-heading small,
+html[data-theme="dark"] .conversation-page .usage-grid span,
+html[data-theme="dark"] .conversation-page .usage-popover-note,
+html[data-theme="dark"] .conversation-page .environment-workspace-card,
+html[data-theme="dark"] .conversation-page .environment-workspace-card small,
+html[data-theme="dark"] .conversation-page .environment-status-cell span,
+html[data-theme="dark"] .conversation-page .environment-remote span,
+html[data-theme="dark"] .conversation-page .environment-remote small,
+html[data-theme="dark"] .conversation-page .workspace-git-change-heading,
+html[data-theme="dark"] .conversation-page .workspace-git-change-row,
+html[data-theme="dark"] .conversation-page .workspace-git-change-list small,
+html[data-theme="dark"] .conversation-page .ssh-status-popover-heading small,
+html[data-theme="dark"] .conversation-page .ssh-status-metric > span,
+html[data-theme="dark"] .conversation-page .ssh-status-metric small,
+html[data-theme="dark"] .conversation-page .ssh-status-metric b.is-unavailable {
+  color: var(--text-secondary);
+}
+
+html[data-theme="dark"] .conversation-page .execution-target-option,
+html[data-theme="dark"] .conversation-page .history-row,
+html[data-theme="dark"] .conversation-page .model-menu-row,
+html[data-theme="dark"] .conversation-page .model-reset-row,
+html[data-theme="dark"] .conversation-page .model-option,
+html[data-theme="dark"] .conversation-page .slash-menu-row,
+html[data-theme="dark"] .conversation-page .composer-menu-row,
+html[data-theme="dark"] .conversation-page .sandbox-menu-row,
+html[data-theme="dark"] .conversation-page .queued-message-menu button {
+  color: var(--text-secondary);
+}
+
+html[data-theme="dark"] .conversation-page .execution-target-option:hover,
+html[data-theme="dark"] .conversation-page .execution-target-option.selected,
+html[data-theme="dark"] .conversation-page .history-row:hover,
+html[data-theme="dark"] .conversation-page .history-row.current,
+html[data-theme="dark"] .conversation-page .model-menu-row:hover,
+html[data-theme="dark"] .conversation-page .model-reset-row:hover,
+html[data-theme="dark"] .conversation-page .model-option:hover,
+html[data-theme="dark"] .conversation-page .model-option.selected,
+html[data-theme="dark"] .conversation-page .slash-menu-row:hover,
+html[data-theme="dark"] .conversation-page .slash-menu-row.selected,
+html[data-theme="dark"] .conversation-page .composer-menu-row:hover,
+html[data-theme="dark"] .conversation-page .sandbox-menu-row:hover,
+html[data-theme="dark"] .conversation-page .sandbox-menu-row.selected,
+html[data-theme="dark"] .conversation-page .queued-message-menu button:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+html[data-theme="dark"] .conversation-page .history-row-copy b,
+html[data-theme="dark"] .conversation-page .usage-grid b,
+html[data-theme="dark"] .conversation-page .model-option b,
+html[data-theme="dark"] .conversation-page .sandbox-menu-row b,
+html[data-theme="dark"] .conversation-page .ssh-status-popover-heading b,
+html[data-theme="dark"] .conversation-page .ssh-status-metric b {
+  color: var(--text-primary);
+}
+
+html[data-theme="dark"] .conversation-page .environment-status-grid,
+html[data-theme="dark"] .conversation-page .environment-actions,
+html[data-theme="dark"] .conversation-page .history-archive-section,
+html[data-theme="dark"] .conversation-page .model-menu-divider,
+html[data-theme="dark"] .conversation-page .composer-menu-divider,
+html[data-theme="dark"] .conversation-page .ssh-status-popover-heading,
+html[data-theme="dark"] .conversation-page .analysis-file-changes {
+  border-color: var(--border-subtle);
+}
+
+html[data-theme="dark"] .conversation-page .environment-actions button {
+  border-color: var(--btn-secondary-border);
+  color: var(--text-secondary);
+  background: var(--btn-secondary-bg);
+}
+
+html[data-theme="dark"] .conversation-page .workspace-git-change-link {
+  color: var(--accent-primary);
+  background: var(--accent-subtle);
+}
+
+html[data-theme="dark"] .conversation-page .workspace-git-change-link:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+html[data-theme="dark"] .conversation-page .chat-scroll {
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+html[data-theme="dark"] .conversation-page .chat-scroll::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  background-clip: padding-box;
+}
+
+html[data-theme="dark"] .conversation-page .chat-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+  background-clip: padding-box;
+}
+
+html[data-theme="dark"] .conversation-page .conversation-rail-dot {
+  background: var(--text-tertiary);
+}
+
+html[data-theme="dark"] .conversation-page .conversation-rail-marker.active .conversation-rail-dot,
+html[data-theme="dark"] .conversation-page .conversation-rail-marker:hover .conversation-rail-dot,
+html[data-theme="dark"] .conversation-page .conversation-rail-marker:focus-visible .conversation-rail-dot,
+html[data-theme="dark"] .conversation-page .conversation-rail-marker.rail-distance-0 .conversation-rail-dot {
+  background: var(--accent-primary);
+}
+
+html[data-theme="dark"] .conversation-page .conversation-rail-preview {
+  border-color: transparent;
+  color: var(--text-primary);
+  background: var(--popover-bg);
+  box-shadow: var(--popover-shadow);
+}
+
+html[data-theme="dark"] .conversation-page .empty-mark,
+html[data-theme="dark"] .conversation-page .message-avatar {
+  color: var(--accent-primary);
+  background: var(--accent-subtle);
+  box-shadow: none;
+}
+
+html[data-theme="dark"] .conversation-page .message-row.user .message-avatar {
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+}
+
+html[data-theme="dark"] .conversation-page .message-content,
+html[data-theme="dark"] .conversation-page .attachment-card,
+html[data-theme="dark"] .conversation-page .file-attachment-card,
+html[data-theme="dark"] .conversation-page .markdown-body a[data-local-path],
+html[data-theme="dark"] .conversation-page .markdown-body a.local-path-link {
+  border-color: transparent;
+  color: var(--text-primary);
+  background: var(--bg-card);
+}
+
+html[data-theme="dark"] .conversation-page .message-row.user .message-content {
+  border-color: transparent;
+  background: var(--accent-subtle);
+}
+
+html[data-theme="dark"] .conversation-page .markdown-body a[data-local-path]:hover,
+html[data-theme="dark"] .conversation-page .markdown-body a.local-path-link:hover,
+html[data-theme="dark"] .conversation-page .message-actions button:hover {
+  border-color: transparent;
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+html[data-theme="dark"] .conversation-page .message-duration,
+html[data-theme="dark"] .conversation-page .message-actions-time,
+html[data-theme="dark"] .conversation-page .message-processing-status,
+html[data-theme="dark"] .conversation-page .model-menu-value,
+html[data-theme="dark"] .conversation-page .model-option small,
+html[data-theme="dark"] .conversation-page .slash-menu-copy small,
+html[data-theme="dark"] .conversation-page .composer-menu-row small,
+html[data-theme="dark"] .conversation-page .sandbox-menu-row small {
+  color: var(--text-secondary);
+}
+
+html[data-theme="dark"] .conversation-page .message-processing-status .inline-spin,
+html[data-theme="dark"] .conversation-page .message-processing-status .processing-status-icon,
+html[data-theme="dark"] .conversation-page .message-duration-toggle:hover,
+html[data-theme="dark"] .conversation-page .markdown-body .local-path-link-icon {
+  color: var(--accent-primary);
+}
+
+html[data-theme="dark"] .conversation-page .border-glow-card.composer-shell {
+  color: var(--text-primary);
+}
+
+html[data-theme="dark"] .conversation-page .composer-shell textarea,
+html[data-theme="dark"] .conversation-page .composer-input {
+  color: var(--text-primary);
+}
+
+html[data-theme="dark"] .conversation-page .composer-shell textarea::placeholder,
+html[data-theme="dark"] .conversation-page .composer-input:empty::before {
+  color: var(--text-tertiary);
+}
+
+html[data-theme="dark"] .conversation-page .composer-shell.drop-target-active {
+  border-color: transparent;
+  background: var(--bg-surface);
+  box-shadow: var(--focus-glow);
+}
+
+html[data-theme="dark"] .conversation-page .composer-icon,
+html[data-theme="dark"] .conversation-page .sandbox-badge,
+html[data-theme="dark"] .conversation-page .model-select-wrap {
+  color: var(--text-secondary);
+}
+
+html[data-theme="dark"] .conversation-page .composer-icon:hover,
+html[data-theme="dark"] .conversation-page .sandbox-badge:hover,
+html[data-theme="dark"] .conversation-page .usage-trigger:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+html[data-theme="dark"] .conversation-page .model-trigger,
+html[data-theme="dark"] .conversation-page .composer-task-steps,
+html[data-theme="dark"] .conversation-page .model-search {
+  border-color: transparent;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+}
+
+html[data-theme="dark"] .conversation-page .model-trigger:hover {
+  background: var(--bg-hover);
+}
+
+html[data-theme="dark"] .conversation-page .model-search input {
+  color: var(--text-primary);
+}
+
+html[data-theme="dark"] .conversation-page .slash-menu-icon,
+html[data-theme="dark"] .conversation-page .slash-menu-row em {
+  border-color: transparent;
+  color: var(--accent-primary);
+  background: var(--accent-subtle);
+}
+
+html[data-theme="dark"] .conversation-page .context-usage-ring::after {
+  background: var(--bg-card);
+}
+
+html[data-theme="dark"] .conversation-page .context-usage-ring {
+  --context-ring-color: var(--accent-primary);
+  background: conic-gradient(var(--context-ring-color) var(--context-progress), var(--bg-surface) 0);
+}
+
+html[data-theme="dark"] .conversation-page .send-button {
+  color: var(--accent-text);
+  background: var(--accent-gradient);
+  box-shadow: var(--shadow-sm);
+}
+
+html[data-theme="dark"] .conversation-page .send-button:hover {
+  background: var(--accent-hover);
+}
+
+html[data-theme="dark"] .conversation-page .send-button:disabled {
+  color: var(--text-tertiary);
+  background: var(--bg-surface);
+  box-shadow: none;
+}
+
+html[data-theme="dark"] .conversation-page .send-button.queue {
+  border-color: transparent;
+  color: var(--accent-primary);
+  background: var(--accent-subtle);
+}
+
+html[data-theme="dark"] .conversation-page .ssh-status-metric,
+html[data-theme="dark"] .conversation-page .analysis-progress-panel {
+  border-color: transparent;
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+}

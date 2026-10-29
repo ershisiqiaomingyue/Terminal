@@ -1,0 +1,69 @@
+/* ==========================================================================
+   LSP 语言服务器面板 - 本地样式
+   - 复用 settings-controls.css 的 .settings-environment-* 卡片外壳
+   - 这里只补「服务器卡片内的编辑器」布局：命令行、参数行、语言映射行
+   ========================================================================== */
+
+.lsp-editors {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.lsp-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.lsp-editor-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* 一行 = 输入框 + 右侧小按钮；.input-shell 自带 width:100%，
+   在弹性行里必须放开收缩，否则会把按钮挤出卡片。 */
+.lsp-field-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.lsp-field-row > .input-shell {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* 语言映射行：扩展名窄、语言 ID 宽 */
+.lsp-language-row > .input-shell:first-child {
+  flex: 0 1 132px;
+  min-width: 96px;
+}
+
+.lsp-editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.lsp-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* 参数/映射全空时的占位提示，避免编辑器看起来是坏的 */
+.lsp-editor-empty {
+  color: var(--text-tertiary);
+  font-size: 12px;
+}

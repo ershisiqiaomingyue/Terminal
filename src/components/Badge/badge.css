@@ -1,0 +1,100 @@
+/* ==========================================================================
+   Badge Component Styles - 状态指示胶囊
+   - 100% 还原 modern-ui-showcase.html 脉冲发光与状态药丸
+   ========================================================================== */
+
+.badge,
+.desk-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 999px;
+  line-height: 1.2;
+  background: var(--badge-bg);
+  border: 1px solid transparent;
+  color: var(--badge-text);
+  backdrop-filter: blur(10px);
+  user-select: none;
+  white-space: nowrap;
+}
+
+.badge-primary,
+.pill-accent {
+  --badge-bg: var(--status-info-bg);
+  --badge-text: var(--status-info-text);
+}
+
+.badge-success,
+.pill-success {
+  --badge-bg: var(--status-success-bg);
+  --badge-text: var(--status-success-text);
+}
+
+.badge-warning,
+.pill-warning {
+  --badge-bg: var(--status-warning-bg);
+  --badge-text: var(--status-warning-text);
+}
+
+.badge-danger,
+.pill-danger {
+  --badge-bg: var(--status-danger-bg);
+  --badge-text: var(--status-danger-text);
+}
+
+.badge-neutral {
+  --badge-bg: var(--status-neutral-bg);
+  --badge-text: var(--status-neutral-text);
+}
+
+/* 呼吸脉冲圆点 */
+.badge-dot,
+.pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 0 currentColor;
+  display: inline-block;
+}
+
+.badge-dot-pulse,
+.pulse-dot {
+  position: relative;
+  /* 性能：徽标一旦挂上就是长期存在的，无限呼吸等于让合成器一直产帧
+     （外扩光晕还会压着毛玻璃面板逐帧重算）。只播 3 次，之后保持高亮静态。 */
+  animation: pulseBadgeBreathe 2.4s ease-in-out 3;
+}
+
+/* Expanding halo drawn behind the dot, so the pulse reads as motion. */
+.badge-dot-pulse::after,
+.pulse-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: currentColor;
+  animation: pulseBadgeHalo 2.4s ease-out 3;
+  pointer-events: none;
+}
+
+@keyframes pulseBadgeBreathe {
+  0%, 100% { opacity: 0.55; transform: scale(0.86); }
+  50% { opacity: 1; transform: scale(1.12); }
+}
+
+@keyframes pulseBadgeHalo {
+  0% { opacity: 0.5; transform: scale(1); }
+  70% { opacity: 0; transform: scale(3); }
+  100% { opacity: 0; transform: scale(3); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge-dot-pulse,
+  .pulse-dot { animation: none; opacity: 1; transform: none; }
+  .badge-dot-pulse::after,
+  .pulse-dot::after { display: none; }
+}

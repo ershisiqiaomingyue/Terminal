@@ -1,0 +1,44 @@
+use super::super::*;
+use super::setup::{prepare_input, prepare_turn_environments, prepare_turn_input, PreparedInput};
+
+pub(in crate::agent::turn) struct TurnInput<'a> {
+    pub app: AppHandle,
+    pub state: State<'a, AgentRuntimeState>,
+    pub mcp_state: State<'a, McpRuntimeState>,
+    pub request: AgentChatRequest,
+    pub session_id: String,
+    pub turn_id: String,
+    pub request_guard: AgentRequestGuard<'a>,
+    pub ssh_context: Option<AgentCoreSshToolContext>,
+    pub ssh_connection_id: Option<String>,
+    pub wsl_root: Option<String>,
+    pub wsl_context: Option<LocalToolContext>,
+    pub default_ssh_host: Option<String>,
+    pub bound_ssh_hosts: Vec<String>,
+    pub is_ssh_target: bool,
+    pub is_wsl_target: bool,
+    app: AppHandle,
+    state: State<'a, AgentRuntimeState>,
+    mcp_state: State<'a, McpRuntimeState>,
+    request: AgentChatRequest,
+    session_id: String,
+    turn_id: String,
+    request_guard: AgentRequestGuard<'a>,
+) -> Result<AgentChatResponse, String> {
+    turn_entry::prepare_and_run(
+        app,
+        state,
+        mcp_state,
+        request,
+        session_id,
+        turn_id,
+        request_guard,
+    )
+    .await
+}
+
+#[allow(dead_code)]
+async fn legacy_run_agent_turn<'a>(
+    app: AppHandle,
+    state: State<'a, AgentRuntimeState>,
+    mcp_state: State<'a, McpRuntimeState>,

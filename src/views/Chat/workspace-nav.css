@@ -1,0 +1,806 @@
+/**
+ * 「工作区」侧栏（对话列表）—— 1:1 照抄 deepseek-harness 的
+ * `ui-workspace/src/client/rows/Rows.module.css` 与 `WorkspaceBrowser.module.css`。
+ *
+ * 只把 dsh 的设计令牌换成这个项目里的令牌；几何、间距、字号、渐隐遮罩的数值一律
+ * 保持原样，方便以后对着 dsh 截图逐像素比对：
+ *   dsh 变量                        → 这里的变量
+ *   --dsw-radius-md (12px)          → --radius-md（本文件内定义，与 dsh 同值）
+ *   --dsw-alias-label-primary       → --ws-label-primary
+ *   --dsw-alias-label-tertiary      → --ws-label-tertiary
+ *   --dsw-alias-label-caption       → --ws-label-caption
+ *   --dsw-alias-interactive-bg-hover→ --ws-hover
+ *   --dsw-alias-state-warn-primary  → --ws-warn（amber-500）
+ *   --dsw-alias-state-business-primary → --accent-primary（保持本项目的主题色）
+ *
+ * 命名空间用 .ws-nav-*：同一份 sidebar.css 里还有「组件 / 代码」两页侧栏在复用
+ * .context-nav-* 那套类，新样式另起前缀才不会互相牵连。
+ */
+
+.ws-nav {
+  /* 暗色是默认主题（tokens.css 里 :root 就是暗色），亮色走下面 [data-theme] 覆盖。 */
+  --ws-label-primary: rgb(249, 250, 251);
+  --ws-label-secondary: rgb(207, 211, 214);
+  --ws-label-tertiary: rgb(173, 178, 184);
+  --ws-label-caption: rgb(129, 133, 140);
+  --ws-hover: rgba(255, 255, 255, 0.08);
+  --ws-elevated: rgba(255, 255, 255, 0.06);
+  --ws-border-l4: rgba(255, 255, 255, 0.2);
+  --ws-warn: rgb(245, 158, 11);
+  /* 行内动作按钮的悬停胶囊：中性一档、归档用仓库统一的 danger 令牌淡底。 */
+  --ws-chip: rgba(255, 255, 255, 0.12);
+  --ws-chip-danger: color-mix(in srgb, var(--danger-text) 22%, transparent);
+  /* dsh 的圆角：xs 4 / sm 8 / md 12 / lg 16。 */
+  --radius-xs: 4px;
+  --radius-md: 12px;
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  color: var(--ws-label-primary);
+}
+
+html[data-theme="light"] .ws-nav {
+  --ws-label-primary: #151e32;
+  --ws-label-secondary: rgb(97, 102, 107);
+  --ws-label-tertiary: rgb(129, 133, 140);
+  --ws-label-caption: rgb(173, 178, 184);
+  --ws-hover: rgba(38, 49, 72, 0.06);
+  --ws-elevated: rgba(0, 0, 0, 0.04);
+  --ws-border-l4: rgba(0, 0, 0, 0.16);
+  --ws-chip: rgba(38, 49, 72, 0.1);
+  --ws-chip-danger: color-mix(in srgb, var(--danger-text) 12%, transparent);
+}
+
+/* -------------------------------------------------------------------------- */
+/* 顶栏：段名 + 可展开搜索 + 图标按钮                                           */
+/* -------------------------------------------------------------------------- */
+
+/* 36px 高、右对齐、向左留 4px、上下各让 4/2px —— 数值照 WorkspaceBrowser.module.css
+   的 .sectionHeader / .root:not(.rail) .sectionHeader。唯一改动是去掉 dsh 的
+   margin-right: -4px：那边靠列表的右侧内边距补偿，这里列表已经顶到侧栏边缘，
+   再延 4px 就会比行宽出去一截，顶栏的悬停底色与行对不齐。 */
+.ws-nav-header {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  height: 36px;
+  margin-top: 2px;
+  margin-bottom: 4px;
+  padding-left: 4px;
+  box-sizing: border-box;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  color: var(--ws-label-tertiary);
+}
+
+/* 段名：搜索一展开就宽度收到 0 并淡出，图标与输入框顺势占位（dsh 的
+   .sectionLabel / .sectionLabelHidden，连 transition 的 180ms 都一致）。 */
+.ws-nav-section-label {
+  flex: none;
+  max-width: 45%;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 14px;
+  line-height: 20px;
+  opacity: 1;
+  visibility: visible;
+  transition: max-width 180ms var(--ease-in-out), margin-right 180ms, opacity 120ms, transform 180ms, visibility 0s linear;
+}
+
+.ws-nav-section-label-hidden {
+  max-width: 0;
+  margin-right: -4px;
+  opacity: 0;
+  transform: translateX(-4px);
+  visibility: hidden;
+  transition-delay: 0s, 0s, 0s, 0s, 180ms;
+}
+
+.ws-nav-search-slot {
+  flex: 1;
+  max-width: 28px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  /* 把整串右侧动作推开的 `margin-left: auto` 挪到了更靠前的 .ws-nav-archive-button
+     上：那才是这一排的第一个元素，auto 留在搜索槽上会把归档按钮留在段名旁边。 */
+  padding-left: 0;
+  box-sizing: border-box;
+  transition: max-width 180ms var(--ease-in-out), padding-left 180ms var(--ease-in-out);
+}
+
+.ws-nav-search-slot-expanded {
+  max-width: 100%;
+  padding-left: 0;
+}
+
+.ws-nav-search {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ws-label-secondary);
+  cursor: text;
+  overflow: hidden;
+  transition: width 180ms var(--ease-in-out), padding 180ms var(--ease-in-out), border-color 180ms var(--ease-in-out), background-color 180ms var(--ease-in-out);
+}
+
+/* 展开态照 .searchExpanded：左右各溢出 2px、宽出 4px、加 0.5px 边框、圆角变 md。 */
+.ws-nav-search-expanded {
+  width: calc(100% + 4px);
+  height: 30px;
+  margin-inline: -2px;
+  padding: 0 4px 0 0;
+  border: 0.5px solid var(--ws-border-l4);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--ws-label-caption);
+}
+
+.ws-nav-search-button {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: color 120ms var(--ease-in-out), background-color 120ms var(--ease-in-out);
+}
+
+.ws-nav-search-expanded .ws-nav-search-button {
+  width: 28px;
+  height: 30px;
+}
+
+.ws-nav-search-button:hover {
+  background: var(--ws-hover);
+}
+
+/* 展开后图标按钮自己不再铺底：外层搜索胶囊已经是选中态，再叠一层会脏。 */
+.ws-nav-search-expanded .ws-nav-search-button:hover {
+  background: transparent;
+}
+
+/* 收起时输入框只占位不参与交互；展开后 180ms 淡入，避免搜索框「啪」地出现。 */
+.ws-nav-search-input {
+  flex: 1;
+  width: 0;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ws-label-primary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 18px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms var(--ease-in-out);
+}
+
+.ws-nav-search-expanded .ws-nav-search-input {
+  margin-left: -2px;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.ws-nav-search-input::placeholder {
+  color: var(--ws-label-tertiary);
+}
+
+.ws-nav-clear-button {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ws-label-secondary);
+  cursor: pointer;
+}
+
+.ws-nav-clear-button:hover {
+  background: var(--ws-hover);
+}
+
+.ws-nav-header-actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 60px;
+  opacity: 1;
+  overflow: hidden;
+  visibility: visible;
+  transition: max-width 180ms, opacity 120ms, transform 180ms;
+}
+
+.ws-nav-header-actions-hidden {
+  max-width: 0;
+  opacity: 0;
+  transform: translateX(4px);
+  visibility: hidden;
+  pointer-events: none;
+  transition-delay: 0s, 0s, 0s, 0s;
+}
+
+/* 顶栏图标按钮：28×28、圆角 8、静息用 secondary 灰、hover 才铺底色
+   （WorkspaceBrowser.module.css 的 .iconButton）。行内不能用这一套，见下面的
+   .ws-nav-row-icon-button。 */
+.ws-nav-icon-button {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ws-label-secondary);
+  cursor: pointer;
+  transition: background-color 120ms var(--ease-in-out), color 120ms var(--ease-in-out);
+}
+
+.ws-nav-icon-button:hover {
+  background: var(--ws-hover);
+}
+
+.ws-nav-icon-button:focus-visible {
+  outline: 2px solid var(--chrome-muted);
+  outline-offset: -2px;
+}
+
+.ws-nav-icon-button svg {
+  display: block;
+}
+
+/* 归档对话：整排右侧动作的第一个，`margin-left: auto` 把这一串（归档 / 搜索 /
+   新建独立对话 / 添加工作区）一起贴到右边。搜索展开时和段名、右侧按钮一起收起。 */
+.ws-nav-archive-button {
+  margin-left: auto;
+  transition: margin-left 180ms var(--ease-in-out), max-width 180ms var(--ease-in-out),
+    opacity 120ms var(--ease-in-out), transform 180ms var(--ease-in-out);
+}
+
+.ws-nav-archive-button-hidden {
+  max-width: 0;
+  /* auto 必须一起清掉：留着它会把空位吃掉，展开后的输入框就撑不满整排。 */
+  margin-left: 0;
+  opacity: 0;
+  transform: translateX(4px);
+  visibility: hidden;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* 行内图标按钮：16×16、圆角 4、静息 tertiary。dsh 的 .iconButton 悬停只提亮图标，
+   但三个键并排时光靠颜色变化分不清位置，所以这里补一层 22px 的胶囊底：
+   普通的用中性灰、归档用淡红（与仓库里 .conversation-nav-plus.is-danger /
+   .select-option-action.is-danger 同一套 danger 令牌）。胶囊用 ::before 画，
+   比按钮本身大 3px，图标仍落在 16×16 的格子里，行高与标题宽度都不受影响。 */
+.ws-nav-row-icon-button {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--ws-label-tertiary);
+  cursor: pointer;
+  transition: color 120ms var(--ease-in-out);
+}
+
+.ws-nav-row-icon-button::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 5px;
+  background: transparent;
+  transition: background-color 120ms var(--ease-in-out);
+}
+
+.ws-nav-row-icon-button:hover {
+  color: var(--ws-label-secondary);
+}
+
+.ws-nav-row-icon-button:hover::before {
+  background: var(--ws-chip);
+}
+
+.ws-nav-row-icon-button-danger:hover {
+  color: var(--status-danger-text);
+}
+
+.ws-nav-row-icon-button-danger:hover::before {
+  background: var(--ws-chip-danger);
+}
+
+.ws-nav-row-icon-button:focus-visible {
+  outline: 2px solid var(--chrome-muted);
+  outline-offset: 1px;
+}
+
+.ws-nav-row-icon-button svg {
+  display: block;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 列表                                                                        */
+/* -------------------------------------------------------------------------- */
+
+.ws-nav-body {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.ws-nav-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin-left: -4px;
+  /* 行右缘离侧栏右框线只留 10px：原本这 10px 是 scrollbar-gutter 的预留位，
+     再叠上侧栏自身 10px 内边距，行尾就离框 20px，悬停底色看着偏窄。把滚动条
+     槽整体推到侧栏边缘（负 margin 抵消），行的右缘贴到只剩侧栏那 10px。 */
+  margin-right: -10px;
+  padding-left: 4px;
+  padding-bottom: 16px;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.ws-nav-list:hover {
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+/* 组内行距 2px、组间距 4px（WorkspaceBrowser.module.css 的 .groupSection 规则）。 */
+.ws-nav-group > * + * {
+  margin-top: 2px;
+}
+
+.ws-nav-group + .ws-nav-group {
+  margin-top: 4px;
+}
+
+.ws-nav-group-sessions {
+  display: flex;
+  flex-direction: column;
+}
+
+.ws-nav-group-sessions > * + * {
+  margin-top: 2px;
+}
+
+/* 底部 24px 的渐隐，滚到底时列表不会被硬边切断（.fade）。right 用负值把滚动条
+   那 10px 也盖住：列表本身已经用 margin-right: -10px 顶到侧栏边缘。 */
+.ws-nav-fade {
+  position: absolute;
+  right: -10px;
+  bottom: 0;
+  left: 0;
+  height: 24px;
+  pointer-events: none;
+  /* 收尾色必须是侧栏「实际被画出来的底色」，不是 --context-navigation-bg：
+     .app-shell .app-sidebar 是透明的，真正的底色来自 .app-shell::before 的
+     --workspace-panel-bg。用错令牌会在列表底部留一条比周围更深的色带。 */
+  background: linear-gradient(to bottom, transparent, var(--workspace-panel-bg));
+}
+
+/* -------------------------------------------------------------------------- */
+/* 行                                                                          */
+/* -------------------------------------------------------------------------- */
+
+.ws-nav-project-row,
+.ws-nav-session-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  border-radius: var(--radius-md);
+  color: var(--ws-label-primary);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* 项目行 34px（含行内 20px 高的按钮）、会话行 32px：两行基线差 1px，看起来
+   是「同一套行」但项目行略高，符合 dsh 的层级感。 */
+.ws-nav-project-row {
+  height: 34px;
+  box-sizing: border-box;
+}
+
+.ws-nav-project-row .ws-nav-row-actions {
+  height: 20px;
+}
+
+.ws-nav-session-row {
+  height: 32px;
+  gap: 0;
+}
+
+/* hover / 选中 / 菜单打开用同一个填充（dsh 里 .selected 与 :hover 同值），
+   这样「我现在在哪条」和「我指着哪条」是同一层视觉语言。 */
+.ws-nav-project-row:hover,
+.ws-nav-session-row:hover,
+.ws-nav-project-row.ws-nav-menu-open,
+.ws-nav-session-row.ws-nav-menu-open,
+.ws-nav-session-row.ws-nav-selected {
+  background: var(--ws-hover);
+}
+
+/* 槽位：16×20，folder / 三角 / 状态点都落在这一格里，切状态不推动标题。 */
+.ws-nav-slot {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 20px;
+  color: var(--ws-label-tertiary);
+}
+
+.ws-nav-slot svg {
+  display: block;
+}
+
+/* 三角比 folder 浅一档：dsh 的注释写得很直白——「chevrons ride the caption grey,
+   the folder glyph stays one step darker (tertiary)」。所以这条必须排在 .ws-nav-slot
+   之后，靠同特异性的后写覆盖来生效。 */
+.ws-nav-chevron {
+  color: var(--ws-label-caption);
+}
+
+.ws-nav-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+/* 项目行标题比会话行重一档（500 对 400）：两级树里父项要压得住子项。 */
+.ws-nav-project-row .ws-nav-title {
+  font-weight: 500;
+}
+
+/* 会话标题比工作区/项目名小一号、浅一档：树是两级，会话是子项，字号和字色都
+   要让人一眼看出层级（工作区名 14px / 500 / primary，会话名 13px / 400 /
+   secondary）。行高 18px 跟着字号收，32px 的行高不变。 */
+.ws-nav-session-row .ws-nav-title {
+  flex: 1;
+  margin: 0 6px 0 4px;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 400;
+  color: var(--ws-label-secondary);
+}
+
+/* 选中的那一条要压过上面的子项灰：当前会话的名字回到主字色和中等字重。 */
+.ws-nav-session-row.ws-nav-selected .ws-nav-title {
+  color: var(--ws-label-primary);
+  font-weight: 500;
+}
+
+.ws-nav-session-row.ws-nav-archived .ws-nav-title {
+  color: var(--ws-label-caption);
+}
+
+/* 标题溢出时悬停爬动（useTitleMarquee）：两端 12px 渐隐，随滚动位置开关。
+   遮罩挂在标题自己身上，状态槽与其它前导格子保持满色。 */
+.ws-nav-session-row .ws-nav-title[data-scrolled] {
+  mask-image: linear-gradient(to right, transparent, #000 12px);
+}
+
+.ws-nav-session-row .ws-nav-title[data-clipped] {
+  mask-image: linear-gradient(to left, transparent, #000 12px);
+}
+
+.ws-nav-session-row .ws-nav-title[data-scrolled][data-clipped] {
+  mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 12px), transparent);
+}
+
+/* 行尾时间：10px 是 dsh 的定值，比标题小一档，看得见但不抢标题。 */
+.ws-nav-time {
+  flex: none;
+  font-size: 10px;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--ws-label-tertiary);
+}
+
+.ws-nav-pin {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 20px;
+  margin-left: 6px;
+  color: var(--ws-label-caption);
+}
+
+/* 行内动作：默认不占位，hover / 菜单打开时才出现，同时把时间与置顶标记藏起来。
+   用 display 交换而不是叠透明度——宽度差全由标题吸收，行外框不会跳。 */
+.ws-nav-row-actions {
+  flex: none;
+  display: none;
+  align-items: center;
+  gap: 15px;
+}
+
+/* 会话行有三个动作（更多 / 归档 / 置顶），间距取 10px：15px 是 dsh 只放一个菜单键
+   时的留白，三个并排会把标题挤掉近一半；而悬停胶囊比图标宽 3px，8px 会让两个胶囊
+   粘在一起，看不出是三个独立的键。 */
+.ws-nav-session-row .ws-nav-row-actions {
+  gap: 10px;
+}
+
+.ws-nav-project-row:hover .ws-nav-row-actions,
+.ws-nav-project-row.ws-nav-menu-open .ws-nav-row-actions,
+.ws-nav-project-row:focus-within .ws-nav-row-actions,
+.ws-nav-session-row:hover .ws-nav-row-actions,
+.ws-nav-session-row.ws-nav-menu-open .ws-nav-row-actions,
+.ws-nav-session-row:focus-within .ws-nav-row-actions {
+  display: inline-flex;
+}
+
+/* 动作一出现就把时间与置顶标记让位：否则「标题 + 时间 + 置顶 + 两个按钮」会把
+   32px 的行挤爆。键盘聚焦时同样成立，不然 Tab 进来会看到两者并排。 */
+.ws-nav-session-row:hover .ws-nav-time,
+.ws-nav-session-row.ws-nav-menu-open .ws-nav-time,
+.ws-nav-session-row:focus-within .ws-nav-time,
+.ws-nav-session-row:hover .ws-nav-pin,
+.ws-nav-session-row.ws-nav-menu-open .ws-nav-pin,
+.ws-nav-session-row:focus-within .ws-nav-pin {
+  display: none;
+}
+
+/* 悬停时标题改成硬裁（不是省略号）：省略号会和正在爬动的尾巴抢视觉。 */
+@media (hover: hover) {
+  .ws-nav-session-row:hover .ws-nav-title,
+  .ws-nav-session-row.ws-nav-menu-open .ws-nav-title {
+    text-overflow: clip;
+  }
+}
+
+/* 项目行：folder 常态、hover 换成实心三角（展开转 90°）。同宽同位，交换不跳。 */
+.ws-nav-project-row .ws-nav-chevron {
+  display: none;
+}
+
+.ws-nav-project-row:hover .ws-nav-chevron,
+.ws-nav-project-row.ws-nav-menu-open .ws-nav-chevron {
+  display: inline-flex;
+}
+
+.ws-nav-project-row:hover .ws-nav-folder,
+.ws-nav-project-row.ws-nav-menu-open .ws-nav-folder {
+  display: none;
+}
+
+.ws-nav-arrow {
+  transition: transform 150ms var(--ease-in-out);
+}
+
+.ws-nav-arrow-open {
+  transform: rotate(90deg);
+}
+
+/* 当前会话所在的工作区：文件夹用主题色（dsh 的 .folderActive）。 */
+.ws-nav-folder-active,
+.ws-nav-folder-active svg {
+  color: var(--accent-primary);
+}
+
+.ws-nav-project-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* 「展开其余 N 个会话」：整行宽、左内距对齐到子行标题，hover 只变文字色不铺底。 */
+.ws-nav-overflow {
+  width: 100%;
+  height: 28px;
+  padding: 0 12px 0 28px;
+  border: 0;
+  background: transparent;
+  color: var(--ws-label-tertiary);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: color 120ms var(--ease-in-out);
+}
+
+.ws-nav-overflow:hover {
+  color: var(--ws-label-primary);
+}
+
+/* 只有「搜索无结果」这一种空态；空工作区本身不画占位文案，与 dsh 一致
+   （WorkspaceBrowser.tsx 的 ProjectRow 下面是 sessions.map，没有 0 行分支）。 */
+.ws-nav-empty {
+  margin: 0;
+  padding: 16px 12px;
+  color: var(--ws-label-tertiary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 状态标记：amber 呼吸点 / 旋转环                                              */
+/* -------------------------------------------------------------------------- */
+
+/* 10px 槽位里画 6px 实心圆（dsh 的 StateDot：::after + inset 20%）。
+   在 dsh 里这个点本身没有动效，这里的呼吸只做 0.55~1 的透明度与轻微缩放，
+   周期 2s，幅度小到不干扰阅读，但余光能扫到「有东西等你」。 */
+.ws-nav-dot {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: 10px;
+  height: 10px;
+  color: var(--ws-label-caption);
+}
+
+.ws-nav-dot::after {
+  content: "";
+  position: absolute;
+  inset: 20%;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.ws-nav-dot[data-state="warning"] {
+  color: var(--ws-warn);
+}
+
+.ws-nav-dot[data-state="warning"]::after {
+  /* 性能：warning 是可能长时间停留的稳态，原来的无限呼吸会让合成器持续产帧。
+     改为只播 3 次做「变了」的提示，之后静态显示警示环。 */
+  animation: ws-nav-breathe 2s var(--ease-in-out) 3;
+}
+
+.ws-nav-dot[data-state="idle"] {
+  color: var(--ws-label-caption);
+}
+
+/* 运行中的环：14px，缺口靠 dasharray 呼吸，1.5s 一圈（与 dsh 的
+   dsh-state-dot-spin / dsh-state-dot-dash 同节奏）。 */
+.ws-nav-spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: var(--ws-label-tertiary);
+}
+
+.ws-nav-spinner svg {
+  display: block;
+  width: 14px;
+  height: 14px;
+}
+
+.ws-nav-spinner-motion {
+  transform-origin: center;
+  animation: ws-nav-spin 1.5s linear infinite;
+}
+
+.ws-nav-spinner-track {
+  opacity: 0.25;
+}
+
+.ws-nav-spinner-arc {
+  stroke-dasharray: 12 150;
+  animation: ws-nav-dash 1.5s ease-in-out infinite;
+}
+
+@keyframes ws-nav-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes ws-nav-dash {
+  0% { stroke-dasharray: 12 150; stroke-dashoffset: 0; }
+  50% { stroke-dasharray: 24 150; stroke-dashoffset: -6; }
+  100% { stroke-dasharray: 12 150; stroke-dashoffset: 0; }
+}
+
+@keyframes ws-nav-breathe {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(0.86); }
+}
+
+/* -------------------------------------------------------------------------- */
+/* 焦点与降级                                                                  */
+/* -------------------------------------------------------------------------- */
+
+.ws-nav-project-row:focus-visible,
+.ws-nav-session-row:focus-visible,
+.ws-nav-icon-button:focus-visible,
+.ws-nav-search-button:focus-visible,
+.ws-nav-clear-button:focus-visible,
+.ws-nav-overflow:focus-visible {
+  outline: 2px solid var(--chrome-muted);
+  outline-offset: -2px;
+}
+
+@media (hover: none) {
+  /* 触屏没有 hover：行内动作常显，否则 ⋯ 永远点不到。 */
+  .ws-nav-session-row .ws-nav-row-actions,
+  .ws-nav-project-row .ws-nav-row-actions {
+    display: inline-flex;
+  }
+
+  .ws-nav-session-row .ws-nav-time,
+  .ws-nav-session-row .ws-nav-pin {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws-nav-arrow,
+  .ws-nav-section-label,
+  .ws-nav-search-slot,
+  .ws-nav-header-actions,
+  .ws-nav-search,
+  .ws-nav-search-input {
+    transition: none;
+  }
+
+  .ws-nav-spinner-motion {
+    animation: none;
+  }
+
+  .ws-nav-spinner-arc {
+    animation: none;
+    stroke-dasharray: 18 150;
+    stroke-dashoffset: -3;
+  }
+
+  .ws-nav-dot[data-state="warning"]::after {
+    animation: none;
+  }
+}

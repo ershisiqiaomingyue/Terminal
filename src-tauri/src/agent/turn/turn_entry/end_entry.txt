@@ -1,0 +1,90 @@
+    let current_user_message_id = format!("user:{turn_id}");
+    let attachment_root = app
+        .path()
+        .app_cache_dir()
+        .map_err(|error| error.to_string())?
+        .join("agent-attachments");
+    let mut image_attachments = normalize_request_image_attachments(
+        &attachment_root,
+        &request.attachments,
+        &request.context,
+        selected_model.supports_vision,
+        &current_user_message_id,
+    )?;
+    for turn in &mut request.context {
+        if turn.role.eq_ignore_ascii_case("user") {
+            append_image_source_labels(
+                &mut turn.content,
+                &turn.attachments,
+                "[历史消息中的图片来源]",
+            );
+        }
+    }
+    // A text-only turn may switch to a non-vision model. Keep the durable
+    // image names in its transcript, but only replay image bytes when the
+    // selected model can accept them and the original owner is identifiable.
+    let diagnostic_session = session_id.clone();
+    let diagnostic_turn = turn_id.clone();
+    let client = create_turn_provider_client(provider, protocol)?.with_diagnostic_observer(
+        Arc::new(move |diagnostic| {
+            let level = if diagnostic.failure_code.is_some() {
+                "warn"
+            } else {
+                "info"
+            };
+            crate::diagnostics::record(
+                level,
+                "agent.provider_transport",
+                "native.agent",
+                json!({
+                    "session_id": diagnostic_session, "turn_id": diagnostic_turn,
+                    "transport": diagnostic,
+                }),
+            );
+        }),
+    );
+    let setup::PreparedInput {
+        request,
+        context:
+            TurnSkillContext {
+                skill_catalog,
+                skill_instructions,
+                selinux_enabled,
+                selinux_scope,
+            },
+        permission_mode,
+        workspace_context,
+        global_instructions,
+        evidence,
+        prompt,
+        mut tool_policy,
+        mut windows_paths,
+        excluded_paths,
+        mut plugin_turn,
+        collaboration_tool,
+        explicitly_disabled,
+        mut ssh_paths,
+        wsl_paths,
+        snapshot_paths,
+        mcp_tools,
+        allow_external_paths,
+        output_sink,
+        mut remote_context,
+        wsl_context,
+        mut tool_cancellation,
+        mut registry,
+        mut approved_path_registry,
+    } = setup::prepare_turn_input(
+        &app,
+        &request,
+        ssh_context.as_ref(),
+        &bound_ssh_hosts,
+        wsl_root.as_deref(),
+        wsl_context.as_ref(),
+        default_environment,
+        &mcp_state,
+        &session_id,
+        &turn_id,
+        &cancellation_reason,
+        &cancellation_token,
+        is_ssh_target,

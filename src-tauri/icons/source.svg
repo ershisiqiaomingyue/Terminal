@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Style Evolution 3: 液态水银天青冷光 (Liquid Mercury Azure) -->
+  <!-- 纯净水银高反差光泽：极淡冰天青、纯白反光刃与清澈皇家蓝，轻盈纯澈 -->
+  <defs>
+    <!-- 环 1: 冰霜白青到皇家电蓝 -->
+    <linearGradient id="mercGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e0f2fe"/>
+      <stop offset="40%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+
+    <!-- 环 2: 纯净冷蓝到银天青 -->
+    <linearGradient id="mercGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1d4ed8"/>
+      <stop offset="60%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#bae6fd"/>
+    </linearGradient>
+
+    <!-- 环 3: 水银亮白到天青深蓝 -->
+    <linearGradient id="mercGrad3" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="50%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#1e40af"/>
+    </linearGradient>
+
+    <!-- 环 4: 极寒深蓝到耀光纯青 -->
+    <linearGradient id="mercGrad4" x1="100%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="50%" stop-color="#7dd3fc"/>
+      <stop offset="100%" stop-color="#f0f9ff"/>
+    </linearGradient>
+
+    <!-- 中心星核：水银亮核 -->
+    <linearGradient id="mercStarCore" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="45%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#cbd5e1"/>
+    </linearGradient>
+
+    <filter id="mercShadow" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="8" stdDeviation="14" flood-color="#2563eb" flood-opacity="0.25"/>
+      <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#38bdf8" flood-opacity="0.2"/>
+    </filter>
+
+    <filter id="mercGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="20"/>
+    </filter>
+  </defs>
+
+  <circle cx="256" cy="256" r="110" fill="#7dd3fc" opacity="0.14" filter="url(#mercGlow)"/>
+
+  <g filter="url(#mercShadow)" transform="translate(256, 256)">
+
+    <ellipse cx="0" cy="0" rx="160" ry="60" fill="none" stroke="url(#mercGrad1)" stroke-width="18" opacity="0.95"/>
+    <ellipse cx="0" cy="0" rx="160" ry="60" transform="rotate(45)" fill="none" stroke="url(#mercGrad2)" stroke-width="18" opacity="0.95"/>
+    <ellipse cx="0" cy="0" rx="160" ry="60" transform="rotate(90)" fill="none" stroke="url(#mercGrad3)" stroke-width="18" opacity="0.95"/>
+    <ellipse cx="0" cy="0" rx="160" ry="60" transform="rotate(135)" fill="none" stroke="url(#mercGrad4)" stroke-width="18" opacity="0.95"/>
+
+    <path d="M -120,-40 C -40,-60 40,-60 120,-40" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.95"/>
+    <path d="M -40,-120 C -60,-40 -60,40 -40,120" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.95"/>
+
+    <path d="M 0,-70
+             C 8,-35 35,-8 70,0
+             C 35,8 8,35 0,70
+             C -8,35 -35,8 -70,0
+             C -35,-8 -8,-35 0,-70 Z"
+          fill="url(#mercStarCore)"
+          opacity="0.98"/>
+
+    <line x1="0" y1="-70" x2="0" y2="70" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" opacity="0.95"/>
+    <line x1="-70" y1="0" x2="70" y2="0" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" opacity="0.95"/>
+
+    <circle cx="0" cy="0" r="5" fill="#ffffff"/>
+    <circle cx="0" cy="0" r="16" fill="#7dd3fc" opacity="0.45" filter="url(#mercGlow)"/>
+  </g>
+</svg>

@@ -1,0 +1,193 @@
+/*
+ * 文件页渲染（两处 1:1 共享：代码查看器文件页 + 终端右栏悬浮预览）
+ * ---------------------------------------------------------------------------
+ * 这些类由 CodeHighlightEditor / MarkdownFilePreview 产出。两个调用方必须拿到
+ * 完全相同的字体、内边距、换行与配色规则，否则同一份代码会在两处排版不一致，
+ * 所以单独成文件：code-viewer.css（代码查看器页）与 terminal-workspace.css
+ * （终端右栏）各自 @import。
+ *
+ * 注意：@import 必须位于引用方文件的最前面，否则浏览器直接丢弃。
+ */
+
+/* 高亮层 + textarea 两层严格对齐；Markdown 正文排版。 */
+/* 可编辑 + 高亮：底层高亮 <pre> 与上层透明 textarea 必须像素对齐。 */
+.code-viewer-editor-stack { position: relative; display: flex; flex: 1; min-height: 0; min-width: 0; }
+.code-viewer-editor-stack > .code-viewer-editor-highlight,
+.code-viewer-editor-stack > .code-viewer-editor-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  /* 右侧 28px：横向滚动时行尾文字不贴右侧竖直滚动条（可见文字在镜像层、
+     滚动条在输入层右缘，两层同 padding 保光标对齐）。 */
+  padding: 14px 28px 22px;
+  border: 0;
+  outline: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.7;
+  tab-size: 2;
+  white-space: pre;
+  overflow: auto;
+  box-sizing: border-box;
+}
+.code-viewer-editor-highlight { pointer-events: none; color: var(--code-foreground); background: var(--code-viewer-content-bg); }
+.code-viewer-editor-highlight > code { display: block; min-width: max-content; }
+.code-viewer-editor-input { z-index: 1; color: transparent; background: transparent; caret-color: var(--code-foreground); resize: none; }
+/* 级联顺序陷阱（重影根因）：本文件被 code-viewer.css 在**第 1 行** @import，
+   所以后面那条 `.code-viewer-editor { color: var(--code-foreground) }`（0,1,0，
+   但它靠后）会压过上面同优先级的 `.code-viewer-editor-input`（同为 0,1,0）——
+   上层 textarea 的文字变成可见，与下层高亮 <pre> 在同一位置叠印，看起来就是
+   每个字都描了边、重影。浮窗原来靠 `.floating-window …` 前缀兜住，代码查看器
+   文件页没有这层前缀，于是照旧重影。
+   修法：栈内用 0,3,0 的选择器强制透明，与后面声明的先后无关；同时把输入层的
+   背景也透明掉（自定义主题下 --code-viewer-content-bg 是不透明的 --code-background，
+   否则不透明的输入层会把下层高亮整块盖住 → 变成一片空白）。
+   排除 .is-plain：大文件纯文本模式没有高亮层，输入层必须自己显字。 */
+.code-viewer-editor-stack:not(.is-plain) > .code-viewer-editor-input {
+  color: transparent;
+  background: transparent;
+}
+/* 选区底色必须半透明（用户反馈「文件被选中就看不见字」）：
+   上层 textarea 的文字是透明的，正文颜色全来自下面的高亮 <pre>，而选区框是画在
+   上层 textarea 里的。只要选区底色不透明，它就会把下面那层正文整块盖死 ——
+   拖选后只剩一片灰块、字全部消失（浅色主题最明显，因为 --code-selection 接近纸色）。
+   改成主题强调色的低透明度叠色：选区看得出来，下面的高亮正文照样透出来。 */
+.code-viewer-editor-input::selection { color: transparent; background: color-mix(in srgb, var(--accent-primary) 30%, transparent); }
+.code-viewer-editor-stack.is-plain > .code-viewer-editor-input { color: var(--code-foreground); }
+.code-viewer-editor-stack.is-plain > .code-viewer-editor-input::selection { color: inherit; background: color-mix(in srgb, var(--accent-primary) 30%, transparent); }
+.code-viewer-preview ::selection,.code-viewer-editor::selection { background: color-mix(in srgb, var(--accent-primary) 30%, transparent); }
+.code-viewer-markdown { flex: 1; min-height: 0; overflow: auto; padding: 16px 20px 28px; color: var(--text-primary); background: transparent; font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
+.code-viewer-markdown > div > :first-child { margin-top: 0; }
+.code-viewer-markdown :is(h1,h2,h3,h4,h5,h6) { margin: 20px 0 8px; font-weight: 600; line-height: 1.4; }
+.code-viewer-markdown h1 { font-size: 20px; }
+.code-viewer-markdown h2 { font-size: 17px; }
+.code-viewer-markdown :is(h3,h4,h5,h6) { font-size: 14px; }
+.code-viewer-markdown :is(p,ul,ol,blockquote,pre,table) { margin: 10px 0; }
+.code-viewer-markdown :is(ul,ol) { padding-left: 22px; }
+.code-viewer-markdown blockquote { margin-left: 0; padding: 6px 12px; color: var(--text-secondary); background: var(--bg-hover); border-radius: 6px; }
+.code-viewer-markdown code { padding: 2px 4px; background: var(--bg-hover); border-radius: 4px; font-family: var(--font-mono); font-size: 12px; }
+.code-viewer-markdown pre { overflow: auto; padding: 12px; background: var(--bg-hover); border-radius: 6px; font-family: var(--font-mono); font-size: 12px; white-space: pre; }
+.code-viewer-markdown pre code { padding: 0; background: transparent; }
+.code-viewer-markdown table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; font-size: 12px; }
+.code-viewer-markdown table { color: var(--table-text); background: var(--table-bg); }
+.code-viewer-markdown :is(th,td) { padding: 7px 12px; text-align: left; box-shadow: inset 0 -1px var(--table-divider); }
+.code-viewer-markdown th { font-weight: 600; color: var(--table-header-text); background: var(--table-header-bg); }
+.code-viewer-markdown tbody tr:nth-child(even) { background: var(--table-stripe-bg); }
+.code-viewer-markdown tbody tr:hover { background: var(--table-hover-bg); }
+.code-viewer-markdown a { color: var(--accent-primary); text-decoration: underline; }
+.code-viewer-markdown img { max-width: 100%; height: auto; }
+.code-viewer-markdown hr { border: 0; height: 1px; background: var(--divider-color); margin: 18px 0; }
+.code-viewer-markdown-note { color: var(--text-secondary); font-size: 12px; }
+.code-viewer-file-content { display: flex; flex-direction: column; flex: 1; min-height: 0; min-width: 0; overflow: hidden; }
+.code-viewer-file-loading { display: flex; flex: 1; min-height: 120px; align-items: center; justify-content: center; gap: 9px; color: var(--text-secondary); font-size: 12px; }
+.code-viewer-file-loading .task-step-icon { flex: 0 0 20px; }
+.code-viewer-markdown-layout { display: grid; grid-template-columns: minmax(0,1fr); flex: 1; min-height: 0; }
+.code-viewer-markdown-layout.has-outline { grid-template-columns: var(--outline-pane-width, 180px) 6px minmax(0,1fr); }
+
+.code-viewer-file-content { position: relative; }
+.code-viewer-find { position: absolute; top: 10px; right: 14px; z-index: 6; display: flex; align-items: center; gap: 4px; width: min(420px, calc(100% - 28px)); padding: 5px 6px; border: 1px solid var(--border-subtle); border-radius: var(--radius-base); background: var(--popover-bg); box-shadow: var(--popover-shadow); }
+.code-viewer-find .input-wrapper { flex: 1; min-width: 90px; max-width: none; }
+.code-viewer-find > span { flex: 0 0 auto; min-width: 44px; color: var(--text-secondary); font-size: 11px; text-align: center; }
+.code-viewer-container .code-viewer-find .code-viewer-find-icon.btn { flex: 0 0 24px; width: 24px; min-width: 24px; height: 24px; padding: 0; border-radius: var(--radius-sm); font-size: 11px; font-family: var(--font-mono); }
+.code-viewer-find-icon.btn[aria-pressed="true"] { color: var(--btn-secondary-text); background: var(--btn-secondary-bg); }
+@media (max-width: 680px) {
+  .code-viewer-find { top: 8px; right: 10px; width: calc(100% - 20px); flex-wrap: wrap; }
+}
+.code-viewer-file-content mark[data-file-match] { color: inherit; background: var(--code-find-match); border-radius: 2px; }
+.code-viewer-file-content mark[data-file-match].is-current { background: var(--code-find-current); }
+.code-viewer-markdown-code { position: relative; }
+.code-viewer-markdown-code pre { padding-top: 36px; }
+
+.code-viewer-highlight-note { z-index: 2; position: absolute; right: 14px; bottom: 10px; max-width: calc(100% - 28px); padding: 3px 6px; border-radius: var(--radius-sm); color: var(--text-secondary); background: var(--bg-card); font-size: 10px; box-shadow: var(--shadow-sm); }
+
+/* 语法配色：与 .ui-file-diff 共用同一套 --code-syntax-* token。 */
+:is(.code-viewer-preview, .code-viewer-editor-highlight, .ui-file-diff, .terminal-drawer-preview-code) .hljs-comment,
+:is(.code-viewer-preview, .code-viewer-editor-highlight, .ui-file-diff, .terminal-drawer-preview-code) .hljs-quote { color: var(--code-syntax-comment); font-style: italic; }
+:is(.code-viewer-preview, .code-viewer-editor-highlight, .ui-file-diff, .terminal-drawer-preview-code) .hljs-keyword,
+:is(.code-viewer-preview, .code-viewer-editor-highlight, .ui-file-diff, .terminal-drawer-preview-code) .hljs-selector-tag { color: var(--code-syntax-keyword); }
+:is(.code-viewer-preview, .code-viewer-editor-highlight, .ui-file-diff, .terminal-drawer-preview-code) .hljs-literal { color: var(--code-syntax-literal); }
+:is(.code-viewer-preview, .code-viewer-editor-highlight, .ui-file-diff, .terminal-drawer-preview-code) .hljs-type { color: var(--code-syntax-type); }
+:is(.code-viewer-preview, .code-viewer-editor-highlight, .ui-file-diff, .terminal-drawer-preview-code) .hljs-string,
+:is(.code-viewer-preview, .code-viewer-editor-highlight, .ui-file-diff, .terminal-drawer-preview-code) .hljs-template-variable { color: var(--code-syntax-string); }
+:is(.code-viewer-preview, .code-viewer-editor-highlight, .ui-file-diff, .terminal-drawer-preview-code) .hljs-attr { color: var(--code-syntax-attribute); }
+:is(.code-viewer-preview, .code-viewer-editor-highlight, .ui-file-diff, .terminal-drawer-preview-code) .hljs-number,
+:is(.code-viewer-preview, .code-viewer-editor-highlight, .ui-file-diff, .terminal-drawer-preview-code) .hljs-symbol,
+:is(.code-viewer-preview, .code-viewer-editor-highlight, .ui-file-diff, .terminal-drawer-preview-code) .hljs-bullet { color: var(--code-syntax-number); }
+:is(.code-viewer-preview, .code-viewer-editor-highlight, .ui-file-diff, .terminal-drawer-preview-code) .hljs-title,
+:is(.code-viewer-preview, .code-viewer-editor-highlight, .ui-file-diff, .terminal-drawer-preview-code) .hljs-function .hljs-title,
+:is(.code-viewer-preview, .code-viewer-editor-highlight, .ui-file-diff, .terminal-drawer-preview-code) .hljs-section { color: var(--code-syntax-function); }
+:is(.code-viewer-preview, .code-viewer-editor-highlight, .ui-file-diff, .terminal-drawer-preview-code) .hljs-meta { color: var(--code-syntax-meta); }
+:is(.code-viewer-preview, .code-viewer-editor-highlight, .ui-file-diff, .terminal-drawer-preview-code) .hljs-built_in { color: var(--code-syntax-builtin); }
+/* Shell / 批处理变量（$VAR、%VAR%、${VAR}）以及属性键 */
+:is(.code-viewer-preview, .code-viewer-editor-highlight, .ui-file-diff, .terminal-drawer-preview-code) .hljs-variable,
+:is(.code-viewer-preview, .code-viewer-editor-highlight, .ui-file-diff, .terminal-drawer-preview-code) .hljs-template-tag,
+:is(.code-viewer-preview, .code-viewer-editor-highlight, .ui-file-diff, .terminal-drawer-preview-code) .hljs-property { color: var(--code-syntax-attribute); }
+:is(.code-viewer-preview, .code-viewer-editor-highlight, .ui-file-diff, .terminal-drawer-preview-code) .hljs-subst { color: var(--text-primary); }
+:is(.code-viewer-preview, .code-viewer-editor-highlight, .ui-file-diff, .terminal-drawer-preview-code) .hljs-params { color: var(--text-primary); }
+:is(.code-viewer-preview, .code-viewer-editor-highlight, .ui-file-diff, .terminal-drawer-preview-code) :is(.hljs-operator, .hljs-punctuation) { color: var(--code-syntax-keyword); }
+
+
+/* ---- 行号槽（CodeHighlightEditor）：右对齐行号 + 行号后一条竖着的细线 ----
+   与正文字体/行高/顶部内边距完全一致（12px / 1.7 / 14px），保证行行对齐；
+   滚动由组件用 translateY 同步，槽体自身 overflow:hidden。 */
+.code-viewer-editor-stack > .code-viewer-gutter {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1;
+  width: 54px;
+  overflow: hidden;
+  border-right: 1px solid var(--divider-color);
+  background: var(--code-viewer-content-bg, transparent);
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.7;
+  text-align: right;
+  user-select: none;
+  pointer-events: none;
+}
+
+.code-viewer-gutter-inner {
+  min-height: 100%;
+  box-sizing: border-box;
+  padding: 14px 8px 22px 6px;
+  white-space: pre;
+  will-change: transform;
+}
+
+/* 有行号槽时，高亮层与输入层整体从槽右侧开始（54px 槽 + 1px 分隔线）。 */
+.code-viewer-editor-stack.has-gutter > .code-viewer-editor-highlight,
+.code-viewer-editor-stack.has-gutter > .code-viewer-editor-input {
+  left: 55px;
+  width: calc(100% - 55px);
+}
+
+/* 高亮层是滚动镜像（随 textarea 同步平移），绝不能自己再画一条滚动条——
+   两层各画一条就是右缘的双滚动条。这里两层滚动条全部隐藏，只留输入层
+   （.code-viewer-editor-input，带 custom-scrollbar 主题色）那一条。 */
+.code-viewer-editor-stack > .code-viewer-editor-highlight {
+  scrollbar-width: none;
+}
+
+.code-viewer-editor-stack > .code-viewer-editor-highlight::-webkit-scrollbar {
+  display: none;
+}
+
+/* ---- 滚动条占位（用户实测：文字与右侧竖直滚动条重合）--------------------
+   根因：scrollbar-width/color 触发的是**浮动式**滚动条（offsetWidth 与
+   clientWidth 相等 = 不占布局空间），横向滚动时整行文字铺满内容宽度，
+   最后约 10px 的文字从浮动滑块底下穿过去——padding 只在滚到最右时有效。
+   修法：输入层 scrollbar-gutter: stable 保留 10px 占位（滚动条不再压内容）；
+   高亮镜像层自己不占位，右 padding 加 10px 对齐输入层的占位条带，
+   可见文字与滚动条之间始终保持 28px 净空，两层逐字符对齐不受影响。 */
+.code-viewer-editor-stack > .code-viewer-editor-input {
+  scrollbar-gutter: stable;
+}
+
+.code-viewer-editor-stack > .code-viewer-editor-highlight {
+  padding-right: 38px;
+}

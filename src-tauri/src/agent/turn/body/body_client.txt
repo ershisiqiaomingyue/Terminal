@@ -1,0 +1,13 @@
+                "native.agent",
+                json!({
+                    "session_id": diagnostic_session, "turn_id": diagnostic_turn,
+                    "transport": diagnostic,
+                }),
+            );
+        }),
+    );
+    let setup::PreparedInput {
+        request,
+        context:
+            TurnSkillContext {
+                skill_catalog,

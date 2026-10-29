@@ -1,0 +1,148 @@
+/* One shared treatment for task planning, background work, queued messages,
+   permission requests and AI questions. Surfaces are separated by fill only. */
+html[data-theme] .chat-notice-surface,
+html[data-theme] .chat-notice-panel {
+  box-sizing: border-box;
+  min-width: 0;
+  border: 0;
+  border-radius: 14px;
+  color: var(--task-detail);
+  background: var(--task-surface);
+  box-shadow: none;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.5;
+}
+html[data-theme] .chat-notice-panel {
+  padding: 10px;
+  background: var(--popover-bg);
+  box-shadow: var(--popover-shadow);
+}
+html[data-theme] .conversation-page .chat-notice-surface :is(.composer-task-bar, .queued-message) {
+  min-height: 36px;
+}
+html[data-theme] :is(.chat-notice-surface, .chat-notice-panel) .chat-notice-action.btn {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: auto;
+  min-width: 0;
+  height: 28px;
+  min-height: 28px;
+  padding: 0 7px;
+  border: 0;
+  border-radius: var(--radius-base);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 400;
+  transform: none;
+  transition: color .15s ease, background .15s ease;
+}
+html[data-theme] :is(.chat-notice-surface, .chat-notice-panel) .chat-notice-action.btn.is-icon {
+  width: 28px;
+  min-width: 28px;
+  padding: 0;
+}
+html[data-theme] :is(.chat-notice-surface, .chat-notice-panel) .chat-notice-action.btn-subtle {
+  color: var(--task-action);
+  background: transparent;
+  box-shadow: none;
+}
+html[data-theme] :is(.chat-notice-surface, .chat-notice-panel) .chat-notice-action.btn-subtle:is(:hover, :active, .is-selected, [aria-pressed="true"], [aria-expanded="true"]):not(:disabled) {
+  color: var(--task-title);
+  background: var(--task-action-hover-bg);
+  box-shadow: none;
+  transform: none;
+}
+/* Background count belongs to the clickable summary, without its own fill. */
+html[data-theme] .chat-notice-surface .chat-background-trigger.chat-notice-action.btn:is(:hover, :active, .active, [aria-expanded="true"]):not(:disabled) {
+  color: var(--task-title);
+  background: transparent;
+  box-shadow: none;
+}
+html[data-theme] .composer-background-card .composer-task-bar:hover { background: var(--button-hover-bg); border-radius: inherit; }
+html[data-theme] .chat-background-tasks.chat-notice-panel { background: var(--task-surface); box-shadow: var(--shadow-sm); }
+html[data-theme] .chat-background-tasks .chat-background-task.chat-notice-surface { background: transparent; }
+html[data-theme] :is(.chat-notice-surface, .chat-notice-panel) .chat-notice-action.btn:disabled { opacity: .5; }
+html[data-theme] :is(.chat-notice-surface, .chat-notice-panel) .chat-notice-action.btn:focus-visible {
+  outline: 2px solid var(--task-title);
+  outline-offset: 2px;
+}
+html[data-theme] :is(.chat-notice-surface, .chat-notice-panel) svg:not(.agent-activity-status svg) { width: 15px; height: 15px; stroke-width: 1.7; }
+html[data-theme] :is(.chat-notice-surface, .chat-notice-panel) .btn-icon { display: inline-flex; }
+html[data-theme] :is(.chat-notice-surface, .chat-notice-panel) .inline-spin { margin: 0; color: inherit; }
+html[data-theme] :is(.chat-notice-surface, .chat-notice-panel) .chat-notice-input .input,
+html[data-theme] .conversation-page .chat-notice-surface textarea {
+  box-sizing: border-box;
+  min-width: 0;
+  border: 0;
+  border-radius: 8px;
+  color: var(--input-text);
+  background: var(--input-bg-sunken);
+  box-shadow: none;
+  font: inherit;
+  font-size: 12px;
+  transition: background .15s ease;
+}
+html[data-theme] :is(.chat-notice-surface, .chat-notice-panel) .chat-notice-input .input { height: 32px; padding: 0 10px; }
+html[data-theme] :is(.chat-notice-surface, .chat-notice-panel) .chat-notice-input .input::placeholder { color: var(--input-placeholder); opacity: 1; }
+html[data-theme] :is(.chat-notice-surface, .chat-notice-panel) .chat-notice-input .input:hover:not(:disabled),
+html[data-theme] .conversation-page .chat-notice-surface textarea:hover:not(:disabled) { background: var(--input-bg-hover); color: var(--input-hover-text); }
+html[data-theme] :is(.chat-notice-surface, .chat-notice-panel) .chat-notice-input .input:focus:not(:disabled),
+html[data-theme] .conversation-page .chat-notice-surface textarea:focus:not(:disabled) {
+  background: var(--input-bg-focus);
+  color: var(--input-hover-text);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent-primary) 16%, transparent);
+  outline: 0;
+}
+html[data-theme] .conversation-page .chat-notice-surface.composer-task-card { border: 0; }
+html[data-theme] .conversation-page .composer-task-bar { gap: 7px; padding: 4px 10px; }
+html[data-theme] .conversation-page .composer-task-bar .chat-notice-action + .chat-notice-action { margin-left: -3px; }
+html[data-theme] .conversation-page .composer-task-steps.chat-notice-panel { border: 0; border-radius: 14px; }
+html[data-theme] .conversation-page .task-plan-popover.chat-notice-panel { width: min(340px, calc(100vw - 80px)); border: 0; border-radius: 14px; }
+html[data-theme] .conversation-page .task-plan-popover > header { align-items: center; padding: 0 0 8px; border: 0; }
+html[data-theme] .conversation-page .task-plan-popover > header small { flex: 1; }
+html[data-theme] .conversation-page .task-plan-popover > header b { font-size: 12px; font-weight: 500; color: var(--task-title); }
+html[data-theme] .conversation-page .task-plan-settings { padding: 0 0 10px; border: 0; }
+html[data-theme] .conversation-page .task-plan-settings label { gap: 5px; }
+html[data-theme] .conversation-page .task-plan-settings .select-trigger { border: 0; box-shadow: none; font-size: 12px; }
+html[data-theme] .conversation-page .task-plan-current { padding: 0; }
+html[data-theme] .conversation-page .task-plan-stop { width: 100%; }
+html[data-theme] .conversation-page .composer-queue { width: calc(100% - 28px); margin: 0 auto 8px; gap: 6px; }
+html[data-theme] .conversation-page .composer-queue-summary { padding: 0 10px; color: var(--task-detail); font-size: 11px; }
+html[data-theme] .conversation-page .queued-message.chat-notice-surface,
+html[data-theme] .conversation-page .queued-message.chat-notice-surface.guiding {
+  min-height: 36px; padding: 4px 10px; gap: 7px;
+  border: 0; border-radius: 14px; color: var(--task-detail); background: var(--task-surface); box-shadow: none; transform: none;
+}
+html[data-theme] .conversation-page .queued-message.chat-notice-surface::before { content: none; }
+html[data-theme] .conversation-page .queued-message-copy { gap: 7px; }
+html[data-theme] .conversation-page .queued-message-icon { color: var(--task-action); }
+html[data-theme] .conversation-page .queued-message-copy p { max-width: none; color: var(--task-title); font-size: 13px; }
+html[data-theme] .conversation-page .queued-message-actions { gap: 4px; }
+html[data-theme] .conversation-page .queued-message.editing { padding-top: 10px; padding-bottom: 10px; }
+html[data-theme] .conversation-page .queued-message-copy textarea { padding: 8px 10px; line-height: 1.5; }
+html[data-theme] .conversation-page .queued-message-menu.chat-notice-panel { border: 0; padding: 5px; }
+html[data-theme] .conversation-page .queued-message-menu .chat-notice-action { width: 100%; justify-content: flex-start; height: 30px; }
+html[data-theme] .conversation-page .agent-permission-bar.chat-notice-surface { width: calc(100% - 28px); margin: 0 auto 8px; padding: 10px; border: 0; border-radius: 14px; }
+html[data-theme] .conversation-page .agent-permission-heading { gap: 7px; color: var(--task-title); font-size: 12px; font-weight: 500; }
+html[data-theme] .conversation-page .agent-permission-heading > .chat-notice-action { margin-left: auto; }
+html[data-theme] .conversation-page .agent-permission-prompt { margin: 7px 0 10px; color: var(--task-title); }
+html[data-theme] .conversation-page .agent-permission-actions > small { color: var(--task-detail); }
+html[data-theme] .conversation-page .agent-question-options .chat-notice-action { height: auto; min-height: 28px; padding: 5px 7px; }
+html[data-theme] .chat-background-tasks.chat-notice-panel { border: 0; border-radius: 14px; }
+html[data-theme] .chat-background-task.chat-notice-surface { border: 0; border-radius: 10px; }
+html[data-theme] .chat-background-heading { gap: 7px; }
+html[data-theme] .chat-background-heading > b { color: var(--task-title); font-size: 12px; }
+html[data-theme] .chat-background-task > summary:hover { background: var(--task-action-hover-bg); }
+@media (max-width: 540px) {
+  html[data-theme] .conversation-page .composer-task-bar { gap: 4px; padding-left: 8px; padding-right: 8px; }
+  html[data-theme] .conversation-page .composer-task-card:not(.composer-background-card) .composer-task-bar > b { display: none; }
+  html[data-theme] .conversation-page .composer-task-time { display: none; }
+  html[data-theme] .conversation-page .composer-task-bar > b { font-size: 12px; }
+  html[data-theme] .conversation-page .composer-task-title { font-size: 12px; }
+  html[data-theme] .conversation-page .agent-permission-reply { flex-wrap: wrap; }
+  html[data-theme] .conversation-page .agent-permission-input { flex-basis: calc(100% - 76px); }
+}

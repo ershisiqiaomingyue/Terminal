@@ -1,0 +1,137 @@
+/* ==========================================================================
+   设备截图与录屏工作台 (DeviceCaptureView) - 现代原生桌面规范
+   ========================================================================== */
+
+.device-capture-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  background: var(--bg-canvas);
+  overflow: hidden;
+
+  --capture-item-bg: var(--bg-card);
+  --capture-item-hover: var(--bg-hover);
+}
+
+html[data-theme="dark"] .device-capture-container,
+[data-theme="dark"] .device-capture-container {
+  --capture-item-bg: var(--bg-card);
+  --capture-item-hover: var(--bg-hover);
+}
+
+.device-capture-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52px;
+  padding: 0 18px;
+  background: var(--page-header-bg);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.device-capture-body {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 900px) {
+  .device-capture-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 左侧：捕获控制与触发面板 */
+.device-capture-controls-col {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  gap: 14px;
+  border-right: 1px solid var(--border-subtle);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  background: var(--bg-canvas);
+}
+
+.device-capture-action-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--card-radius);
+  background: var(--bg-card);
+  border: var(--card-border);
+  box-shadow: var(--card-shadow), var(--card-rim);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+/* 右侧：捕获画廊与大图预览 */
+.device-capture-gallery-col {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 20px;
+  gap: 14px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  background: var(--bg-canvas);
+}
+
+.device-capture-preview-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 380px;
+  background: var(--bg-card);
+  border-radius: var(--card-radius);
+  border: var(--card-border);
+  box-shadow: var(--card-shadow), var(--card-rim);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  position: relative;
+  overflow: hidden;
+}
+
+html[data-theme="dark"] .device-capture-preview-screen {
+  background: var(--bg-card);
+}
+
+.device-capture-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.device-capture-thumb-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border-radius: var(--control-radius);
+  background: var(--bg-card);
+  border: var(--card-border);
+  box-shadow: var(--shadow-sm), var(--card-rim);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.device-capture-thumb-card:hover {
+  background: var(--bg-card-hover);
+  border-color: transparent;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md), var(--card-rim);
+}
+
+@media (max-width: 900px) {
+  .device-capture-body { overflow-y: auto; scrollbar-gutter: stable; grid-template-rows: auto auto; }
+  .device-capture-controls-col, .device-capture-gallery-col { overflow: visible; }
+}

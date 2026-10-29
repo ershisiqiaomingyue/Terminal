@@ -1,0 +1,3462 @@
+{
+  "version": 2,
+  "models": [
+    {
+      "model": "anthropic/claude-fable-5",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/anthropic/claude-fable-5"
+    },
+    {
+      "model": "anthropic/claude-fable-5.1",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/anthropic/claude-fable-5.1"
+    },
+    {
+      "model": "anthropic/claude-haiku-4.5",
+      "provider": null,
+      "contextWindow": 200000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/anthropic/claude-haiku-4.5"
+    },
+    {
+      "model": "anthropic/claude-haiku-5.5",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/anthropic/claude-haiku-5.5"
+    },
+    {
+      "model": "anthropic/claude-opus-4.5",
+      "provider": null,
+      "contextWindow": 200000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/anthropic/claude-opus-4.5"
+    },
+    {
+      "model": "anthropic/claude-opus-4.6",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "max"
+      ],
+      "reasoningBudget": true,
+      "source": "https://models.dev/api.json#openrouter/anthropic/claude-opus-4.6"
+    },
+    {
+      "model": "anthropic/claude-opus-4.7",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/anthropic/claude-opus-4.7"
+    },
+    {
+      "model": "anthropic/claude-opus-4.8",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/anthropic/claude-opus-4.8"
+    },
+    {
+      "model": "anthropic/claude-opus-5",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/anthropic/claude-opus-5"
+    },
+    {
+      "model": "anthropic/claude-opus-5.5",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/anthropic/claude-opus-5.5"
+    },
+    {
+      "model": "anthropic/claude-sonnet-4.6",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/anthropic/claude-sonnet-4.6"
+    },
+    {
+      "model": "anthropic/claude-sonnet-5",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/anthropic/claude-sonnet-5"
+    },
+    {
+      "model": "anthropic/claude-sonnet-5.5",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/anthropic/claude-sonnet-5.5"
+    },
+    {
+      "model": "claude-fable-5",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#anthropic/claude-fable-5"
+    },
+    {
+      "model": "claude-fable-5-1",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#anthropic/claude-fable-5-1"
+    },
+    {
+      "model": "claude-fable-5.1",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/anthropic/claude-fable-5.1"
+    },
+    {
+      "model": "claude-fable-latest",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/~anthropic/claude-fable-latest"
+    },
+    {
+      "model": "claude-haiku-4-5",
+      "provider": null,
+      "contextWindow": 200000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": true,
+      "source": "https://models.dev/api.json#anthropic/claude-haiku-4-5"
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "provider": null,
+      "contextWindow": 200000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": true,
+      "source": "https://models.dev/api.json#anthropic/claude-haiku-4-5-20251001"
+    },
+    {
+      "model": "claude-haiku-4.5",
+      "provider": null,
+      "contextWindow": 200000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/anthropic/claude-haiku-4.5"
+    },
+    {
+      "model": "claude-haiku-5-5",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#anthropic/claude-haiku-5-5"
+    },
+    {
+      "model": "claude-haiku-5.5",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/anthropic/claude-haiku-5.5"
+    },
+    {
+      "model": "claude-haiku-latest",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/~anthropic/claude-haiku-latest"
+    },
+    {
+      "model": "claude-opus-4-5",
+      "provider": null,
+      "contextWindow": 200000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "reasoningBudget": true,
+      "source": "https://models.dev/api.json#anthropic/claude-opus-4-5"
+    },
+    {
+      "model": "claude-opus-4-5-20251101",
+      "provider": null,
+      "contextWindow": 200000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "reasoningBudget": true,
+      "source": "https://models.dev/api.json#anthropic/claude-opus-4-5-20251101"
+    },
+    {
+      "model": "claude-opus-4-6",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "max"
+      ],
+      "reasoningBudget": true,
+      "source": "https://models.dev/api.json#anthropic/claude-opus-4-6"
+    },
+    {
+      "model": "claude-opus-4-7",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#anthropic/claude-opus-4-7"
+    },
+    {
+      "model": "claude-opus-4-8",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#anthropic/claude-opus-4-8"
+    },
+    {
+      "model": "claude-opus-4.5",
+      "provider": null,
+      "contextWindow": 200000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/anthropic/claude-opus-4.5"
+    },
+    {
+      "model": "claude-opus-4.6",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "max"
+      ],
+      "reasoningBudget": true,
+      "source": "https://models.dev/api.json#openrouter/anthropic/claude-opus-4.6"
+    },
+    {
+      "model": "claude-opus-4.7",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/anthropic/claude-opus-4.7"
+    },
+    {
+      "model": "claude-opus-4.8",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/anthropic/claude-opus-4.8"
+    },
+    {
+      "model": "claude-opus-5",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#anthropic/claude-opus-5"
+    },
+    {
+      "model": "claude-opus-5-5",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#anthropic/claude-opus-5-5"
+    },
+    {
+      "model": "claude-opus-5.5",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/anthropic/claude-opus-5.5"
+    },
+    {
+      "model": "claude-opus-latest",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/~anthropic/claude-opus-latest"
+    },
+    {
+      "model": "claude-sonnet-4-6",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "max"
+      ],
+      "reasoningBudget": true,
+      "source": "https://models.dev/api.json#anthropic/claude-sonnet-4-6"
+    },
+    {
+      "model": "claude-sonnet-4.6",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/anthropic/claude-sonnet-4.6"
+    },
+    {
+      "model": "claude-sonnet-5",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#anthropic/claude-sonnet-5"
+    },
+    {
+      "model": "claude-sonnet-5-5",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#anthropic/claude-sonnet-5-5"
+    },
+    {
+      "model": "claude-sonnet-5.5",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/anthropic/claude-sonnet-5.5"
+    },
+    {
+      "model": "claude-sonnet-latest",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/~anthropic/claude-sonnet-latest"
+    },
+    {
+      "model": "deepseek-chat",
+      "provider": null,
+      "contextWindow": 163840,
+      "protocols": [],
+      "supportsReasoning": false,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/deepseek/deepseek-chat"
+    },
+    {
+      "model": "deepseek-flash",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#deepseek/deepseek-flash"
+    },
+    {
+      "model": "deepseek-v4-flash",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#deepseek/deepseek-v4-flash"
+    },
+    {
+      "model": "deepseek-v4-flash-0731",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/deepseek/deepseek-v4-flash-0731"
+    },
+    {
+      "model": "deepseek-v4-flash-latest",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/~deepseek/deepseek-v4-flash-latest"
+    },
+    {
+      "model": "deepseek-v4-flash-vision-exp",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#deepseek/deepseek-v4-flash-vision-exp"
+    },
+    {
+      "model": "deepseek-v4-pro",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#deepseek/deepseek-v4-pro"
+    },
+    {
+      "model": "deepseek-v4-pro-0813",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/deepseek/deepseek-v4-pro-0813"
+    },
+    {
+      "model": "deepseek-v4.1-flash",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/deepseek/deepseek-v4.1-flash"
+    },
+    {
+      "model": "deepseek/deepseek-chat",
+      "provider": null,
+      "contextWindow": 163840,
+      "protocols": [],
+      "supportsReasoning": false,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/deepseek/deepseek-chat"
+    },
+    {
+      "model": "deepseek/deepseek-v4-flash",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "high",
+        "xhigh"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/deepseek/deepseek-v4-flash"
+    },
+    {
+      "model": "deepseek/deepseek-v4-flash-0731",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/deepseek/deepseek-v4-flash-0731"
+    },
+    {
+      "model": "deepseek/deepseek-v4-flash-vision-exp",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/deepseek/deepseek-v4-flash-vision-exp"
+    },
+    {
+      "model": "deepseek/deepseek-v4-pro",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "high",
+        "xhigh"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/deepseek/deepseek-v4-pro"
+    },
+    {
+      "model": "deepseek/deepseek-v4-pro-0813",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/deepseek/deepseek-v4-pro-0813"
+    },
+    {
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/deepseek/deepseek-v4.1-flash"
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "minimal",
+        "low",
+        "medium",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#google/gemini-3-flash-preview"
+    },
+    {
+      "model": "gemini-3-pro-image",
+      "provider": null,
+      "contextWindow": 65536,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#google/gemini-3-pro-image"
+    },
+    {
+      "model": "gemini-3-pro-image-preview",
+      "provider": null,
+      "contextWindow": 131072,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#google/gemini-3-pro-image-preview"
+    },
+    {
+      "model": "gemini-3.1-flash-image",
+      "provider": null,
+      "contextWindow": 131072,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "minimal",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#google/gemini-3.1-flash-image"
+    },
+    {
+      "model": "gemini-3.1-flash-image-preview",
+      "provider": null,
+      "contextWindow": 65536,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "minimal",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#google/gemini-3.1-flash-image-preview"
+    },
+    {
+      "model": "gemini-3.1-flash-lite",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "minimal",
+        "low",
+        "medium",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#google/gemini-3.1-flash-lite"
+    },
+    {
+      "model": "gemini-3.1-flash-lite-image",
+      "provider": null,
+      "contextWindow": 65536,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "minimal",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#google/gemini-3.1-flash-lite-image"
+    },
+    {
+      "model": "gemini-3.1-flash-lite-preview",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "minimal",
+        "low",
+        "medium",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#google/gemini-3.1-flash-lite-preview"
+    },
+    {
+      "model": "gemini-3.1-flash-live-preview",
+      "provider": null,
+      "contextWindow": 131072,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "minimal",
+        "low",
+        "medium",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#google/gemini-3.1-flash-live-preview"
+    },
+    {
+      "model": "gemini-3.1-flash-tts-preview",
+      "provider": null,
+      "contextWindow": 8192,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#google/gemini-3.1-flash-tts-preview"
+    },
+    {
+      "model": "gemini-3.1-pro-preview",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#google/gemini-3.1-pro-preview"
+    },
+    {
+      "model": "gemini-3.1-pro-preview-customtools",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#google/gemini-3.1-pro-preview-customtools"
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "minimal",
+        "low",
+        "medium",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#google/gemini-3.5-flash"
+    },
+    {
+      "model": "gemini-3.5-flash-lite",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "minimal",
+        "low",
+        "medium",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#google/gemini-3.5-flash-lite"
+    },
+    {
+      "model": "gemini-3.5-live-translate-preview",
+      "provider": null,
+      "contextWindow": 16384,
+      "protocols": [],
+      "supportsReasoning": false,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#google/gemini-3.5-live-translate-preview"
+    },
+    {
+      "model": "gemini-3.6-flash",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "minimal",
+        "low",
+        "medium",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#google/gemini-3.6-flash"
+    },
+    {
+      "model": "gemini-3.7-flash",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#google/gemini-3.7-flash"
+    },
+    {
+      "model": "gemini-3.8-flash",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#google/gemini-3.8-flash"
+    },
+    {
+      "model": "glm-4.7",
+      "provider": null,
+      "contextWindow": 204800,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#zai/glm-4.7"
+    },
+    {
+      "model": "glm-4.7-flash",
+      "provider": null,
+      "contextWindow": 200000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#zai/glm-4.7-flash"
+    },
+    {
+      "model": "glm-4.7-flashx",
+      "provider": null,
+      "contextWindow": 200000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#zai/glm-4.7-flashx"
+    },
+    {
+      "model": "glm-5",
+      "provider": null,
+      "contextWindow": 204800,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#zai/glm-5"
+    },
+    {
+      "model": "glm-5-turbo",
+      "provider": null,
+      "contextWindow": 200000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#zai/glm-5-turbo"
+    },
+    {
+      "model": "glm-5.1",
+      "provider": null,
+      "contextWindow": 200000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#zai/glm-5.1"
+    },
+    {
+      "model": "glm-5.2",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "high",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#zai/glm-5.2"
+    },
+    {
+      "model": "glm-5.3",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "supportsVision": false,
+      "reasoningEfforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#zai/glm-5.3"
+    },
+    {
+      "model": "glm-5.3-flash",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "supportsVision": true,
+      "reasoningEfforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#zai/glm-5.3-flash"
+    },
+    {
+      "model": "glm-5.3-flashx",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#zai/glm-5.3-flashx"
+    },
+    {
+      "model": "glm-5.3-prime",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/z-ai/glm-5.3-prime"
+    },
+    {
+      "model": "glm-5v-turbo",
+      "provider": null,
+      "contextWindow": 200000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#zai/glm-5v-turbo"
+    },
+    {
+      "model": "google/gemini-3-flash-preview",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "minimal",
+        "low",
+        "medium",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/google/gemini-3-flash-preview"
+    },
+    {
+      "model": "google/gemini-3-pro-image",
+      "provider": null,
+      "contextWindow": 131072,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/google/gemini-3-pro-image"
+    },
+    {
+      "model": "google/gemini-3-pro-image-preview",
+      "provider": null,
+      "contextWindow": 65536,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/google/gemini-3-pro-image-preview"
+    },
+    {
+      "model": "google/gemini-3.1-flash-image",
+      "provider": null,
+      "contextWindow": 131072,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "minimal",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/google/gemini-3.1-flash-image"
+    },
+    {
+      "model": "google/gemini-3.1-flash-image-preview",
+      "provider": null,
+      "contextWindow": 65536,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "minimal",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/google/gemini-3.1-flash-image-preview"
+    },
+    {
+      "model": "google/gemini-3.1-flash-lite",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "minimal",
+        "low",
+        "medium",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/google/gemini-3.1-flash-lite"
+    },
+    {
+      "model": "google/gemini-3.1-flash-lite-image",
+      "provider": null,
+      "contextWindow": 65536,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "minimal",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/google/gemini-3.1-flash-lite-image"
+    },
+    {
+      "model": "google/gemini-3.1-flash-lite-preview",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "minimal",
+        "low",
+        "medium",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/google/gemini-3.1-flash-lite-preview"
+    },
+    {
+      "model": "google/gemini-3.1-pro-preview",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/google/gemini-3.1-pro-preview"
+    },
+    {
+      "model": "google/gemini-3.1-pro-preview-customtools",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/google/gemini-3.1-pro-preview-customtools"
+    },
+    {
+      "model": "google/gemini-3.5-flash",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "minimal",
+        "low",
+        "medium",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/google/gemini-3.5-flash"
+    },
+    {
+      "model": "google/gemini-3.5-flash-lite",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "minimal",
+        "low",
+        "medium",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/google/gemini-3.5-flash-lite"
+    },
+    {
+      "model": "google/gemini-3.6-flash",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "minimal",
+        "low",
+        "medium",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/google/gemini-3.6-flash"
+    },
+    {
+      "model": "google/gemini-3.7-flash",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/google/gemini-3.7-flash"
+    },
+    {
+      "model": "google/gemini-3.8-flash",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/google/gemini-3.8-flash"
+    },
+    {
+      "model": "gpt-5.5",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openai/gpt-5.5"
+    },
+    {
+      "model": "gpt-5.5-pro",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openai/gpt-5.5-pro"
+    },
+    {
+      "model": "gpt-5.6",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openai/gpt-5.6"
+    },
+    {
+      "model": "gpt-5.6-luna",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openai/gpt-5.6-luna"
+    },
+    {
+      "model": "gpt-5.6-luna-pro",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/openai/gpt-5.6-luna-pro"
+    },
+    {
+      "model": "gpt-5.6-sol",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openai/gpt-5.6-sol"
+    },
+    {
+      "model": "gpt-5.6-sol-pro",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/openai/gpt-5.6-sol-pro"
+    },
+    {
+      "model": "gpt-5.6-terra",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openai/gpt-5.6-terra"
+    },
+    {
+      "model": "gpt-5.6-terra-pro",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/openai/gpt-5.6-terra-pro"
+    },
+    {
+      "model": "gpt-6-astra",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openai/gpt-6-astra"
+    },
+    {
+      "model": "gpt-6-astra-pro",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/openai/gpt-6-astra-pro"
+    },
+    {
+      "model": "gpt-6-luna",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openai/gpt-6-luna"
+    },
+    {
+      "model": "gpt-6-luna-pro",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/openai/gpt-6-luna-pro"
+    },
+    {
+      "model": "gpt-6-sol",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openai/gpt-6-sol"
+    },
+    {
+      "model": "gpt-6-sol-pro",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/openai/gpt-6-sol-pro"
+    },
+    {
+      "model": "gpt-6.1-sol",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openai/gpt-6.1-sol"
+    },
+    {
+      "model": "gpt-6.1-sol-pro",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/openai/gpt-6.1-sol-pro"
+    },
+    {
+      "model": "grok-4.20",
+      "provider": null,
+      "contextWindow": 2000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/x-ai/grok-4.20"
+    },
+    {
+      "model": "grok-4.20-0309-non-reasoning",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": false,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#xai/grok-4.20-0309-non-reasoning"
+    },
+    {
+      "model": "grok-4.20-0309-reasoning",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#xai/grok-4.20-0309-reasoning"
+    },
+    {
+      "model": "grok-4.20-multi-agent",
+      "provider": null,
+      "contextWindow": 2000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/x-ai/grok-4.20-multi-agent"
+    },
+    {
+      "model": "grok-4.20-multi-agent-0309",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#xai/grok-4.20-multi-agent-0309"
+    },
+    {
+      "model": "grok-4.3",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#xai/grok-4.3"
+    },
+    {
+      "model": "grok-4.5",
+      "provider": null,
+      "contextWindow": 500000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#xai/grok-4.5"
+    },
+    {
+      "model": "grok-4.6",
+      "provider": null,
+      "contextWindow": 500000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#xai/grok-4.6"
+    },
+    {
+      "model": "grok-4.7",
+      "provider": null,
+      "contextWindow": 500000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#xai/grok-4.7"
+    },
+    {
+      "model": "kimi-k2-thinking",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/moonshotai/kimi-k2-thinking"
+    },
+    {
+      "model": "kimi-k2.5",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/moonshotai/kimi-k2.5"
+    },
+    {
+      "model": "kimi-k2.6",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#moonshotai/kimi-k2.6"
+    },
+    {
+      "model": "kimi-k2.7-code",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#moonshotai/kimi-k2.7-code"
+    },
+    {
+      "model": "kimi-k2.7-code-highspeed",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#moonshotai/kimi-k2.7-code-highspeed"
+    },
+    {
+      "model": "kimi-k3",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#moonshotai/kimi-k3"
+    },
+    {
+      "model": "mimo-v2-flash",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#xiaomi/mimo-v2-flash"
+    },
+    {
+      "model": "mimo-v2-omni",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#xiaomi/mimo-v2-omni"
+    },
+    {
+      "model": "mimo-v2-pro",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#xiaomi/mimo-v2-pro"
+    },
+    {
+      "model": "mimo-v2.5",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#xiaomi/mimo-v2.5"
+    },
+    {
+      "model": "mimo-v2.5-pro",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#xiaomi/mimo-v2.5-pro"
+    },
+    {
+      "model": "mimo-v2.5-pro-ultraspeed",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#xiaomi/mimo-v2.5-pro-ultraspeed"
+    },
+    {
+      "model": "mimo-v2.6-flash",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#xiaomi/mimo-v2.6-flash"
+    },
+    {
+      "model": "mimo-v2.6-pro",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#xiaomi/mimo-v2.6-pro"
+    },
+    {
+      "model": "mimo-v2.6-pro-ultraspeed",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#xiaomi/mimo-v2.6-pro-ultraspeed"
+    },
+    {
+      "model": "minimax-m2",
+      "provider": null,
+      "contextWindow": 204800,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#minimax/MiniMax-M2"
+    },
+    {
+      "model": "minimax-m2-her",
+      "provider": null,
+      "contextWindow": 65536,
+      "protocols": [],
+      "supportsReasoning": false,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/minimax/minimax-m2-her"
+    },
+    {
+      "model": "minimax-m2.1",
+      "provider": null,
+      "contextWindow": 204800,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#minimax/MiniMax-M2.1"
+    },
+    {
+      "model": "minimax-m2.5",
+      "provider": null,
+      "contextWindow": 204800,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#minimax/MiniMax-M2.5"
+    },
+    {
+      "model": "minimax-m2.5-highspeed",
+      "provider": null,
+      "contextWindow": 204800,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#minimax/MiniMax-M2.5-highspeed"
+    },
+    {
+      "model": "minimax-m2.7",
+      "provider": null,
+      "contextWindow": 204800,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#minimax/MiniMax-M2.7"
+    },
+    {
+      "model": "minimax-m2.7-highspeed",
+      "provider": null,
+      "contextWindow": 204800,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#minimax/MiniMax-M2.7-highspeed"
+    },
+    {
+      "model": "minimax-m3",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#minimax/MiniMax-M3"
+    },
+    {
+      "model": "minimax-m3.1-flash-preview",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#minimax-cn-coding-plan/MiniMax-M3.1-Flash-Preview"
+    },
+    {
+      "model": "minimax/minimax-m2",
+      "provider": null,
+      "contextWindow": 204800,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/minimax/minimax-m2"
+    },
+    {
+      "model": "minimax/minimax-m2-her",
+      "provider": null,
+      "contextWindow": 65536,
+      "protocols": [],
+      "supportsReasoning": false,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/minimax/minimax-m2-her"
+    },
+    {
+      "model": "minimax/minimax-m2.1",
+      "provider": null,
+      "contextWindow": 204800,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/minimax/minimax-m2.1"
+    },
+    {
+      "model": "minimax/minimax-m2.5",
+      "provider": null,
+      "contextWindow": 204800,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/minimax/minimax-m2.5"
+    },
+    {
+      "model": "minimax/minimax-m2.7",
+      "provider": null,
+      "contextWindow": 204800,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/minimax/minimax-m2.7"
+    },
+    {
+      "model": "minimax/minimax-m3",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/minimax/minimax-m3"
+    },
+    {
+      "model": "moonshotai/kimi-k2-thinking",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/moonshotai/kimi-k2-thinking"
+    },
+    {
+      "model": "moonshotai/kimi-k2.5",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/moonshotai/kimi-k2.5"
+    },
+    {
+      "model": "moonshotai/kimi-k2.6",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/moonshotai/kimi-k2.6"
+    },
+    {
+      "model": "moonshotai/kimi-k2.7-code",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/moonshotai/kimi-k2.7-code"
+    },
+    {
+      "model": "moonshotai/kimi-k3",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/moonshotai/kimi-k3"
+    },
+    {
+      "model": "openai/gpt-5.5",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/openai/gpt-5.5"
+    },
+    {
+      "model": "openai/gpt-5.5-pro",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/openai/gpt-5.5-pro"
+    },
+    {
+      "model": "openai/gpt-5.6-luna",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/openai/gpt-5.6-luna"
+    },
+    {
+      "model": "openai/gpt-5.6-luna-pro",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/openai/gpt-5.6-luna-pro"
+    },
+    {
+      "model": "openai/gpt-5.6-sol",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/openai/gpt-5.6-sol"
+    },
+    {
+      "model": "openai/gpt-5.6-sol-pro",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/openai/gpt-5.6-sol-pro"
+    },
+    {
+      "model": "openai/gpt-5.6-terra",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/openai/gpt-5.6-terra"
+    },
+    {
+      "model": "openai/gpt-5.6-terra-pro",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/openai/gpt-5.6-terra-pro"
+    },
+    {
+      "model": "openai/gpt-6-astra",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/openai/gpt-6-astra"
+    },
+    {
+      "model": "openai/gpt-6-astra-pro",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/openai/gpt-6-astra-pro"
+    },
+    {
+      "model": "openai/gpt-6-luna",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/openai/gpt-6-luna"
+    },
+    {
+      "model": "openai/gpt-6-luna-pro",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/openai/gpt-6-luna-pro"
+    },
+    {
+      "model": "openai/gpt-6-sol",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/openai/gpt-6-sol"
+    },
+    {
+      "model": "openai/gpt-6-sol-pro",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/openai/gpt-6-sol-pro"
+    },
+    {
+      "model": "openai/gpt-6.1-sol",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/openai/gpt-6.1-sol"
+    },
+    {
+      "model": "openai/gpt-6.1-sol-pro",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/openai/gpt-6.1-sol-pro"
+    },
+    {
+      "model": "qwen/qwen3-coder-next",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": false,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3-coder-next"
+    },
+    {
+      "model": "qwen/qwen3-max-thinking",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3-max-thinking"
+    },
+    {
+      "model": "qwen/qwen3-vl-32b-instruct",
+      "provider": null,
+      "contextWindow": 131072,
+      "protocols": [],
+      "supportsReasoning": false,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3-vl-32b-instruct"
+    },
+    {
+      "model": "qwen/qwen3-vl-8b-instruct",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": false,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3-vl-8b-instruct"
+    },
+    {
+      "model": "qwen/qwen3-vl-8b-thinking",
+      "provider": null,
+      "contextWindow": 131072,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3-vl-8b-thinking"
+    },
+    {
+      "model": "qwen/qwen3.5-122b-a10b",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3.5-122b-a10b"
+    },
+    {
+      "model": "qwen/qwen3.5-27b",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3.5-27b"
+    },
+    {
+      "model": "qwen/qwen3.5-35b-a3b",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3.5-35b-a3b"
+    },
+    {
+      "model": "qwen/qwen3.5-397b-a17b",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3.5-397b-a17b"
+    },
+    {
+      "model": "qwen/qwen3.5-9b",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3.5-9b"
+    },
+    {
+      "model": "qwen/qwen3.5-flash-02-23",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3.5-flash-02-23"
+    },
+    {
+      "model": "qwen/qwen3.5-plus-02-15",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3.5-plus-02-15"
+    },
+    {
+      "model": "qwen/qwen3.5-plus-20260420",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3.5-plus-20260420"
+    },
+    {
+      "model": "qwen/qwen3.6-27b",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3.6-27b"
+    },
+    {
+      "model": "qwen/qwen3.6-35b-a3b",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3.6-35b-a3b"
+    },
+    {
+      "model": "qwen/qwen3.6-flash",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3.6-flash"
+    },
+    {
+      "model": "qwen/qwen3.6-max-preview",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3.6-max-preview"
+    },
+    {
+      "model": "qwen/qwen3.6-plus",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3.6-plus"
+    },
+    {
+      "model": "qwen/qwen3.7-flash",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": true,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3.7-flash"
+    },
+    {
+      "model": "qwen/qwen3.7-max",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3.7-max"
+    },
+    {
+      "model": "qwen/qwen3.7-plus",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3.7-plus"
+    },
+    {
+      "model": "qwen/qwen3.8-2.4t-a95b",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "xhigh"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3.8-2.4t-a95b"
+    },
+    {
+      "model": "qwen/qwen3.8-27b",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "xhigh"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3.8-27b"
+    },
+    {
+      "model": "qwen/qwen3.8-flash",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": true,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3.8-flash"
+    },
+    {
+      "model": "qwen/qwen3.8-max-0902",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "minimal",
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3.8-max-0902"
+    },
+    {
+      "model": "qwen/qwen3.8-max-prime",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "minimal",
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3.8-max-prime"
+    },
+    {
+      "model": "qwen/qwen3.8-omni-flash",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": true,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3.8-omni-flash"
+    },
+    {
+      "model": "qwen3-coder-next",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": false,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#alibaba-coding-plan/qwen3-coder-next"
+    },
+    {
+      "model": "qwen3-max",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": true,
+      "source": "https://models.dev/api.json#alibaba-cn/qwen3-max"
+    },
+    {
+      "model": "qwen3-max-2026-01-23",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": false,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#alibaba-coding-plan/qwen3-max-2026-01-23"
+    },
+    {
+      "model": "qwen3-max-thinking",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3-max-thinking"
+    },
+    {
+      "model": "qwen3-vl-32b-instruct",
+      "provider": null,
+      "contextWindow": 131072,
+      "protocols": [],
+      "supportsReasoning": false,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3-vl-32b-instruct"
+    },
+    {
+      "model": "qwen3-vl-8b-instruct",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": false,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3-vl-8b-instruct"
+    },
+    {
+      "model": "qwen3-vl-8b-thinking",
+      "provider": null,
+      "contextWindow": 131072,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3-vl-8b-thinking"
+    },
+    {
+      "model": "qwen3.5-122b-a10b",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": true,
+      "source": "https://models.dev/api.json#alibaba/qwen3.5-122b-a10b"
+    },
+    {
+      "model": "qwen3.5-27b",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": true,
+      "source": "https://models.dev/api.json#alibaba/qwen3.5-27b"
+    },
+    {
+      "model": "qwen3.5-35b-a3b",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": true,
+      "source": "https://models.dev/api.json#alibaba/qwen3.5-35b-a3b"
+    },
+    {
+      "model": "qwen3.5-397b-a17b",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": true,
+      "source": "https://models.dev/api.json#alibaba/qwen3.5-397b-a17b"
+    },
+    {
+      "model": "qwen3.5-9b",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3.5-9b"
+    },
+    {
+      "model": "qwen3.5-flash",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": true,
+      "source": "https://models.dev/api.json#alibaba/qwen3.5-flash"
+    },
+    {
+      "model": "qwen3.5-flash-02-23",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3.5-flash-02-23"
+    },
+    {
+      "model": "qwen3.5-plus",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": true,
+      "source": "https://models.dev/api.json#alibaba/qwen3.5-plus"
+    },
+    {
+      "model": "qwen3.5-plus-02-15",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3.5-plus-02-15"
+    },
+    {
+      "model": "qwen3.5-plus-20260420",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3.5-plus-20260420"
+    },
+    {
+      "model": "qwen3.6-27b",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": true,
+      "source": "https://models.dev/api.json#alibaba/qwen3.6-27b"
+    },
+    {
+      "model": "qwen3.6-35b-a3b",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": true,
+      "source": "https://models.dev/api.json#alibaba/qwen3.6-35b-a3b"
+    },
+    {
+      "model": "qwen3.6-flash",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": true,
+      "source": "https://models.dev/api.json#alibaba/qwen3.6-flash"
+    },
+    {
+      "model": "qwen3.6-max-preview",
+      "provider": null,
+      "contextWindow": 262144,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": true,
+      "source": "https://models.dev/api.json#alibaba/qwen3.6-max-preview"
+    },
+    {
+      "model": "qwen3.6-plus",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": true,
+      "source": "https://models.dev/api.json#alibaba/qwen3.6-plus"
+    },
+    {
+      "model": "qwen3.7-flash",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": true,
+      "source": "https://models.dev/api.json#alibaba/qwen3.7-flash"
+    },
+    {
+      "model": "qwen3.7-max",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": true,
+      "source": "https://models.dev/api.json#alibaba/qwen3.7-max"
+    },
+    {
+      "model": "qwen3.7-plus",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": true,
+      "source": "https://models.dev/api.json#alibaba/qwen3.7-plus"
+    },
+    {
+      "model": "qwen3.8-2.4t-a95b",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "xhigh"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3.8-2.4t-a95b"
+    },
+    {
+      "model": "qwen3.8-27b",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "xhigh"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3.8-27b"
+    },
+    {
+      "model": "qwen3.8-flash",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "xhigh"
+      ],
+      "reasoningBudget": true,
+      "source": "https://models.dev/api.json#alibaba/qwen3.8-flash"
+    },
+    {
+      "model": "qwen3.8-max",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "xhigh"
+      ],
+      "reasoningBudget": true,
+      "source": "https://models.dev/api.json#alibaba/qwen3.8-max"
+    },
+    {
+      "model": "qwen3.8-max-0902",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "minimal",
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3.8-max-0902"
+    },
+    {
+      "model": "qwen3.8-max-preview",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "xhigh"
+      ],
+      "reasoningBudget": true,
+      "source": "https://models.dev/api.json#alibaba-token-plan/qwen3.8-max-preview"
+    },
+    {
+      "model": "qwen3.8-max-prime",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "minimal",
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/qwen/qwen3.8-max-prime"
+    },
+    {
+      "model": "qwen3.8-omni-flash",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "xhigh"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#alibaba/qwen3.8-omni-flash"
+    },
+    {
+      "model": "x-ai/grok-4.20",
+      "provider": null,
+      "contextWindow": 2000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/x-ai/grok-4.20"
+    },
+    {
+      "model": "x-ai/grok-4.20-multi-agent",
+      "provider": null,
+      "contextWindow": 2000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/x-ai/grok-4.20-multi-agent"
+    },
+    {
+      "model": "x-ai/grok-4.3",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/x-ai/grok-4.3"
+    },
+    {
+      "model": "x-ai/grok-4.5",
+      "provider": null,
+      "contextWindow": 500000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/x-ai/grok-4.5"
+    },
+    {
+      "model": "x-ai/grok-4.6",
+      "provider": null,
+      "contextWindow": 500000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/x-ai/grok-4.6"
+    },
+    {
+      "model": "x-ai/grok-4.7",
+      "provider": null,
+      "contextWindow": 500000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/x-ai/grok-4.7"
+    },
+    {
+      "model": "xiaomi/mimo-v2.5",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/xiaomi/mimo-v2.5"
+    },
+    {
+      "model": "xiaomi/mimo-v2.5-pro",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/xiaomi/mimo-v2.5-pro"
+    },
+    {
+      "model": "xiaomi/mimo-v2.6-flash",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/xiaomi/mimo-v2.6-flash"
+    },
+    {
+      "model": "xiaomi/mimo-v2.6-pro",
+      "provider": null,
+      "contextWindow": 1050000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/xiaomi/mimo-v2.6-pro"
+    },
+    {
+      "model": "xiaomi/mimo-v2.6-pro-ultraspeed",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/xiaomi/mimo-v2.6-pro-ultraspeed"
+    },
+    {
+      "model": "z-ai/glm-4.7",
+      "provider": null,
+      "contextWindow": 204800,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/z-ai/glm-4.7"
+    },
+    {
+      "model": "z-ai/glm-4.7-flash",
+      "provider": null,
+      "contextWindow": 200000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/z-ai/glm-4.7-flash"
+    },
+    {
+      "model": "z-ai/glm-5",
+      "provider": null,
+      "contextWindow": 204800,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/z-ai/glm-5"
+    },
+    {
+      "model": "z-ai/glm-5-turbo",
+      "provider": null,
+      "contextWindow": 202752,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/z-ai/glm-5-turbo"
+    },
+    {
+      "model": "z-ai/glm-5.1",
+      "provider": null,
+      "contextWindow": 204800,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/z-ai/glm-5.1"
+    },
+    {
+      "model": "z-ai/glm-5.2",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "high",
+        "xhigh"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/z-ai/glm-5.2"
+    },
+    {
+      "model": "z-ai/glm-5.3",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "supportsVision": false,
+      "reasoningEfforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/z-ai/glm-5.3"
+    },
+    {
+      "model": "z-ai/glm-5.3-flash",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "supportsVision": true,
+      "reasoningEfforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/z-ai/glm-5.3-flash"
+    },
+    {
+      "model": "z-ai/glm-5.3-flashx",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/z-ai/glm-5.3-flashx"
+    },
+    {
+      "model": "z-ai/glm-5.3-prime",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/z-ai/glm-5.3-prime"
+    },
+    {
+      "model": "z-ai/glm-5v-turbo",
+      "provider": null,
+      "contextWindow": 202752,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/z-ai/glm-5v-turbo"
+    },
+    {
+      "model": "~anthropic/claude-fable-latest",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/~anthropic/claude-fable-latest"
+    },
+    {
+      "model": "~anthropic/claude-haiku-latest",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/~anthropic/claude-haiku-latest"
+    },
+    {
+      "model": "~anthropic/claude-opus-latest",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/~anthropic/claude-opus-latest"
+    },
+    {
+      "model": "~anthropic/claude-sonnet-latest",
+      "provider": null,
+      "contextWindow": 1000000,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/~anthropic/claude-sonnet-latest"
+    },
+    {
+      "model": "~deepseek/deepseek-v4-flash-latest",
+      "provider": null,
+      "contextWindow": 1048576,
+      "protocols": [],
+      "supportsReasoning": true,
+      "reasoningEfforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "reasoningBudget": false,
+      "source": "https://models.dev/api.json#openrouter/~deepseek/deepseek-v4-flash-latest"
+    }
+  ]
+}

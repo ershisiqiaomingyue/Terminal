@@ -1,0 +1,35 @@
+/* Keep the picker attached to its toolbar button and out of composer layout. */
+
+.chat-debug-anchor { position: relative; display: inline-flex; }
+.chat-debug-picker {
+  position: absolute;
+  z-index: 50;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  width: min(360px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  padding: 8px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-base);
+  background: var(--popover-bg);
+  box-shadow: var(--shadow-sm);
+}
+
+.chat-debug-picker-title {
+  flex: 1 0 100%;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+}
+
+.chat-debug-picker .checkbox-row {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+
+.chat-debug-reply { display: flex; flex-direction: column; gap: 12px; width: min(760px, calc(100% - 48px)); margin: 24px auto; }
+.chat-scroll:has(.chat-debug-reply) .chat-empty { display: none; }
+.chat-debug-file-diff { margin: 0; padding: 14px; overflow: auto; font: 11.5px/1.6 var(--font-mono); }

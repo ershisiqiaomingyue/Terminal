@@ -1,0 +1,153 @@
+.code-viewer-toolbar.code-viewer-toolbar-b { height: 54px; min-height: 54px; padding: 0 16px; gap: 14px; flex-wrap: nowrap; white-space: nowrap; }
+.code-viewer-toolbar-b h1 { font-size: 14px; }
+.code-viewer-toolbar-b .code-viewer-source-tabs { display: flex; align-items: center; flex: 0 0 auto; gap: 2px; padding: 3px; border: 0; border-radius: var(--radius-base); background: var(--segmented-bg); box-shadow: none; }
+.code-viewer-source-tabs .seg-btn { display: inline-flex; align-items: center; justify-content: center; gap: 5px; height: 26px; min-width: 0; padding: 0 9px; border: 0; border-radius: var(--radius-sm); font: inherit; font-size: 12px; cursor: pointer; }
+.code-viewer-toolbar-b .btn { height: 32px; min-height: 32px; flex-shrink: 0; padding: 0 9px; border: 0; box-shadow: none; border-radius: var(--radius-base); }
+.code-viewer-toolbar-b .code-viewer-open-button { padding: 0; }
+.code-viewer-toolbar-b .code-viewer-root-name { display: inline-flex; align-items: baseline; gap: 5px; min-width: 0; flex: 0 1 auto; overflow: hidden; white-space: nowrap; font-size: 12px; color: var(--text-secondary); }
+.code-viewer-toolbar-b .code-viewer-root-name > b { flex: 0 0 auto; font-weight: 600; color: var(--text-primary); }
+.code-viewer-toolbar-b .code-viewer-root-name > i { flex: 0 0 auto; font-style: normal; color: var(--text-tertiary); }
+.code-viewer-toolbar-b .code-viewer-root-name > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.code-viewer-toolbar-b .code-viewer-toolbar-actions { flex: 0 0 auto; gap: 3px; }
+.code-viewer-toolbar-b .code-viewer-toolbar-actions > .btn { min-width: 30px; padding: 0 7px; }
+.code-viewer-toolbar-divider { width: 1px; height: 15px; margin: 0 5px; background: var(--divider-color); }
+.code-viewer-download-dot { display: block; width: 5px; height: 5px; border-radius: 50%; background: var(--success-text); flex-shrink: 0; }
+.code-viewer-download-button { position: relative; }
+.code-viewer-download-dot { position: absolute; right: 4px; top: 5px; }
+.code-transfer-anchor { display: inline-flex; flex: 0 0 auto; align-items: center; position: relative; }
+.code-viewer-toolbar-b .code-viewer-toolbar-actions > .btn,
+.code-viewer-toolbar-b .code-transfer-anchor > .btn { width: 32px; min-width: 32px; height: 32px; min-height: 32px; padding: 0; gap: 0; border-radius: var(--radius-base); }
+/* Plain line icons at rest; shared themed feedback on hover and press. */
+html[data-theme] .code-viewer-toolbar-b .code-viewer-toolbar-actions .btn {
+  color: var(--text-secondary);
+  background: transparent;
+  box-shadow: none;
+}
+html[data-theme] .code-viewer-toolbar-b .code-viewer-toolbar-actions .btn:is(:hover, :active):not(:disabled) {
+  color: var(--button-hover-text);
+  background: var(--button-hover-bg);
+  box-shadow: none;
+}
+.code-viewer-toolbar-b .code-viewer-toolbar-actions .btn-icon { display: inline-flex; align-items: center; justify-content: center; }
+.code-viewer-toolbar-b .code-viewer-toolbar-actions .btn-icon svg { display: block; stroke-width: 1.6; }
+html[data-theme] .code-viewer-toolbar-b .code-viewer-toolbar-actions .btn:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 1px; }
+.code-toolbar-popover { position: fixed; z-index: 10000; width: min(390px, calc(100vw - 16px)); max-height: calc(100vh - 16px); display: flex; flex-direction: column; gap: 10px; padding: 14px; box-sizing: border-box; border: 0; border-radius: var(--radius-lg); background: var(--popover-bg); color: var(--text-primary); box-shadow: var(--popover-shadow); font-family: var(--font-sans); font-size: 12px; }
+.code-toolbar-popover-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.code-toolbar-popover-heading strong { font-size: 13px; font-weight: 600; }
+.code-toolbar-popover-heading .btn { width: 26px; height: 26px; min-height: 26px; padding: 0; border: 0; box-shadow: none; }
+.code-toolbar-popover .btn-subtle { color: var(--control-text); background: transparent; }
+.code-toolbar-popover .btn-subtle:hover:not(:disabled) { color: var(--button-hover-text); background: var(--button-hover-bg); }
+.code-toolbar-empty,.code-toolbar-popover-note { margin: 0; padding: 8px 0; color: var(--text-tertiary); font-size: 11px; }
+.code-toolbar-empty { padding: 24px 0; text-align: center; }
+.code-toolbar-popover-note { padding: 4px 0 0; }
+.code-download-list { min-height: 0; max-height: min(380px, calc(100vh - 160px)); overflow: auto; display: flex; flex-direction: column; gap: 2px; padding: 1px 2px 3px; }
+/* 传输记录是弹层里的一行，不再套第二层卡片底色：只保留行内间距与 hover 反馈。 */
+.card.code-transfer-card {
+  width: 100%;
+  min-width: 0;
+  flex: 0 0 auto;
+  flex-direction: row;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 7px 7px 8px;
+}
+html[data-theme] .code-toolbar-popover .card.code-transfer-card {
+  border: 0;
+  border-radius: var(--radius-base);
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+html[data-theme] .code-toolbar-popover .card.code-transfer-card::after { display: none; }
+html[data-theme] .code-toolbar-popover .card.code-transfer-card:hover { background: color-mix(in srgb, var(--text-primary) 5%, transparent) !important; }
+/* 进行中的传输仍然需要一块底色，和已完成的历史记录区分开。 */
+html[data-theme] .code-toolbar-popover .card.code-transfer-card.code-transfer-job,
+html[data-theme] .code-toolbar-popover .card.code-transfer-card.code-transfer-preparing { background: var(--surface-inset-bg) !important; }
+.code-transfer-direction { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 26px; width: 26px; height: 26px; border-radius: 8px; color: var(--text-secondary); background: color-mix(in srgb, var(--text-primary) 6%, transparent); }
+.code-transfer-direction > svg { display: block; width: 14px; height: 14px; }
+.code-transfer-card-content { display: flex; flex: 1 1 auto; min-width: 0; flex-direction: column; align-items: flex-start; gap: 2px; }
+.code-transfer-title { display: flex; align-items: center; gap: 7px; width: 100%; min-width: 0; }
+.code-transfer-title > strong { flex: 0 1 auto; min-width: 0; overflow: hidden; color: var(--text-primary); font-size: 12.5px; font-weight: 600; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+/* 大小与时间跟着文件名排在第一行，用更轻的字重和更紧的间距，尽量把宽度让给文件名。 */
+.code-transfer-stamp { display: inline-flex; flex: 0 0 auto; align-items: baseline; gap: 5px; color: var(--text-tertiary); font-size: 10.5px; font-variant-numeric: tabular-nums; line-height: 1.35; white-space: nowrap; }
+.code-transfer-stamp > .code-transfer-bytes { font-weight: 500; }
+/* 文件不存在：不铺整块红底，只用一个圆点 + 一行小字说明，其余信息保持正常字色。 */
+.code-transfer-status { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 5px; color: var(--danger-text); font-size: 10.5px; font-weight: 500; line-height: 1.35; white-space: nowrap; }
+.code-transfer-status::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+/* 第二行：服务器名 + 状态红标（贴着名字排，不跟正文混在一起）。 */
+.code-transfer-card-content > .code-transfer-meta { display: flex; align-items: center; gap: 6px; width: 100%; min-width: 0; overflow: hidden; color: var(--text-secondary); font-size: 11px; line-height: 1.35; white-space: nowrap; }
+.code-transfer-meta > .code-transfer-server { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.code-transfer-card-content > strong { display: block; width: 100%; overflow: hidden; color: var(--text-primary); font-size: 12.5px; font-weight: 600; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+.code-transfer-card-content > small { display: block; width: 100%; overflow: hidden; color: var(--text-secondary); font-size: 11px; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+/* 三行：第一行文件名+大小/时间，第二行服务器名，第三行完整路径（太长才省略）。 */
+.code-transfer-card-content > .code-transfer-path { color: var(--text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.code-transfer-card-content > progress { width: 100%; height: 3px; margin: 2px 0 1px; accent-color: var(--accent-primary); }
+.code-transfer-card-actions { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: flex-end; gap: 2px; min-width: 42px; color: var(--text-secondary); }
+/* 缺失状态没有成功图标，把这块宽度还给文件名和路径。 */
+.code-transfer-card-actions:empty { display: none; }
+.code-transfer-card-actions > svg { flex: 0 0 auto; }
+.code-transfer-card .btn { flex: 0 0 28px; width: 28px; min-width: 28px; height: 28px; min-height: 28px; padding: 0; border: 0; border-radius: var(--radius-base); box-shadow: none; }
+.code-transfer-card .btn:hover:not(:disabled) { color: var(--button-hover-text); background: var(--button-hover-bg); }
+.code-download-item { align-items: center; gap: 2px; }
+/* 文件已不在磁盘：只让图标、红标和禁用按钮表达状态，正文保持正常字色，不整行刷红。 */
+.code-download-item.is-missing .code-transfer-direction,
+.code-download-item.is-unavailable .code-transfer-direction { color: var(--danger-text); background: color-mix(in srgb, var(--danger-text) 10%, transparent); }
+.code-download-item.is-missing .code-transfer-direction > svg,
+.code-download-item.is-unavailable .code-transfer-direction > svg { color: var(--danger-text); }
+.code-download-item.is-missing .code-download-open:disabled,
+.code-download-item.is-unavailable .code-download-open:disabled { color: inherit; }
+.code-download-item.is-missing .code-transfer-card-content > small,
+.code-download-item.is-unavailable .code-transfer-card-content > small { opacity: .55; }
+.code-download-item.is-missing .code-download-item-actions,
+.code-download-item.is-unavailable .code-download-item-actions { opacity: .35; }
+.code-download-open { display: flex; align-items: center; gap: 9px; min-width: 0; flex: 1; padding: 1px 2px; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text-primary); font: inherit; text-align: left; cursor: pointer; }
+.code-download-open .code-transfer-direction > svg { color: var(--text-secondary); }
+.code-download-open:disabled { cursor: default; color: var(--text-muted); }
+.code-download-open:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 1px; }
+.code-download-open .code-download-success { color: var(--success-text); }
+.code-download-item > .code-transfer-card-actions { flex-basis: 24px; min-width: 24px; }
+.code-download-item-actions { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 0; }
+.code-download-pending .code-download-success { color: var(--success-text); }
+.code-transfer-upload-actions { display: flex; align-items: center; gap: 8px; padding-top: 10px; box-shadow: 0 -1px 0 var(--divider-color); }
+.code-download-error,.code-transfer-card .code-download-error,.code-transfer-job.is-failed > .code-transfer-direction { color: var(--danger-text); }
+.code-download-error,.code-transfer-card .code-download-error { font-size: 11px; line-height: 1.45; overflow-wrap: anywhere; }
+.code-toolbar-popover :is(button,input):focus-visible,.code-viewer-source-tabs button:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 1px; }
+.code-ssh-directory-picker.provider-editor-dialog { width: min(620px, calc(100vw - 32px)); }
+.code-ssh-directory-picker .provider-editor-content { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+.code-ssh-picker-server { display: flex; align-items: center; gap: 7px; color: var(--text-secondary); font-size: 12px; }
+.code-ssh-picker-location { display: flex; align-items: center; gap: 6px; }
+.code-ssh-picker-location .input-wrapper { flex: 1; min-width: 0; }
+.code-ssh-picker-location .btn { flex-shrink: 0; }
+.code-ssh-directory-picker .code-ssh-picker-icon.btn { width: 28px; min-width: 28px; height: 28px; min-height: 28px; flex: 0 0 28px; padding: 0; gap: 0; border: 0; border-radius: var(--radius-base); }
+.code-ssh-directory-picker .code-ssh-picker-icon.btn-xs { width: 24px; min-width: 24px; height: 24px; min-height: 24px; flex-basis: 24px; }
+.code-ssh-picker-icon .btn-icon { display: flex; align-items: center; justify-content: center; }
+.code-ssh-picker-list { height: min(300px, calc(100vh - 340px)); min-height: 110px; overflow: auto; }
+.code-ssh-picker-folder { display: flex; align-items: center; gap: 4px; padding: 3px; border-radius: var(--radius-base); }
+.code-ssh-picker-folder:hover { background: var(--popover-item-hover); }
+.code-ssh-picker-select { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; padding: 9px 8px; border: 0; background: transparent; color: inherit; font: inherit; font-size: 12px; text-align: left; cursor: pointer; }
+.code-ssh-picker-select > svg { flex-shrink: 0; color: var(--text-secondary); }
+.code-ssh-picker-select > span { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; }
+.code-ssh-picker-select strong { font-weight: 500; overflow: hidden; text-overflow: ellipsis; }
+.code-ssh-picker-select small { font-size: 10px; color: var(--text-secondary); overflow-wrap: anywhere; }
+.code-ssh-picker-empty { display: flex; align-items: center; justify-content: center; gap: 8px; height: 100%; color: var(--text-tertiary); font-size: 12px; }
+.code-ssh-picker-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding-top: 12px; box-shadow: 0 -1px 0 var(--divider-color); }
+.code-ssh-picker-actions .btn { flex-shrink: 0; }
+.code-ssh-directory-picker button:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 1px; }
+@media (max-width: 760px) {
+  .code-viewer-toolbar.code-viewer-toolbar-b { gap: 8px; padding: 0 12px; }
+}
+@media (max-width: 540px) {
+  .code-viewer-toolbar.code-viewer-toolbar-b { gap: 6px; padding: 0 8px; }
+  .code-viewer-toolbar-b h1,.code-viewer-toolbar-b .code-viewer-root-name,.code-viewer-toolbar-divider { display: none; }
+  .code-viewer-source-tabs .seg-btn { padding: 0 7px; }
+  .code-viewer-source-tabs .seg-btn > svg { display: none; }
+  .code-viewer-toolbar-b .code-viewer-open-button { padding: 0; }
+  .code-viewer-toolbar-b .code-viewer-toolbar-actions { gap: 0; }
+  .code-viewer-toolbar-b .code-viewer-toolbar-actions > .btn { min-width: 26px; padding: 0 5px; }
+  .code-transfer-card-content > strong,
+  .code-download-open strong { font-size: 12px; }
+  .code-transfer-card { gap: 8px; padding: 7px 6px 7px 8px; }
+  .code-transfer-direction { flex-basis: 24px; width: 24px; height: 24px; }
+  .code-download-item.is-missing::after { left: 40px; right: 30px; }
+}

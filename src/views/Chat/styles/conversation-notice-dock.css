@@ -1,0 +1,194 @@
+/* Placement only: NoticePanel owns every card, icon, tone and interaction style. */
+html[data-theme] .conversation-page .composer-notice-dock {
+  position: absolute;
+  z-index: 8;
+  bottom: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  display: flex;
+  min-width: 0;
+  max-height: var(--composer-notice-max-height, min(420px, 50vh));
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.composer-notice-dock.is-empty { display: none !important; }
+.composer-notice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.composer-notice-slot {
+  display: flex;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+  max-height: var(--composer-notice-max-height);
+}
+/* Align full notices with the straight top edge between the input's corners.
+   Compact file notices retain the library's own width. */
+.composer-notice-slot:not([data-notice-kind="files"]) {
+  box-sizing: border-box;
+  padding-left: var(--composer-notice-inset-left, 24px);
+  padding-right: var(--composer-notice-inset-right, 24px);
+}
+.composer-notice-slot > .ui-notice { max-height: inherit; }
+/* 文件改动卡展开后是在卡片内部往下铺开的列表，停靠区照常滚动即可。 */
+html[data-theme] .conversation-page .composer-notice-list:has(.ui-file-notice.is-expanded) {
+  overflow: auto;
+}
+
+/* Queue sits above the input with a real gap (steer-cards 的浮岛卡不贴输入框).
+   间距是 `--composer-stack-gap`（8px）再加上这里 10px —— 阴影已经在卡片自己身上
+   收成一层轻投影，所以这里不需要靠拉大间距来躲折角。 */
+html[data-theme] .conversation-page .composer-notice-dock:has([data-notice-kind="queue"]) { bottom: calc(100% + 10px); }
+.chat-footer:has([data-notice-kind="queue"]) .composer-stack { position: relative; z-index: 9; }
+.chat-workspace:has(.composer-notice-dock:not(.is-empty)) .chat-floating-controls {
+  bottom: calc(var(--composer-notice-height, 36px) + 18px);
+}
+
+/* ── 追加消息卡：design-drafts/steer-cards 1:1 ───────────────────────────────
+   只换壳，不动按钮逻辑。多条 = 汇总头 + 行列表；单条 = 一粒胶囊（无汇总头）。 */
+.conversation-page .composer-notice-slot[data-notice-kind="queue"] .ui-notice.is-inline {
+  /* 和「AI 询问」等普通通知卡同一套材质：--bg-card + --card-rim 顶部内白边 +
+     常规投影。之前把它压成 --bg-canvas 是为了消四角杂光，但那也让卡片沉进
+     页面底色里，反而丢了「白色浮卡」的层次——杂光真正来源是右下角那团微光
+     溢出到圆角外，靠 overflow 裁住即可，卡片本身照常叠在底色上。 */
+  border: 1px solid color-mix(in srgb, var(--accent-primary) 30%, var(--border-subtle));
+  border-radius: 16px;
+  /* 不透明填充：这里原来是 `background: var(--bg-card)`，亮色下是 0.85 的白，
+     对话内容会透上来。用 `.ui-notice` 里同一枚 `--notice-fill`（--bg-card 去 alpha
+     后铺在 --bg-canvas 上），四张通知卡保持同一层材质。 */
+  background-color: var(--bg-canvas);
+  background-image: linear-gradient(var(--notice-fill), var(--notice-fill));
+  /* 只用一层向上的轻投影：两层叠出来的深阴影会在卡片左右下角形成两团暗色，
+     叠在输入框顶边时被看成「输入框的折角」。 */
+  box-shadow: 0 6px 18px -8px rgba(0, 0, 0, 0.18);
+  /* 微光必须被圆角裁住，否则它会从卡片外侧漏出来。 */
+  overflow: hidden;
+  isolation: isolate;
+}
+/* 右下角环境微光：设计稿里它只在卡片内侧的圆角里发亮。 */
+.conversation-page .composer-notice-slot[data-notice-kind="queue"] .ui-notice.is-inline::after {
+  content: "";
+  position: absolute;
+  right: -8px;
+  bottom: -10px;
+  width: 130px;
+  height: 75px;
+  background: var(--ambient-glow);
+  filter: blur(18px);
+  opacity: 0.85;
+  pointer-events: none;
+  z-index: 0;
+}
+.conversation-page .composer-notice-slot[data-notice-kind="queue"] .ui-notice.is-inline > * { position: relative; z-index: 1; }
+
+/* 汇总头：蓝点 + 「已收到 N 条追加消息」+ 次要说明 + 右侧展开/收起箭头。
+   高度向普通通知头（36px）看齐——设计稿的 46px 放在这套密集停靠区里比「AI 询问」
+   高出一截，一张卡就把输入框顶上去（m10690）。 */
+.conversation-page .composer-notice-slot[data-notice-kind="queue"] .ui-notice-heading {
+  padding: 0;
+  gap: 0;
+  border-radius: 0;
+  box-sizing: border-box;
+}
+/* 内边距只留一层：其它卡片的 `.ui-notice-heading` 是 0，12px 全在
+   `.ui-notice-summary` 上。这里之前 heading 与 summary 各自补了 12px，正文整体
+   右移 12px，跟上面「后台任务」的首字对不齐（m13866 的截图就是这个问题）。 */
+.conversation-page .composer-notice-slot[data-notice-kind="queue"] .ui-notice-summary.is-static {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  min-width: 0;
+  min-height: 36px;
+  padding: 4px 12px;
+  gap: 8px;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+/* 图标槽和别的通知卡一样是 15px（其它卡是 15px 图标），圆点画在槽正中。
+   槽宽 + `padding: 12px` + `gap: 8px` 与「后台任务 / AI 询问」完全一致，
+   所以圆点右边的「2 条追加消息等待中」和上面那张卡的首字落在同一条竖线上。 */
+.conversation-page .composer-notice-slot[data-notice-kind="queue"] .ui-notice-icon {
+  position: relative;
+  flex: 0 0 15px;
+  width: 15px;
+  height: 15px;
+}
+.conversation-page .composer-notice-slot[data-notice-kind="queue"] .ui-notice-icon svg { display: none; }
+.conversation-page .composer-notice-slot[data-notice-kind="queue"] .ui-notice-icon::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+}
+.conversation-page .composer-notice-slot[data-notice-kind="queue"] .ui-notice-icon::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  border: 1.5px solid var(--accent-primary);
+  /* 性能：参考 notice-panel.css 的同一处修复——原来 infinite，排队提示常驻
+     时会让合成器一直产帧并在毛玻璃面板上重算模糊。改为只播 3 次。 */
+  animation: ui-queue-pulse-ring 1.8s cubic-bezier(0.24, 0, 0.38, 1) 3;
+}
+@media (prefers-reduced-motion: reduce) {
+  .composer-notice-slot[data-notice-kind="queue"] .ui-notice-icon::after { animation: none; opacity: 0; }
+}
+.conversation-page .composer-notice-slot[data-notice-kind="queue"] .ui-notice-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.conversation-page .composer-notice-slot[data-notice-kind="queue"] .ui-notice-preview {
+  flex: 0 1 auto;
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+/* 箭头方向由 notice-panel.css 统一管（收起 >、展开 v），这里只管位置与颜色。 */
+.conversation-page .composer-notice-slot[data-notice-kind="queue"] .ui-notice-summary.is-static .ui-notice-chevron {
+  flex: 0 0 auto;
+  margin-left: auto;
+  color: var(--text-tertiary);
+  transition: color var(--transition-base);
+}
+/* 左右对齐（与「后台任务 / 任务编排 / AI 询问」同一套）：
+   ① 左边：统一 `padding-left: 12px` + 15px 图标槽 + `gap: 8px`；
+   ② 右边：箭头就是最后一个元素，尺寸/位置全部交给 notice-panel.css 的
+      `.ui-notice-chevron` —— 上一版在这里给它套了 26×26 的盒子，结果比上面那张卡
+      的箭头大一号，正是截图里那个突兀的 `⌄`。这里只把外边距收窄到 0，
+      让箭头中心落在 12px 内边距里、和上面卡片的右侧图标落在同一条竖线上。 */
+.conversation-page .composer-notice-slot[data-notice-kind="queue"] .ui-notice-summary.is-static:hover .ui-notice-chevron { color: var(--text-primary); }
+/* 整条抬头不做 hover 铺底：这张卡的抬头是可点区域（可折叠），一 hover 就浮出一块
+   不一样的颜色，看起来像另一个控件。只有右侧几个图标按钮自己保留 hover。 */
+.conversation-page .composer-notice-slot[data-notice-kind="queue"] .ui-notice-summary.is-static:hover {
+  background: transparent;
+}
+
+/* 单条形态：卡片收到 14px 圆角。抬头就是那唯一一条消息（见 ChatQueuePanel：单条
+   不渲染列表、卡头直接写「一条追加消息等待中：<正文>」），所以这里不能再把卡头藏起来
+   —— 藏掉的话正文就没了。 */
+.conversation-page .composer-notice-slot[data-notice-kind="queue"] .ui-notice.is-inline:has(> .ui-notice-queue-list.is-single) {
+  border-radius: 14px;
+}
+/* 圆点槽就是 15px（环 14px 居中，落在槽内），所以这里不能再给 icon 加 `margin-right`：
+   一加，标题起点就从 `12 + 15 + 8 = 35px` 变成 41px，比上面「后台任务」的「后」字
+   右移 6px —— m14017 说的就是这 6px。间距全部交给 `.ui-notice-summary` 的 `gap: 8px`。 */
+.conversation-page .composer-notice-slot[data-notice-kind="queue"] .ui-notice-icon { margin-right: 0; }

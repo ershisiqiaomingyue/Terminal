@@ -1,0 +1,85 @@
+/**
+ * ============================================================================
+ * Divider 结构分割线组件规范
+ * 满足“如果某个界面里是左右结构，上下结构 每个结构之间要加很虚的分割线”
+ * ============================================================================
+ */
+
+/* 水平微弱分割线 (上下结构之间) */
+.divider-h {
+  width: 100%;
+  height: 0;
+  border: 0;
+  border-radius: 0 !important;
+  border-bottom: var(--divider-subtle);
+  margin: 16px 0;
+}
+
+.divider-h.dense {
+  margin: 8px 0;
+}
+
+.divider-h.dashed {
+  border-bottom: var(--divider-dashed);
+}
+
+/* 垂直微弱分割线 (左右结构之间) */
+.divider-v {
+  width: 0;
+  height: auto;
+  align-self: stretch;
+  border: 0;
+  border-radius: 0 !important;
+  border-right: var(--divider-subtle);
+  margin: 0 16px;
+}
+
+.divider-v.dense {
+  margin: 0 8px;
+}
+
+.divider-v.dashed {
+  border-right: var(--divider-dashed);
+}
+
+/* 结构容器辅助：左右分栏之间自带极虚边线 */
+.split-left-pane {
+  border-radius: 0 !important;
+  border-right: var(--divider-subtle);
+}
+
+.split-right-pane {
+  border-radius: 0 !important;
+  border-left: var(--divider-subtle);
+}
+
+/* 结构容器辅助：上下分区自带极虚边线 */
+.split-top-bar {
+  border-radius: 0 !important;
+  border-bottom: var(--divider-subtle);
+}
+
+.split-bottom-bar {
+  border-radius: 0 !important;
+  border-top: var(--divider-subtle);
+}
+
+/* Separators stay square in every consumer, including draggable pane handles. */
+[role="separator"],
+[role="separator"]::before,
+[role="separator"]::after,
+.conversation-rail-dot,
+.code-viewer-pane-resizer::before,
+.code-viewer-pane-resizer::after,
+.ui-preview-header,
+.ui-preview-modes,
+.ui-preview-search,
+.ui-usage,
+.divider-h,
+.divider-v,
+.split-left-pane,
+.split-right-pane,
+.split-top-bar,
+.split-bottom-bar {
+  border-radius: 0 !important;
+}

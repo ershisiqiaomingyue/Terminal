@@ -1,0 +1,26 @@
+/* 唯一界面（终端）的外壳布局。
+   参考原 App 的 `.app-main`：整窗一块面板，背景走 ambient 壁纸。 */
+.terminal-app {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.terminal-app > .terminal-workspace {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  position: relative;
+  z-index: 1;
+}
+
+.terminal-app .ambient-wallpaper {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--bg-app);
+}

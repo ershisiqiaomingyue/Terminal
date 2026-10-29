@@ -1,0 +1,65 @@
+/* 自定义标题栏：左侧 100px 留白 → 菜单 → 右侧窗口按钮。 */
+.titlebar {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  height: 38px;
+  padding-right: 4px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--divider-color, var(--border-subtle));
+  -webkit-app-region: drag;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.titlebar-gutter {
+  flex: 0 0 auto;
+  height: 100%;
+}
+
+.titlebar-menu {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  -webkit-app-region: no-drag;
+}
+
+.titlebar-spacer {
+  flex: 1 1 auto;
+  height: 100%;
+  min-width: 8px;
+}
+
+.titlebar-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 100%;
+  margin-right: 40px;
+  -webkit-app-region: no-drag;
+}
+
+.titlebar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: default;
+  transition: background 0.13s ease, color 0.13s ease;
+}
+.titlebar-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.titlebar-btn-close:hover {
+  background: #e81123;
+  color: #ffffff;
+}

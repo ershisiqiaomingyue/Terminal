@@ -1,0 +1,39 @@
+                "info"
+            };
+            crate::diagnostics::record(
+                level,
+                "agent.provider_transport",
+                "native.agent",
+                json!({
+                    "session_id": diagnostic_session, "turn_id": diagnostic_turn,
+                    "transport": diagnostic,
+                }),
+            );
+        }),
+    );
+    let setup::PreparedInput {
+        request,
+        context:
+            TurnSkillContext {
+                skill_catalog,
+                skill_instructions,
+                selinux_enabled,
+                selinux_scope,
+            },
+        permission_mode,
+        workspace_context,
+        global_instructions,
+        evidence,
+        prompt,
+        mut tool_policy,
+        mut windows_paths,
+        excluded_paths,
+        mut plugin_turn,
+        collaboration_tool,
+        explicitly_disabled,
+        mut ssh_paths,
+        wsl_paths,
+        snapshot_paths,
+        mcp_tools,
+        allow_external_paths,
+        output_sink,

@@ -1,0 +1,163 @@
+/* ==========================================================================
+   ListItem — the repeating settings/list row.
+   Hover is an inset rounded block, not a full-bleed band: the highlight sits
+   inside the row with its own radius, matching the settings panels where the
+   tint never touches the card edge.
+   ========================================================================== */
+
+.ui-list-item {
+  position: relative;
+  padding: 2px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.ui-list-item.no-divider { border-bottom: none; }
+
+/* Keep the disclosure button separate from sibling switches and actions. */
+.ui-list-item-hit.btn, .ui-list-item-static {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex: 1;
+  gap: 10px;
+  min-width: 0;
+  padding: 0;
+  white-space: normal;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font-family: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.ui-list-item.is-interactive > .ui-list-item-row:hover {
+  background: var(--bg-hover);
+}
+
+.ui-list-item.is-selected > .ui-list-item-row { background: var(--bg-selected); }
+
+.ui-list-item-hit:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: -2px;
+}
+
+.ui-list-item.is-dense > .ui-list-item-row { padding-block: 6px; }
+.ui-list-item-static { cursor: default; }
+
+/* Non-clickable rows keep the same geometry without the button element. */
+.ui-list-item > .ui-list-item-row {
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+
+.ui-list-item-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  justify-content: space-between;
+  transition: background-color var(--transition-fast);
+}
+
+.ui-list-item-chevron {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 18px;
+  color: var(--text-tertiary);
+  transition: transform var(--transition-fast);
+}
+
+.ui-list-item.is-expanded .ui-list-item-chevron { transform: rotate(90deg); }
+
+.ui-list-item-leading {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+  color: var(--text-secondary);
+}
+
+.ui-list-item-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.ui-list-item-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ui-list-item-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.ui-list-item-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.ui-list-item-desc {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--control-text);
+  overflow-wrap: anywhere;
+}
+
+.ui-list-item-footer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--control-text);
+  overflow-wrap: anywhere;
+}
+
+.ui-list-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  padding-top: 2px;
+}
+
+/* Leave a gap below the row's hover fill so expanded cards keep their own
+   silhouette instead of touching the disclosure highlight. */
+.ui-list-item-extra {
+  margin: 8px 10px 12px;
+  animation: ui-list-item-reveal 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes ui-list-item-reveal {
+  from { opacity: 0; transform: translateY(-2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Narrow widths: the action cluster drops under the text instead of squeezing
+   the description into a one-word-per-line column. */
+.ui-list-item.is-compact .ui-list-item-row { flex-wrap: wrap; }
+.ui-list-item.is-compact :is(.ui-list-item-hit, .ui-list-item-static) { flex-basis: 100%; }
+.ui-list-item.is-compact .ui-list-item-actions { margin-left: auto; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-list-item-extra { animation: none; }
+  .ui-list-item-chevron { transition: none; }
+}

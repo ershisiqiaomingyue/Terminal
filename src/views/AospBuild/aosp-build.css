@@ -1,0 +1,871 @@
+/* ==========================================================================
+   AOSP 构建与模块编译工作台 (AospBuildView) - 现代原生桌面规范
+   - 彻底杜绝刺眼外框线与黑浊暗角阴影
+   - 完美适配亮色白晶磨砂与深色深空微光
+   - 标准胶囊分段导航 (Segmented Pill Group)
+   - 柔和微凹槽位、高反差状态标签与物理质感按钮
+   ========================================================================== */
+
+.aosp-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  background: var(--bg-canvas);
+  overflow: hidden;
+
+  /* 基础底色 Tokens */
+  --aosp-item-bg: var(--bg-card);
+  --aosp-item-hover: var(--bg-hover);
+  --aosp-item-active: var(--bg-selected);
+  --aosp-item-active-text: var(--text-primary);
+  --aosp-slot-bg: var(--bg-surface);
+}
+
+/* 深色模式 Tokens */
+html[data-theme="dark"] .aosp-container,
+[data-theme="dark"] .aosp-container {
+  --aosp-item-bg: var(--bg-card);
+  --aosp-item-hover: var(--bg-hover);
+  --aosp-item-active: var(--bg-selected);
+  --aosp-item-active-text: var(--text-primary);
+  --aosp-slot-bg: var(--bg-surface);
+}
+
+/* ─── 页面顶部 Header ──────────────────────────────────────── */
+.aosp-top-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52px;
+  padding: 0 18px;
+  background: var(--page-header-bg);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+.aosp-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.aosp-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.aosp-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.25;
+}
+
+.aosp-subtitle {
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+}
+
+.aosp-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ─── 顶层副工具条 (环境选择、AOSP 根目录与验证) ───────────── */
+.aosp-actions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 18px;
+  background: var(--page-header-bg);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  min-height: 44px;
+}
+
+.aosp-env-selector-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.aosp-env-kind-segmented {
+  border-radius: var(--radius-sm);
+}
+
+.aosp-env-kind-segmented .aosp-env-kind-btn {
+  padding: 3px 10px;
+  height: auto;
+  border-radius: calc(var(--radius-sm) - 2px);
+  font-weight: 500;
+}
+
+.aosp-env-kind-segmented .aosp-env-kind-btn.active {
+  font-weight: 600;
+}
+
+.aosp-target-select {
+  min-width: 170px;
+  max-width: 220px;
+}
+
+.aosp-target-select > .btn { width: 100%; justify-content: flex-start; }
+.aosp-global-ssh-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.aosp-connection-controls { display: flex; align-items: center; gap: 4px; }
+.aosp-connection-status { display: inline-flex; align-items: center; gap: 5px; min-width: 88px; color: var(--control-text); font-size: 11px; white-space: nowrap; }
+.aosp-connection-status[data-phase="connected"] { color: var(--status-success-text); }
+.aosp-connection-status[data-phase="failed"] { color: var(--status-danger-text); }
+.aosp-connection-status[data-phase="checking"] { color: var(--status-warning-text); }
+.aosp-connection-controls .btn { width: 28px; min-width: 28px; height: 28px; padding: 0; }
+.aosp-connection-notice { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 6px 18px; color: var(--status-warning-text); font-size: 11px; }
+.aosp-connection-notice > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.aosp-cached-result { color: var(--control-text); white-space: nowrap; }
+.aosp-workspace-empty { display: flex; flex: 1; min-height: 120px; padding: 24px; align-items: center; justify-content: center; flex-direction: column; gap: 12px; color: var(--control-text); font-size: 12px; text-align: center; }
+.aosp-dir-open-btn:disabled { opacity: .5; cursor: default; }
+
+.aosp-root-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 200px;
+  max-width: 460px;
+}
+
+.aosp-dir-open-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.aosp-dir-open-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.aosp-dir-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--overlay-bg);
+}
+
+.aosp-dir-dialog {
+  width: min(560px, 100%);
+  max-height: min(640px, calc(100vh - 48px));
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  background: var(--bg-card);
+  border: 1px solid transparent;
+  box-shadow: var(--shadow-lg, 0 24px 64px rgba(0, 0, 0, 0.35));
+}
+
+.aosp-dir-header,
+.aosp-dir-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  flex-shrink: 0;
+}
+
+.aosp-dir-header { border-bottom: 1px solid var(--divider-color); }
+.aosp-dir-footer { border-top: 1px solid var(--divider-color); justify-content: flex-end; }
+
+.aosp-dir-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.aosp-dir-path {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  word-break: break-all;
+}
+
+.aosp-dir-close {
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.aosp-dir-parent {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 10px 16px;
+  border: 0;
+  border-bottom: 1px solid var(--divider-color);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  text-align: left;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.aosp-dir-parent:hover {
+  background: var(--bg-hover);
+}
+
+.aosp-dir-name {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  text-align: left;
+  font-size: 13px;
+  cursor: pointer;
+  word-break: break-all;
+}
+
+.aosp-dir-list {
+  flex: 1;
+  min-height: 180px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding: 8px;
+}
+
+.aosp-dir-hint {
+  margin: 12px;
+  font-size: 12.5px;
+  color: var(--text-tertiary);
+}
+
+.aosp-dir-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+.aosp-dir-row:hover { background: var(--bg-hover); }
+
+.aosp-dir-row span {
+  min-width: 0;
+  font-size: 13px;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.aosp-dir-row-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.aosp-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* ─── 悬浮 Toast 胶囊通知 ─────────────────────────────────── */
+.aosp-toast-pill {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 9999px;
+  background: var(--toast-bg);
+  color: var(--toast-text);
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: var(--toast-shadow);
+  backdrop-filter: blur(8px);
+  animation: aosp-toast-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+@keyframes aosp-toast-in {
+  from { opacity: 0; transform: translate(-50%, -6px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* ─── 主体工作台内容区 ─────────────────────────────────────── */
+.aosp-main-content {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 20px;
+  overflow: hidden;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  background: var(--bg-canvas);
+}
+
+/* 胶囊分段导航栏 */
+.aosp-tabs-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+.aosp-seg-group {
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+.aosp-seg-group .seg-btn { flex: 0 0 auto; white-space: nowrap; }
+.aosp-overview-panel .property-row { gap: 12px; }
+
+.aosp-build-badge-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ─── TAB 页面通用 ─────────────────────────────────────────── */
+.aosp-tab-pane {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  overflow-x: hidden;
+  padding-right: 4px;
+  gap: 14px;
+}
+
+/* 状态提示横幅 */
+.aosp-status-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  border-radius: var(--radius-base);
+  font-size: 12.5px;
+  background: var(--aosp-slot-bg);
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+}
+
+.aosp-status-banner.success {
+  background: color-mix(in srgb, var(--success-text) 8%, var(--bg-canvas));
+  border-color: transparent;
+  color: var(--success-text);
+}
+
+.aosp-status-banner.warning {
+  background: color-mix(in srgb, var(--warning-text) 8%, var(--bg-canvas));
+  border-color: transparent;
+  color: var(--warning-text);
+}
+
+/* ─── TAB 1: 源码环境与遥测 ───────────────────────────────── */
+.aosp-overview-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.aosp-overview-panel .property-grid-card {
+  background: var(--bg-surface) !important;
+  border: 1px solid transparent !important;
+  border-radius: var(--radius-base);
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] .aosp-overview-panel .property-grid-card,
+[data-theme="dark"] .aosp-overview-panel .property-grid-card {
+  background: var(--bg-surface) !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+}
+
+.aosp-code-box {
+  display: block;
+  white-space: pre-wrap;
+  padding: 11px 15px;
+  border-radius: var(--radius-base);
+  background: var(--surface-inset-bg);
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  word-break: break-all;
+  line-height: 1.5;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] .aosp-code-box,
+[data-theme="dark"] .aosp-code-box {
+  background: var(--surface-inset-bg);
+  border: 1px solid transparent;
+}
+
+/* ─── TAB 2: Lunch 目标与编译控制 ─────────────────────────── */
+.aosp-command-editor {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 90px;
+  padding: 10px 12px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid transparent;
+  border-radius: var(--radius-base);
+  font: 12px/1.6 var(--font-mono, monospace);
+}
+.aosp-build-mode-tabs { align-self: flex-start; }
+.aosp-custom-commands { display: flex; flex-direction: column; gap: 14px; }
+.aosp-command-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.aosp-cache-stats { white-space: pre-wrap; overflow-wrap: anywhere; text-align: right; }
+.aosp-code-box.aosp-not-detected { color: var(--warning-text); }
+.aosp-command-editor:focus { outline: 1px solid var(--accent-primary); }
+.aosp-command-help { color: var(--text-tertiary); font-size: 12px; line-height: 1.5; }
+.aosp-command-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.aosp-saved-commands { display: flex; flex-direction: column; gap: 12px; padding-top: 6px; min-width: 0; }
+.aosp-saved-commands-heading { display: flex; align-items: center; gap: 8px; color: var(--text-secondary); font-size: 12px; font-weight: 600; }
+.aosp-saved-commands-count { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: var(--radius-full); background: var(--accent-subtle); color: var(--accent-primary); font-size: 11px; }
+.aosp-saved-command {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  min-width: 0;
+  border-radius: var(--radius-base);
+  background: var(--bg-input);
+  transition: background-color 150ms ease;
+}
+.aosp-saved-command:hover,
+.aosp-saved-command:focus-within { background: var(--bg-hover); }
+.aosp-saved-command-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.aosp-saved-command-title { display: flex; align-items: center; flex: 1; min-width: 150px; gap: 10px; }
+.aosp-saved-command-title strong { color: var(--text-primary); font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+.aosp-saved-command-icon { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 30px; height: 30px; border-radius: var(--radius-sm); background: var(--accent-subtle); color: var(--accent-primary); }
+.aosp-saved-command-code { display: flex; align-items: flex-start; gap: 10px; padding: 12px; border-radius: var(--radius-sm); background: var(--bg-canvas); font: 12px/1.7 var(--font-mono, monospace); }
+.aosp-saved-command-prompt { flex-shrink: 0; color: var(--accent-primary); user-select: none; }
+.aosp-saved-command-code code { min-width: 0; color: var(--text-secondary); font: inherit; white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (prefers-reduced-motion: reduce) { .aosp-saved-command { transition: none; } }
+
+.aosp-build-controls-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 20px;
+  border-radius: var(--card-radius);
+  background: var(--bg-card);
+  border: var(--card-border);
+  box-shadow: var(--card-shadow), var(--card-rim);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+html[data-theme="dark"] .aosp-build-controls-card,
+[data-theme="dark"] .aosp-build-controls-card {
+  background: var(--bg-card);
+  border: var(--card-border);
+  box-shadow: var(--card-shadow), var(--card-rim);
+}
+
+.aosp-build-fields-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.aosp-build-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 200px;
+}
+
+.aosp-build-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.aosp-build-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-top: auto;
+}
+
+/* ─── TAB 3: 交互式 Linux 终端 ───────────────────────────── */
+.aosp-terminal-pane {
+  overflow: hidden;
+  padding: 12px;
+  background: var(--terminal-surround-bg);
+  border: 0;
+  border-radius: var(--radius-lg);
+  box-sizing: border-box;
+}
+
+.aosp-terminal-context {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: var(--radius-base);
+  color: var(--text-secondary);
+  background: transparent;
+}
+
+.aosp-terminal-context-title {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 9px;
+}
+
+.aosp-terminal-context-title > svg {
+  flex: 0 0 auto;
+  color: var(--control-text);
+}
+
+.aosp-terminal-context-title div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.aosp-terminal-context-title strong {
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.aosp-terminal-context-title span {
+  overflow: hidden;
+  color: var(--control-text);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aosp-terminal-pane .aosp-interactive-terminal.chat-terminal-panel {
+  flex: 1 1 auto;
+  min-height: 260px;
+  margin: 0;
+  padding: 6px;
+  border-radius: var(--radius-base);
+  background: var(--terminal-surround-bg);
+  box-shadow: none;
+}
+
+.aosp-terminal-pane .aosp-interactive-terminal.chat-terminal-panel header {
+  border-radius: calc(var(--radius-base) - 2px) calc(var(--radius-base) - 2px) 0 0;
+}
+
+.aosp-terminal-pane .aosp-interactive-terminal .chat-terminal-host {
+  padding: 10px 2px 10px 12px;
+  border-radius: 0 0 calc(var(--radius-base) - 2px) calc(var(--radius-base) - 2px);
+}
+
+/* 推荐 Lunch 目标网格 */
+.aosp-preset-targets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+}
+
+.aosp-target-pill-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: var(--radius-base);
+  background: var(--aosp-item-bg);
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--transition-fast);
+}
+
+.aosp-target-pill-card:hover {
+  background: var(--aosp-item-hover);
+}
+
+.aosp-target-pill-card.selected {
+  background: var(--aosp-item-active) !important;
+}
+
+.aosp-target-pill-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.aosp-target-pill-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: var(--font-mono, monospace);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aosp-target-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.aosp-target-pill-desc {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+/* ─── TAB 3: 实时任务监控与日志控制台 ─────────────────────── */
+.aosp-task-status-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 20px;
+  border-radius: var(--card-radius);
+  background: var(--bg-card);
+  border: var(--card-border);
+  box-shadow: var(--card-shadow), var(--card-rim);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+html[data-theme="dark"] .aosp-task-status-card,
+[data-theme="dark"] .aosp-task-status-card {
+  background: var(--bg-card);
+  border: var(--card-border);
+  box-shadow: var(--card-shadow), var(--card-rim);
+}
+
+.aosp-task-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.aosp-task-message {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.aosp-progress-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.aosp-progress-bar-track {
+  flex: 1;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--progress-track-bg);
+  overflow: hidden;
+  position: relative;
+}
+
+.aosp-progress-bar-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-hover));
+  transition: width 0.3s ease;
+}
+
+.aosp-progress-percentage {
+  font-size: 11.5px;
+  font-weight: 700;
+  font-family: var(--font-mono, monospace);
+  color: var(--text-secondary);
+  min-width: 40px;
+  text-align: right;
+}
+
+.aosp-console-viewport {
+  flex: 1;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  background: var(--bg-card);
+  border: var(--card-border);
+  box-shadow: var(--card-shadow), var(--card-rim);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.aosp-console-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 12px;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.aosp-console-logs {
+  margin: 0;
+  padding: 12px 14px;
+  background: var(--bg-canvas);
+  color: var(--text-secondary);
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  overflow-x: hidden;
+  flex: 1;
+  min-height: 0;
+}
+
+.aosp-console-logs .log-error {
+  color: var(--danger-text);
+  font-weight: 600;
+}
+
+.aosp-console-logs .log-warning {
+  color: var(--warning-text);
+}
+
+.aosp-console-logs .log-info {
+  color: var(--success-text);
+}
+
+/* ─── TAB 4: 编译产物与设备安装 ───────────────────────────── */
+.aosp-artifacts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.aosp-artifacts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.aosp-artifact-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 16px;
+  border-radius: var(--radius-base);
+  background: var(--bg-surface);
+  border: 1px solid transparent;
+  transition: background var(--transition-fast);
+}
+
+html[data-theme="dark"] .aosp-artifact-item-row,
+[data-theme="dark"] .aosp-artifact-item-row {
+  background: var(--bg-surface);
+  border: 1px solid transparent;
+}
+
+.aosp-artifact-item-row:hover {
+  background: var(--aosp-item-hover);
+}
+
+.aosp-artifact-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.aosp-artifact-item-path {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: var(--font-mono, monospace);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aosp-artifact-item-meta {
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.aosp-artifact-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}

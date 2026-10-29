@@ -1,0 +1,237 @@
+use super::*;
+
+use super::strategy::{context_window_budget_exceeded, tool_permission_timeout};
+
+mod finalization;
+use finalization::{finalize_usage, save_transcript, CheckpointState, UsageFinalization};
+mod budget;
+mod strategy;
+use strategy::take_recovery_reasoning_effort;
+mod setup;
+
+pub(super) async fn run_agent_turn<'a>(
+    app: AppHandle,
+    state: State<'a, AgentRuntimeState>,
+    mcp_state: State<'a, McpRuntimeState>,
+    request: AgentChatRequest,
+    session_id: String,
+    turn_id: String,
+    mut request_guard: AgentRequestGuard<'a>,
+) -> Result<AgentChatResponse, String> {
+    let setup::TurnRequest {
+        mut request,
+        is_ssh_target,
+        is_wsl_target,
+        default_environment,
+    } = setup::prepare_input(request)?;
+    let _tool_group_cleanup = AgentToolGroupCleanup {
+        session_id: session_id.clone(),
+        turn_id: turn_id.clone(),
+    };
+    let cancellation = request_guard.cancellation();
+    let cancellation_reason = request_guard.cancellation_reason();
+    // P1-B：令牌与上面的标志同生同灭（见 `AgentRequestControl::request_cancellation`）。
+    // 准备阶段的 `await` 用它即时打断，不再依赖执行流自己走到下一个
+    // `is_cancelled` 检查点；轮循环内既有的标志检查点保持不变（P2 回归基线）。
+    let cancellation_token = request_guard.cancellation_token();
+    spawn_turn_idle_watchdog(&app, &session_id, &turn_id, &cancellation);
+    let mut steer_receiver = request_guard.take_steer_receiver();
+    // 准备阶段（本轮开头 → 首个模型请求）此前没有任何取消检查点：SSH 握手、
+    // WSL 探测、Skills 索引读取一旦卡住，「停止」就要等它们自然结束。这里用
+    // token 与准备 future 做 select：取消瞬间丢弃 future，卡住的 await 不再被
+    // 等待（被丢弃的连接任务照常在后台自行收尾）。
+    let environments = tokio::select! {
+        _ = cancellation_token.cancelled() => {
+            return Err(cancellation_message(&cancellation_reason));
+        }
+        environments = super::turn_prepare::prepare_with_timeout(
+            super::turn_prepare::DEFAULT_PREPARE_TIMEOUT,
+            &cancellation,
+            setup::prepare_turn_environments(
+                &app,
+                &request,
+                &session_id,
+                &turn_id,
+                &cancellation,
+                is_ssh_target,
+                is_wsl_target,
+            ),
+        ) => environments?,
+    };
+    let TurnEnvironments {
+        ssh_context,
+        ssh_connection_id: mut_ssh_connection_id,
+        wsl_root,
+        wsl_context,
+        default_ssh_host,
+        bound_ssh_hosts,
+    } = environments;
+    let mut ssh_connection_id = mut_ssh_connection_id;
+    let providers = load_providers(&app)?;
+    let (provider, selected_model) = agent_core::resolve_agent_model(&providers, &request.model_id)
+        .ok_or_else(|| {
+            format!(
+                "[model_not_found] 当前选择的模型 {} 不在已加载的供应商配置中，请重新选择模型。",
+                request.model_id
+            )
+        })?;
+    let protocol = model_protocol(provider, &selected_model);
+    crate::diagnostics::record(
+        "info",
+        "agent.turn_context",
+        "native.agent",
+        json!({
+            "session_id": session_id, "turn_id": turn_id,
+            "provider_id": provider.id, "model_id": selected_model.id, "protocol": protocol,
+            "context_window": agent_core::resolved_model_context_window(provider, &selected_model),
+            "execution_kind": if is_ssh_target { "ssh" } else if is_wsl_target { "wsl" } else { "local" },
+            "connection_id": ssh_connection_id,
+            "has_local_workspace": agent_core::local_workspace_path(&request).is_some(),
+            "has_ssh_workspace": ssh_context.is_some(),
+            "profile_id": request.execution_target.as_ref().and_then(|target| target.profile_id.as_deref()),
+            "has_workspace": request.workspace_path.as_deref().is_some_and(|path| !path.trim().is_empty()),
+            "has_execution_root": request.execution_target.as_ref().and_then(|target| target.root.as_deref()).is_some_and(|path| !path.trim().is_empty()),
+            // G4-D：hook 面是否启用（无 hooks.json 时为 false，接入点零开销直通）。
+            "turn_hooks_enabled": super::hooks::hooks_enabled(),
+            // G5-A：执行单元种类（turn/subagent/workflow_node）——协作 worker 的
+            // 控制块在 admission 时标记。
+            "unit_kind": state.requests.lock().ok()
+                .and_then(|requests| requests.get(&session_id).map(|control| control.unit_kind().as_str().to_string()))
+                .unwrap_or_else(|| "turn".to_string()),
+        }),
+    );
+    let current_user_message_id = format!("user:{turn_id}");
+    let attachment_root = app
+        .path()
+        .app_cache_dir()
+        .map_err(|error| error.to_string())?
+        .join("agent-attachments");
+    let mut image_attachments = normalize_request_image_attachments(
+        &attachment_root,
+        &request.attachments,
+        &request.context,
+        selected_model.supports_vision,
+        &current_user_message_id,
+    )?;
+    for turn in &mut request.context {
+        if turn.role.eq_ignore_ascii_case("user") {
+            append_image_source_labels(
+                &mut turn.content,
+                &turn.attachments,
+                "[历史消息中的图片来源]",
+            );
+        }
+    }
+    // A text-only turn may switch to a non-vision model. Keep the durable
+    // image names in its transcript, but only replay image bytes when the
+    // selected model can accept them and the original owner is identifiable.
+    let diagnostic_session = session_id.clone();
+    let diagnostic_turn = turn_id.clone();
+    let client = create_turn_provider_client(provider, protocol)?.with_diagnostic_observer(
+        Arc::new(move |diagnostic| {
+            let level = if diagnostic.failure_code.is_some() {
+                "warn"
+            } else {
+                "info"
+            };
+            crate::diagnostics::record(
+                level,
+                "agent.provider_transport",
+                "native.agent",
+                json!({
+                    "session_id": diagnostic_session, "turn_id": diagnostic_turn,
+                    "transport": diagnostic,
+                }),
+            );
+        }),
+    );
+    let setup::PreparedInput {
+        request,
+        context:
+            TurnSkillContext {
+                skill_catalog,
+                skill_instructions,
+                selinux_enabled,
+                selinux_scope,
+            },
+        permission_mode,
+        workspace_context,
+        global_instructions,
+        evidence,
+        prompt,
+        mut tool_policy,
+        mut windows_paths,
+        excluded_paths,
+        mut plugin_turn,
+        collaboration_tool,
+        explicitly_disabled,
+        mut ssh_paths,
+        wsl_paths,
+        snapshot_paths,
+        mcp_tools,
+        allow_external_paths,
+        output_sink,
+        mut remote_context,
+        wsl_context,
+        mut tool_cancellation,
+        mut registry,
+        mut approved_path_registry,
+    } = setup::prepare_turn_input(
+        &app,
+        &request,
+        ssh_context.as_ref(),
+        &bound_ssh_hosts,
+        wsl_root.as_deref(),
+        wsl_context.as_ref(),
+        default_environment,
+        &mcp_state,
+        &session_id,
+        &turn_id,
+        &cancellation_reason,
+        &cancellation_token,
+        is_ssh_target,
+        is_wsl_target,
+    )
+    .await?;
+    let permission_mode = permission_mode.as_str();
+    let mut ssh_permission_namespace = ssh_connection_id
+        .as_deref()
+        .map(|id| format!("ssh:{id}"))
+        // P7-A：回退 namespace 不再掺 turn_id——掺了它每个 turn 都是新 key，
+        // 「本次会话允许」跨轮永远不命中。无连接期间统一用稳定回退值；
+        // 连接就绪后由 question-card 路径迁往 ssh:{connection_id}（P7-D）。
+        .unwrap_or_else(|| "ssh:unavailable".to_string());
+    let wsl_permission_namespace = request
+        .execution_target
+        .as_ref()
+        .and_then(|target| target.profile_id.as_deref())
+        .map(|id| format!("wsl:{id}"))
+        .unwrap_or_else(|| "wsl:unavailable".to_string());
+    // A workspace snapshot can require hashing thousands of files. Do not put
+    // that cost in front of every turn: capture it lazily just before the
+    // first mutating tool call, where it is actually needed for file changes.
+    let mut before_files = None;
+    let mut last_file_snapshot = Vec::new();
+    let mut file_backup_lease = None;
+    let mut before_snapshot_attempted = false;
+    let tool_definitions = registry
+        .list_public()
+        .into_iter()
+        .cloned()
+        .collect::<Vec<_>>();
+    let context_window = agent_core::resolved_model_context_window(provider, &selected_model);
+    let context_window_resolution = agent_core::resolve_context_window(context_window);
+    let context_window_estimated = !context_window_resolution.is_known();
+    let provider_capabilities = ProviderCapabilities::for_kind(protocol);
+    let model_supports_tools = selected_model
+        .supports_tools
+        .unwrap_or(provider_capabilities.supports_tools);
+    let model_supports_usage = selected_model
+        .supports_usage
+        .unwrap_or(provider_capabilities.supports_usage);
+    let (native_reasoning_effort, reasoning_effort) =
+        turn_reasoning_settings(&app, &request, &selected_model, protocol);
+    // 恢复轮要用的「别再想」档位（多数模型上就是最低档）：只有真的走到
+    // `reasoning_only` 那一轮才会被用掉一次，见 `take_recovery_reasoning_effort`。
+    let recovery_reasoning_effort =
+        reasoning_recovery_effort(&app, &selected_model, protocol, native_reasoning_effort);

@@ -1,0 +1,11 @@
+.session-tabs { display: flex; align-items: center; gap: 4px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.session-tabs::-webkit-scrollbar { display: none; }
+.session-tab { display: inline-flex; align-items: center; flex: 0 0 auto; height: var(--session-tab-height, 26px); border: 0; border-radius: 6px; color: var(--session-tab-text); background: var(--session-tab-bg); transition: color var(--transition-fast), background var(--transition-fast); }
+.session-tab:hover { color: var(--session-tab-active-text); background: var(--session-tab-hover-bg); }
+.session-tab.active { color: var(--session-tab-active-text); background: var(--session-tab-active-bg); }
+.session-tab.active:hover { background: var(--session-tab-active-hover-bg); }
+.session-tab-select { display: inline-flex; align-items: center; height: 100%; min-width: 0; padding: 0 9px; border: 0; border-radius: inherit; color: inherit; background: transparent; font: inherit; font-size: var(--session-tab-font-size, 11px); white-space: nowrap; cursor: pointer; }
+.session-tab.active .session-tab-select { font-weight: 600; }
+.session-tab-close { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 19px; height: 19px; margin-right: 4px; padding: 0; border: 0; border-radius: 4px; color: inherit; background: transparent; cursor: pointer; }
+.session-tab-close:hover { background: var(--session-tab-active-hover-bg); }
+.session-tab-select:focus-visible, .session-tab-close:focus-visible { outline: 1px solid currentColor; outline-offset: -2px; }

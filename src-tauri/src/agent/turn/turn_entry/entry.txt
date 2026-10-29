@@ -1,0 +1,24 @@
+async fn prepare_turn_entry<'a>(
+    state: State<'a, AgentRuntimeState>,
+    mcp_state: State<'a, McpRuntimeState>,
+    request: AgentChatRequest,
+    session_id: String,
+    turn_id: String,
+    mut request_guard: AgentRequestGuard<'a>,
+) -> Result<AgentChatResponse, String> {
+    input: TurnInput<'a>,
+        mut request,
+        is_ssh_target,
+        is_wsl_target,
+        default_environment,
+    } = prepare_input(request)?;
+    let _tool_group_cleanup = AgentToolGroupCleanup {
+        session_id: session_id.clone(),
+        turn_id: turn_id.clone(),
+    };
+    let cancellation = request_guard.cancellation();
+    let cancellation_reason = request_guard.cancellation_reason();
+    // P1-B：令牌与上面的标志同生同灭（见 `AgentRequestControl::request_cancellation`）。
+    // 准备阶段的 `await` 用它即时打断，不再依赖执行流自己走到下一个
+    // `is_cancelled` 检查点；轮循环内既有的标志检查点保持不变（P2 回归基线）。
+    let cancellation_token = request_guard.cancellation_token();

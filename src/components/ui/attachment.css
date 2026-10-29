@@ -1,0 +1,227 @@
+/* ==========================================================================
+   Attachment — composer attachment card.
+   Geometry copied from views/Chat/styles/composer-attachment-card.css:
+     48px min height, 12px radius, 30px icon chip, 36px image preview.
+   Images always show a real thumbnail; a missing one shows the image glyph.
+   ========================================================================== */
+
+.ui-attachment {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  border: 0;
+  border-radius: 12px;
+  color: var(--text-primary);
+  background: var(--surface-action-bg);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--text-primary) 7%, transparent);
+  box-sizing: border-box;
+  transition: background-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.ui-attachment:hover {
+  background: var(--surface-action-hover-bg);
+  box-shadow: 0 2px 7px color-mix(in srgb, var(--text-primary) 10%, transparent);
+}
+
+.ui-attachment.is-row {
+  width: min(260px, 100%);
+  min-height: 48px;
+  padding: 7px 8px 7px 9px;
+}
+
+/* Icon chip: 30px rounded square, accent tint. */
+.ui-attachment-face {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent-primary);
+  cursor: pointer;
+}
+
+.ui-attachment.is-row .ui-attachment-face {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+}
+
+.ui-attachment-face:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 1px;
+}
+
+/* Image preview: 36px square, cover-cropped, zoom cursor. */
+.ui-attachment.is-row.is-image .ui-attachment-face {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface-inset-bg);
+  cursor: zoom-in;
+}
+
+.ui-attachment.is-row.is-image .ui-attachment-face img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ui-attachment-glyph { display: inline-flex; }
+
+/* Lazy image preview swapped in through the `preview` slot: same 36px square
+   the icon face occupies, so the row does not resize when the bitmap lands. */
+.ui-attachment.is-row .ui-attachment-image {
+  position: relative;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--surface-inset-bg);
+  border: 0;
+  cursor: zoom-in;
+}
+
+.ui-attachment.is-row .ui-attachment-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ui-attachment.is-row .ui-attachment-image svg {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  color: var(--text-tertiary);
+}
+
+/* Kind tints: only the glyph colour changes, the chip stays neutral. */
+.ui-attachment.is-image .ui-attachment-glyph { color: var(--accent-primary); }
+.ui-attachment.is-directory .ui-attachment-glyph { color: var(--warning-text); }
+.ui-attachment.is-code .ui-attachment-glyph { color: var(--success-text); }
+.ui-attachment.is-archive .ui-attachment-glyph { color: color-mix(in srgb, var(--accent-primary) 55%, var(--warning-text)); }
+.ui-attachment.is-json .ui-attachment-glyph { color: color-mix(in srgb, var(--warning-text) 70%, var(--text-primary)); }
+.ui-attachment.is-document .ui-attachment-glyph { color: var(--status-danger-text); }
+.ui-attachment.is-text .ui-attachment-glyph { color: var(--text-secondary); }
+
+.ui-attachment-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 1px 0;
+}
+
+.ui-attachment-name {
+  font-size: 12px;
+  font-weight: 550;
+  line-height: 1.25;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-attachment-meta small {
+  font-size: 11px;
+  line-height: 1.2;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-attachment-retry {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 11px;
+  text-align: left;
+  color: var(--text-error, var(--text-secondary));
+  cursor: pointer;
+}
+
+.ui-attachment-retry:hover { text-decoration: underline; }
+
+/* Remove: quiet at rest, red only on hover. Matches the toast close glyph:
+   same box, same hover fill, same danger ink. Nothing is visible until the
+   pointer arrives, so a card full of attachments stays calm. */
+.ui-attachment-remove.btn,
+.ui-attachment-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 24px;
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.ui-attachment-remove:hover:not(:disabled) {
+  color: var(--status-danger-text);
+  background: color-mix(in srgb, var(--danger-text) 12%, transparent);
+}
+
+/* ── tile shape ──────────────────────────────────────────────────────────── */
+.ui-attachment.is-tile { border-radius: 10px; overflow: visible; }
+.ui-attachment.is-tile .ui-attachment-face {
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface-inset-bg);
+  cursor: zoom-in;
+}
+.ui-attachment.is-tile .ui-attachment-face img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.ui-attachment.is-tile .ui-attachment-remove {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  border-radius: 999px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-tertiary);
+  opacity: 0;
+  transition: opacity var(--transition-fast), color var(--transition-fast),
+    background-color var(--transition-fast), border-color var(--transition-fast);
+}
+.ui-attachment.is-tile:hover .ui-attachment-remove,
+.ui-attachment.is-tile:focus-within .ui-attachment-remove { opacity: 1; }
+
+.ui-attachment.is-tile .ui-attachment-remove:hover:not(:disabled) {
+  color: var(--status-danger-text);
+  background: color-mix(in srgb, var(--danger-text) 12%, var(--bg-card));
+  border-color: color-mix(in srgb, var(--danger-text) 30%, var(--border-subtle));
+}
+
+@media (hover: none) {
+  .ui-attachment.is-tile .ui-attachment-remove { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-attachment,
+  .ui-attachment-remove { transition: none; }
+}

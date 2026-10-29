@@ -1,0 +1,45 @@
+/* ==========================================================================
+   Spinner — the shared rotating "working" glyph.
+   One keyframes set for the whole app; the only per-use adjustment is size and
+   the inherited colour (currentColor).
+   ========================================================================== */
+
+.ui-spinner {
+  display: inline-block;
+  flex: 0 0 auto;
+  vertical-align: -2px;
+  color: inherit;
+  animation: ui-spinner-rotate 1s linear infinite;
+}
+
+/* Inside a text run the glyph needs a little breathing room; inside a flex row
+   the row's own gap provides it, so scoped overrides set margin:0. */
+.ui-spinner.is-inline { margin-left: 6px; }
+
+@keyframes ui-spinner-rotate {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-spinner { animation: none; }
+}
+
+/* StepSpinner：TaskStepList 运行态同款（主色淡底圆 + 旋转虚线弧）。 */
+.ui-step-spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  border-radius: 50%;
+  background: var(--accent-subtle);
+  color: var(--accent-primary);
+  animation: task-step-spin 1s linear infinite;
+}
+
+@keyframes task-step-spin {
+  100% { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-step-spinner { animation: none; }
+}

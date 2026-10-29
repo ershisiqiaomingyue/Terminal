@@ -1,0 +1,580 @@
+.collaboration-page {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-bottom: 24px;
+}
+
+.collaboration-header,
+.collaboration-job-list > header,
+.collaboration-job > header,
+.collaboration-worker-heading,
+.collaboration-composer-actions,
+.collaboration-agent-row,
+.collaboration-permissions > div {
+  display: flex;
+  align-items: center;
+}
+
+.collaboration-header,
+.collaboration-job-list > header,
+.collaboration-job > header {
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.collaboration-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent-primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.collaboration-header h1 {
+  font-size: 22px;
+  line-height: 1.2;
+  margin-top: 6px;
+  color: var(--text-primary);
+}
+
+.collaboration-header p,
+.collaboration-job-list > header p,
+.collaboration-job small,
+.collaboration-agent-main small {
+  color: var(--text-tertiary);
+  font-size: 12px;
+}
+
+.collaboration-header p {
+  margin-top: 7px;
+  max-width: 680px;
+}
+
+.collaboration-icon-button,
+.collaboration-domain-field button,
+.collaboration-worker-heading button {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+  background: var(--bg-card);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.collaboration-icon-button:hover,
+.collaboration-domain-field button:hover,
+.collaboration-worker-heading button:hover {
+  color: var(--accent-primary);
+  border-color: transparent;
+}
+
+.collaboration-composer {
+  border-top: 1px solid var(--divider-color);
+  border-bottom: 1px solid var(--divider-color);
+  padding: 18px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.collaboration-form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.collaboration-form-grid label,
+.collaboration-goal-field {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.collaboration-page input,
+.collaboration-page textarea,
+.collaboration-page select {
+  width: 100%;
+  color: var(--text-primary);
+  background: var(--bg-input, var(--bg-card));
+  border: 1px solid transparent;
+  border-radius: 6px;
+  min-width: 0;
+  font: inherit;
+  font-size: 13px;
+}
+
+.collaboration-page input,
+.collaboration-page select {
+  height: 34px;
+  padding: 0 9px;
+}
+
+.collaboration-page textarea {
+  resize: vertical;
+  min-height: 58px;
+  padding: 8px 9px;
+  line-height: 1.45;
+}
+
+.collaboration-page input:focus,
+.collaboration-page textarea:focus,
+.collaboration-page select:focus {
+  outline: 2px solid color-mix(in srgb, var(--accent-primary) 35%, transparent);
+  border-color: transparent;
+}
+
+.collaboration-domain-field > div,
+.collaboration-worker-options {
+  display: flex;
+  gap: 7px;
+  min-width: 0;
+}
+
+.collaboration-domain-field > div button {
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+}
+
+.collaboration-worker-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 12px;
+}
+
+.collaboration-worker-draft {
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.collaboration-worker-heading {
+  justify-content: space-between;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.collaboration-worker-heading span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.collaboration-worker-heading button {
+  width: 26px;
+  height: 26px;
+}
+
+.collaboration-worker-options select {
+  flex: 0 0 122px;
+}
+
+.collaboration-composer-actions {
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.collaboration-primary-action,
+.collaboration-secondary-action,
+.collaboration-permissions button,
+.collaboration-job-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.collaboration-primary-action {
+  color: var(--btn-primary-text);
+  background: var(--btn-primary-bg);
+  border: 1px solid transparent;
+}
+
+.collaboration-primary-action:hover:not(:disabled) {
+  background: var(--btn-primary-hover);
+}
+
+.collaboration-secondary-action,
+.collaboration-job-actions button {
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  border: 1px solid transparent;
+}
+
+.collaboration-secondary-action:hover:not(:disabled),
+.collaboration-job-actions button:hover:not(:disabled) {
+  color: var(--accent-primary);
+  border-color: transparent;
+}
+
+.collaboration-page button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.collaboration-feedback {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.collaboration-permissions {
+  display: grid;
+  gap: 8px;
+}
+
+.collaboration-permissions > div {
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 9px 10px;
+  border-left: 3px solid var(--status-warning-text);
+  background: color-mix(in srgb, var(--warning-text) 11%, var(--bg-card));
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.collaboration-permissions span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: auto;
+  min-width: 240px;
+}
+
+.collaboration-permissions button {
+  min-height: 28px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+}
+
+.collaboration-job-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.collaboration-job-list h2 {
+  font-size: 16px;
+  color: var(--text-primary);
+}
+
+.collaboration-empty {
+  min-height: 160px;
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  text-align: center;
+  color: var(--text-tertiary);
+  border-top: 1px solid var(--divider-color);
+  border-bottom: 1px solid var(--divider-color);
+  font-size: 13px;
+}
+
+.collaboration-empty svg {
+  margin: 0 auto;
+  color: var(--accent-primary);
+}
+
+.collaboration-job {
+  border: 1px solid transparent;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.collaboration-job > header {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--divider-color);
+}
+
+.collaboration-job h3 {
+  display: inline;
+  margin-left: 8px;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.collaboration-aggregate {
+  padding: 10px 14px;
+  border-bottom: var(--divider-subtle);
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.collaboration-aggregate summary {
+  color: var(--accent-primary);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.collaboration-aggregate p {
+  margin-top: 8px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.55;
+}
+
+.collaboration-job small {
+  display: block;
+  margin-top: 6px;
+}
+
+.collaboration-status,
+.collaboration-agent-state {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.collaboration-status {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--control-text);
+  background: var(--status-neutral-bg);
+}
+
+.collaboration-status.is-running { color: var(--status-info-text); background: var(--status-info-bg); }
+.collaboration-status.is-interrupted { color: var(--status-warning-text); background: var(--status-warning-bg); }
+.collaboration-status.is-completed { color: var(--status-success-text); background: var(--status-success-bg); }
+.collaboration-status.is-completed_with_errors,
+.collaboration-status.is-failed { color: var(--status-warning-text); background: var(--status-warning-bg); }
+.collaboration-status.is-cancelled { color: var(--status-danger-text); background: var(--status-danger-bg); }
+
+html[data-custom-theme] .collaboration-status {
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+}
+
+html[data-custom-theme] .collaboration-status.is-running {
+  color: var(--accent-primary);
+  background: color-mix(in srgb, var(--accent-primary) 14%, var(--bg-surface));
+}
+
+html[data-custom-theme] .collaboration-status.is-interrupted,
+html[data-custom-theme] .collaboration-status.is-completed_with_errors,
+html[data-custom-theme] .collaboration-status.is-failed {
+  color: var(--warning-text);
+  background: color-mix(in srgb, var(--warning-text) 14%, var(--bg-surface));
+}
+
+html[data-custom-theme] .collaboration-status.is-completed {
+  color: var(--success-text);
+  background: color-mix(in srgb, var(--success-text) 14%, var(--bg-surface));
+}
+
+html[data-custom-theme] .collaboration-status.is-cancelled {
+  color: var(--danger-text);
+  background: color-mix(in srgb, var(--danger-text) 14%, var(--bg-surface));
+}
+
+.collaboration-agent-table { display: flex; flex-direction: column; }
+
+.collaboration-agent-row {
+  gap: 10px;
+  padding: 11px 14px;
+  min-width: 0;
+}
+
+.collaboration-agent-row + .collaboration-agent-row { border-top: var(--divider-subtle); }
+
+.collaboration-agent-state {
+  flex: 0 0 20px;
+  color: var(--text-tertiary);
+}
+
+.collaboration-agent-state.is-running { color: var(--status-info-text); }
+.collaboration-agent-state.is-completed { color: var(--status-success-text); }
+.collaboration-agent-state.is-failed { color: var(--status-warning-text); }
+
+.collaboration-agent-main { min-width: 0; flex: 1; }
+.collaboration-agent-main b { display: block; color: var(--text-primary); font-size: 13px; }
+.collaboration-agent-main small { display: block; margin-top: 3px; overflow-wrap: anywhere; }
+.collaboration-agent-main details { margin-top: 7px; color: var(--text-secondary); font-size: 12px; }
+.collaboration-agent-main summary { cursor: pointer; color: var(--accent-primary); }
+.collaboration-agent-main details p { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 6px; line-height: 1.55; }
+
+.collaboration-spin { animation: collaboration-spin 0.9s linear infinite; }
+
+@keyframes collaboration-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 900px) {
+  .collaboration-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 620px) {
+  .collaboration-form-grid { grid-template-columns: 1fr; }
+  .collaboration-header, .collaboration-job-list > header, .collaboration-job > header { align-items: flex-start; flex-direction: column; }
+  .collaboration-composer-actions { align-items: stretch; flex-direction: column; }
+  .collaboration-primary-action, .collaboration-secondary-action { width: 100%; }
+  .collaboration-worker-options { flex-direction: column; }
+  .collaboration-worker-options select { flex-basis: auto; }
+}
+
+.collaboration-side-panel {
+  --collaboration-success: var(--status-success-text);
+  --collaboration-success-surface: var(--status-success-bg);
+  --collaboration-danger: var(--status-danger-text);
+  --collaboration-danger-surface: var(--status-danger-bg);
+  --text-primary: var(--workspace-panel-text);
+  --text-secondary: var(--workspace-panel-muted);
+  --text-tertiary: var(--workspace-panel-muted);
+  display: flex;
+  flex: 0 0 316px;
+  width: 316px;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  border: 0;
+  color: var(--text-primary);
+  background: var(--workspace-panel-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.workspace-changes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.collaboration-side-section > header button,
+.collaboration-side-agent > button,
+.workspace-changes-header button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  background: transparent;
+  cursor: pointer;
+}
+
+.collaboration-side-section > header button:hover,
+.collaboration-side-agent > button:hover,
+.workspace-changes-header button:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.collaboration-side-scroll,
+.workspace-changes-list { min-height: 0; overflow: auto; scrollbar-gutter: stable; }
+.collaboration-side-section { display: flex; flex-direction: column; padding: 10px 0; border-bottom: 1px solid var(--border-subtle); }
+.collaboration-side-section > header { display: flex; align-items: center; justify-content: space-between; min-height: 28px; padding: 0 12px; color: var(--text-secondary); font-size: 11px; font-weight: 600; }
+.collaboration-side-section > header button:disabled { opacity: .45; cursor: not-allowed; }
+.collaboration-side-empty { margin: 9px 12px 4px; color: var(--text-tertiary); font-size: 11px; }
+
+.collaboration-side-agent { display: flex; align-items: center; gap: 8px; min-height: 46px; padding: 6px 12px; }
+.collaboration-side-agent:hover,
+.collaboration-side-agent.completed summary:hover { background: var(--bg-hover); }
+.collaboration-side-agent-icon { display: inline-flex; align-items: center; justify-content: center; width: 25px; height: 25px; flex: 0 0 auto; border-radius: 7px; color: var(--text-secondary); background: var(--bg-surface); }
+.collaboration-side-agent-icon.is-running { color: var(--accent-primary); background: var(--accent-subtle); }
+.collaboration-side-agent-icon.is-completed { color: var(--collaboration-success); background: var(--collaboration-success-surface); }
+.collaboration-side-agent-icon.is-failed { color: var(--collaboration-danger); background: var(--collaboration-danger-surface); }
+.collaboration-side-agent > div,
+.collaboration-side-agent summary > div { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 2px; }
+.collaboration-side-agent b,
+.collaboration-side-agent small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.collaboration-side-agent b { font-size: 12px; font-weight: 600; }
+.collaboration-side-agent small { color: var(--text-secondary); font-size: 10px; }
+.collaboration-side-agent > button { margin-left: auto; }
+.collaboration-side-agent.completed { display: block; padding: 0; }
+.collaboration-side-agent.completed summary { display: flex; align-items: center; gap: 8px; min-height: 46px; padding: 6px 12px; cursor: pointer; list-style: none; }
+.collaboration-side-agent.completed summary::-webkit-details-marker { display: none; }
+.collaboration-side-agent.completed p { margin: 0; padding: 0 12px 10px 45px; color: var(--text-secondary); font-size: 11px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
+.collaboration-side-message { margin: 10px 12px; color: var(--text-secondary); font-size: 11px; line-height: 1.45; }
+
+.workspace-changes-panel { display: flex; min-height: 0; flex: 1; flex-direction: column; }
+.workspace-changes-header { gap: 8px; min-height: 48px; padding: 0 12px; }
+.workspace-changes-header > div { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
+.workspace-changes-header b { color: var(--text-primary); font-size: 12px; font-weight: 650; }
+.workspace-changes-header small { overflow: hidden; color: var(--text-secondary); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.workspace-changes-empty { display: grid; flex: 1; place-items: center; margin: 0; padding: 16px 12px; color: var(--text-secondary); font-size: 11px; line-height: 1.5; text-align: center; overflow-wrap: anywhere; }
+.workspace-changes-panel > .workspace-changes-list { display: flex; flex: 0 1 auto; flex-direction: column; gap: 4px; max-height: min(35%, 260px); padding: 8px; overscroll-behavior: contain; }
+/* Use the same subtle/secondary Buttons as Settings' saved model choices.
+   Colors, hover, focus and selected surfaces stay with the shared Button. */
+.workspace-changes-row.btn { flex: 0 0 auto; justify-content: flex-start; gap: 8px; width: 100%; min-width: 0; height: 32px; padding: 0 10px; text-align: left; }
+.workspace-changes-row > .btn-icon { flex: 0 0 auto; color: var(--text-tertiary); }
+.workspace-change-path { display: flex; flex: 1; align-items: center; gap: 8px; min-width: 0; font-size: 12px; font-weight: 500; line-height: 20px; }
+.workspace-change-name { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.workspace-change-path small { flex: 1 4 0; min-width: 0; overflow: hidden; color: var(--text-tertiary); font-size: 11px; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
+.workspace-change-path.is-deleted .workspace-change-name { text-decoration: line-through; }
+.workspace-change-meta, .workspace-change-stats { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.workspace-change-meta { flex: 0 0 auto; gap: 10px; }
+.workspace-change-stats { font-size: 11px; font-variant-numeric: tabular-nums; }
+.workspace-change-stats em { color: var(--collaboration-success); font-style: normal; }
+.workspace-change-stats i { color: var(--collaboration-danger); font-style: normal; }
+.workspace-change-status { width: 12px; color: var(--text-secondary); font: 500 11px/20px var(--font-mono); text-align: center; }
+.workspace-change-status.is-created { color: var(--collaboration-success); }
+.workspace-change-status.is-deleted { color: var(--collaboration-danger); }
+
+/* Keep the file list navigable without squeezing the shared preview body. */
+.workspace-changes-panel > .workspace-diff-view {
+  position: static;
+  inset: auto;
+  z-index: auto;
+  width: 100%;
+  flex: 1 1 0;
+  min-height: 0;
+  border-top: 1px solid var(--border-subtle);
+  box-shadow: none;
+}
+
+.collaboration-side-scroll::-webkit-scrollbar,
+.workspace-changes-list::-webkit-scrollbar { width: 7px; }
+.collaboration-side-scroll::-webkit-scrollbar-thumb,
+.workspace-changes-list::-webkit-scrollbar-thumb { border-radius: 6px; background: var(--scrollbar-thumb); }
+
+@media (max-width: 860px) {
+  .collaboration-side-panel { position: absolute; z-index: 25; top: 0; right: 0; bottom: 0; box-shadow: var(--shadow-lg); }
+}
+
+@media (max-width: 520px) {
+  .collaboration-side-panel { max-width: 100%; }
+}
+
+html[data-theme] .collaboration-side-section > header,
+html[data-theme] .workspace-changes-header {
+  background: color-mix(in srgb, var(--workspace-panel-bg) 85%, var(--bg-surface));
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+html[data-theme] .collaboration-side-agent {
+  border-bottom: 1px solid var(--border-subtle);
+  transition: all 0.15s ease;
+}
+
+html[data-theme] .collaboration-side-agent:hover {
+  background: var(--bg-hover);
+  box-shadow: var(--shadow-sm);
+}

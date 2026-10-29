@@ -1,0 +1,163 @@
+/*
+ * 会话完成的右下角提示窗。
+ *
+ * 这是一个独立的 Tauri 子窗口（`/?notice=1`），窗口本身是透明的，所以
+ * 下面这层 `.notice-card` 就是最终看到的整块卡片：圆角、投影、配色都靠它。
+ * 主题跟随主界面（`html[data-theme]`），因此这里只写两套变量，不写死颜色。
+ */
+
+html {
+  background: transparent;
+}
+
+/* 选择器带 `html` 前缀是有原因的：全局 `body { background: var(--bg-ambient) }`
+   （src/styles/index.css:66）特异度更高，不提高一级这里就会被它盖掉，
+   窗口透明就会失败——整块卡片会坐在一坨不透明底色上。 */
+html body {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  overflow: hidden;
+  /* 提示窗不需要滚动条，也不该被选中。 */
+  user-select: none;
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+
+#root {
+  box-sizing: border-box;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  height: 100%;
+  /* 卡片必须占满整窗。这里一旦留白（曾经是 14px 的投影余量），桌面上就会看到卡片
+     外面围着一圈透明空白 —— 窗口是多少像素，就应该被卡片填满多少像素。 */
+  padding: 0;
+}
+
+.notice-card {
+  --notice-bg: #1b2029;
+  --notice-border: rgba(255, 255, 255, 0.08);
+  --notice-title: #f8fafc;
+  --notice-body: #a9b0bd;
+  --notice-accent: #4ade80;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  /* 摘要只有一行时卡片仍占满窗口，内容整体居中，空档上下均分而不是全压在下面。 */
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  /* 高度跟着窗口走：窗口尺寸就是卡片尺寸，两行摘要才是设计尺寸
+     （84 = 2 边框 + 24 内距 + 18 标题 + 6 间隔 + 34 摘要）。 */
+  height: 100%;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--notice-border);
+  /* 直角。窗口是矩形的，卡片一旦有圆角，那四个角就只能靠透明像素「让」出来，桌面上
+     看就是四角各缺一块（用户报的「圆角外还有点小透明」）。要圆角就得让 DWM 去圆窗口
+     本体，那是另一条路；这里先把铺满做实。 */
+  border-radius: 0;
+  background: var(--notice-bg);
+  /* 没有外扩余量了，投影会被窗口边缘硬裁成一条直角边，所以不再画外投影；卡片的
+     边界改由 1px 描边 + 顶部一道内高光来交代。 */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  /* 卡片高度刚好等于内容高度，别的字体/DPI 下万一多出 1px，宁可裁在卡内也不要溢到
+     圆角外面。 */
+  overflow: hidden;
+  cursor: pointer;
+  /* 后端定位窗口后前端才置 visible，这里只负责滑入。 */
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 160ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.notice-card[data-visible] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+html[data-theme="light"] .notice-card {
+  --notice-bg: #ffffff;
+  --notice-border: rgba(15, 23, 42, 0.1);
+  --notice-title: #0f172a;
+  --notice-body: #475569;
+  --notice-accent: #16a34a;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.notice-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.notice-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--notice-accent);
+}
+
+.notice-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+  color: var(--notice-title);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notice-close {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--notice-body);
+  cursor: pointer;
+  transition: background-color 120ms, color 120ms;
+}
+
+.notice-close:hover {
+  background: rgba(148, 163, 184, 0.16);
+  color: var(--notice-title);
+}
+
+.notice-summary {
+  margin: 0;
+  padding-left: 14px;
+  /* 最多两行，第三行起打点，正好符合「有个两行展示即可」。
+     `flex: none` 不能省：行夹在 flex 列里会被压成 0 高，摘要就整段消失了。 */
+  flex: none;
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 17px;
+  max-height: 34px;
+  color: var(--notice-body);
+  word-break: break-word;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.notice-card:focus-visible {
+  outline: 2px solid var(--notice-accent);
+  outline-offset: -2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notice-card {
+    transition: none;
+  }
+}

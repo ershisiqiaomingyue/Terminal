@@ -1,0 +1,299 @@
+
+
+/* Final icon-only treatment after legacy theme overrides. */
+html[data-theme] .conversation-page .slash-menu-icon,
+html[data-theme] .conversation-page .slash-menu-row.selected .slash-menu-icon {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+html[data-theme] .conversation-page .slash-menu-icon.is-skill { color: var(--accent-primary); }
+html[data-theme] .conversation-page .slash-menu-icon.is-tool { color: var(--text-secondary); }
+html[data-theme] .conversation-page .slash-menu-icon.is-app { color: var(--status-success, #16a34a); }
+.history-process-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 8px 0; font-size: 12px; }
+.history-process-controls > span { display: inline-flex; align-items: center; gap: 6px; }
+
+/* The compaction strip is the library `CompactionProgress` (.ui-compaction*);
+   this file only owns where it sits in the conversation status line, so the
+   running and finished states cannot drift apart visually. */
+.chat-compaction-progress { margin: 0 0 8px; }
+
+/* 追加要求受理回执：常驻显示在折叠区之外，让用户在长命令执行期间也能确认
+   追加内容已送达（后端在受理瞬间发出 steer_accepted）。全部走主题变量。 */
+.agent-steer-accepted {
+  align-items: flex-start;
+  width: fit-content;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 4px 0 2px;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-base, 8px);
+  background: var(--bg-muted);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.agent-steer-accepted > svg { flex: 0 0 auto; margin-top: 2px; color: var(--accent-primary); }
+.agent-steer-accepted > span { min-width: 0; }
+.agent-steer-accepted b { color: var(--text-primary); font-weight: 550; }
+.agent-steer-accepted-hint {
+  display: inline-block;
+  margin-left: 6px;
+  color: var(--text-tertiary);
+  font-size: 11px;
+}
+
+/* 追加要求生效后的留痕（后端 "steered"），与上面的受理回执同族但用成功色。 */
+.agent-steer-applied {
+  align-items: flex-start;
+  width: fit-content;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 4px 0 2px;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-base, 8px);
+  background: var(--bg-muted);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* N6-C：turn 终态时未送达的追加要求（后端回收后广播 steer_rejected）——
+   同族样式但用警示色，提示需要重新发送。 */
+.agent-steer-rejected {
+  align-items: flex-start;
+  width: fit-content;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 4px 0 2px;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-base, 8px);
+  background: var(--bg-muted);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.agent-steer-rejected > svg { flex: 0 0 auto; margin-top: 2px; color: var(--status-danger, var(--accent-primary)); }
+.agent-steer-rejected > span { min-width: 0; }
+.agent-steer-rejected b { color: var(--text-primary); font-weight: 550; }
+
+/* G1/G2：goal 徽章——跨轮目标的常驻状态锚点（悬停看验收条件/轮次/预算）。 */
+.goal-badge {
+  align-items: flex-start;
+  width: fit-content;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 4px 0 2px;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-base, 8px);
+  background: var(--bg-muted);
+  color: var(--text-secondary);
+  line-height: 1.5;
+  display: flex;
+  gap: 8px;
+  white-space: pre-line;
+}
+.goal-badge > svg { flex: 0 0 auto; margin-top: 2px; color: var(--accent-primary); }
+.goal-badge > span { min-width: 0; }
+.goal-badge b { color: var(--text-primary); font-weight: 550; }
+.goal-badge.is-terminal > svg { color: var(--status-success, var(--accent-primary)); }
+.agent-steer-applied > svg { flex: 0 0 auto; margin-top: 2px; color: var(--success, var(--status-success, #10b981)); }
+.agent-steer-applied > span { min-width: 0; overflow-wrap: anywhere; }
+.agent-steer-applied b { color: var(--text-primary); font-weight: 550; }
+
+/* Explanations lead; execution details stay behind quiet, compact controls. */
+html[data-theme] .conversation-page .agent-turn-body { gap: 14px; padding-top: 8px; }
+html[data-theme] .conversation-page .agent-turn-body .markdown-body > :first-child > :first-child { margin-top: 0; }
+html[data-theme] .conversation-page .agent-turn-body .markdown-body > :last-child > :last-child { margin-bottom: 0; }
+html[data-theme] .conversation-page :is(.agent-tool-group, .agent-command) { margin: 0; padding: 0; }
+html[data-theme] .conversation-page .agent-tool-group + .agent-tool-group { margin-top: -6px; }
+html[data-theme] .conversation-page :is(.agent-tool-group-summary, .agent-command-summary) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 10px 4px 6px;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  color: var(--text-secondary);
+  background: transparent;
+  box-shadow: none;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+html[data-theme] .conversation-page :is(.agent-tool-group-summary, .agent-command-summary) b {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+html[data-theme] .conversation-page :is(.agent-tool-group-summary, .agent-command-summary):hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+  border-color: transparent;
+}
+html[data-theme] .conversation-page :is(.agent-tool-group-summary, .agent-command-summary) .agent-activity-type-icon {
+  flex: 0 0 auto;
+  color: var(--text-tertiary);
+  transition: color 0.15s ease;
+}
+html[data-theme] .conversation-page :is(.agent-tool-group-summary, .agent-command-summary):hover .agent-activity-type-icon {
+  color: var(--text-secondary);
+}
+html[data-theme] .conversation-page :is(.agent-tool-group-summary, .agent-command-summary) .agent-disclosure-chevron {
+  flex: 0 0 auto;
+  margin-left: auto;
+  opacity: 0.45;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+html[data-theme] .conversation-page :is(.agent-tool-group-summary, .agent-command-summary):hover .agent-disclosure-chevron {
+  opacity: 0.85;
+}
+html[data-theme] .conversation-page :is(.agent-tool-group, .agent-command).expanded :is(.agent-tool-group-summary, .agent-command-summary) .agent-disclosure-chevron {
+  transform: rotate(180deg);
+  opacity: 0.85;
+}
+html[data-theme] .conversation-page .agent-command-detail { border: 0; background: transparent; }
+html[data-theme] .conversation-page .agent-tool-group-detail { width: min(680px, 100%); }
+
+html[data-theme] .conversation-page .agent-tool-group-detail { border-left-color: var(--tool-detail-divider); }
+html[data-theme] .conversation-page .agent-command-shell,
+html[data-theme] .conversation-page .agent-command-prompt,
+html[data-theme] .conversation-page .agent-command-live-label small { color: var(--tool-detail-muted); }
+html[data-theme] .conversation-page .agent-command-detail :is(pre, .agent-command-waiting) {
+  border: 0;
+  border-radius: 6px;
+  color: var(--tool-code-text);
+  background: var(--tool-output-bg);
+}
+html[data-theme] .conversation-page .agent-command-detail .agent-command-input { background: var(--tool-input-bg); }
+html[data-theme] .conversation-page .agent-command-detail .agent-command-live-output {
+  padding: 7px 8px;
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+}
+html[data-theme] .conversation-page .agent-command-detail pre {
+  scrollbar-width: thin;
+  scrollbar-color: var(--tool-scrollbar-thumb) transparent;
+}
+html[data-theme] .conversation-page .agent-command-detail pre code { color: inherit; background: transparent; }
+html[data-theme] .conversation-page .agent-command-detail pre::-webkit-scrollbar { width: 6px; height: 6px; }
+html[data-theme] .conversation-page .agent-command-detail pre::-webkit-scrollbar-track { background: transparent; }
+html[data-theme] .conversation-page .agent-command-detail pre::-webkit-scrollbar-thumb { border-radius: var(--radius-full); background: var(--tool-scrollbar-thumb); }
+html[data-theme] .conversation-page .agent-command-detail pre::-webkit-scrollbar-thumb:hover { background: var(--tool-scrollbar-thumb-hover); }
+html[data-theme] .conversation-page .agent-command-detail pre::-webkit-scrollbar-button { display: none; }
+html[data-theme] .conversation-page .agent-command-detail pre::-webkit-scrollbar-corner { background: transparent; }
+
+/* 状态圆圈样式：严格按图还原 (已完成实心打勾、正在做旋转加载、未做纯净空心圈) */
+html[data-theme] .conversation-page .agent-activity-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  flex: 0 0 18px;
+  box-sizing: border-box;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 1. 做了就打勾 (Done) */
+html[data-theme] .conversation-page .agent-activity-status.done,
+html[data-theme] .conversation-page .agent-activity-status[data-state="done"] {
+  background: var(--accent-primary, #6366f1);
+  color: #ffffff;
+  border: 1px solid transparent;
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.4);
+}
+html[data-theme] .conversation-page .agent-activity-status.done svg,
+html[data-theme] .conversation-page .agent-activity-status[data-state="done"] svg {
+  width: 11px;
+  height: 11px;
+  stroke: #ffffff;
+  stroke-width: 2.8;
+}
+
+/* 2. 正在做就滚动 (Running) */
+html[data-theme] .conversation-page .agent-activity-status.running,
+html[data-theme] .conversation-page .agent-activity-status[data-state="running"] {
+  background: var(--accent-subtle, rgba(99, 102, 241, 0.16));
+  color: var(--accent-primary, #6366f1);
+  border: 1px solid var(--accent-border, rgba(99, 102, 241, 0.3));
+}
+html[data-theme] .conversation-page .agent-activity-status.running svg,
+html[data-theme] .conversation-page .agent-activity-status[data-state="running"] svg {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+  margin: 0;
+  color: inherit;
+}
+
+/* 3. 没做的就空心圈 (Pending) */
+html[data-theme] .conversation-page .agent-activity-status.pending,
+html[data-theme] .conversation-page .agent-activity-status[data-state="pending"] {
+  background: transparent;
+  border: 1.5px solid var(--status-pending-border, rgba(148, 163, 184, 0.45));
+  color: var(--text-tertiary, rgba(148, 163, 184, 0.9));
+}
+html[data-theme] .conversation-page .agent-activity-status.pending,
+html[data-theme] .conversation-page .agent-activity-status[data-state="pending"] {
+  border-color: color-mix(in srgb, var(--text-primary) 38%, transparent);
+}
+html[data-theme] .conversation-page .agent-activity-status.pending svg,
+html[data-theme] .conversation-page .agent-activity-status[data-state="pending"] svg {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+  margin: 0;
+  color: inherit;
+  stroke: currentColor;
+  stroke-width: 2.2;
+}
+
+/* 4. 失败/取消 (Error / Cancelled) */
+html[data-theme] .conversation-page .agent-activity-status:is(.error, .cancelled, [data-state="error"], [data-state="cancelled"], [data-state="interrupted"]) {
+  background: #ef4444;
+  color: #ffffff;
+  border: 1px solid transparent;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.35);
+}
+html[data-theme] .conversation-page .agent-activity-status:is(.error, .cancelled, [data-state="error"], [data-state="cancelled"], [data-state="interrupted"]) svg {
+  width: 11px;
+  height: 11px;
+  stroke: #ffffff;
+  stroke-width: 2.8;
+}
+
+/* Reuse the original processing-status sweep on the live operation label. */
+html[data-theme] .conversation-page :is(.agent-tool-group, .agent-command)[data-state="done"] > :is(.agent-tool-group-summary, .agent-command-summary) {
+  color: var(--text-secondary);
+}
+html[data-theme] .conversation-page :is(.agent-tool-group, .agent-command)[data-state="running"] > :is(.agent-tool-group-summary, .agent-command-summary) .agent-execution-label {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--execution-status-text);
+}
+html[data-theme] .conversation-page :is(.agent-tool-group, .agent-command)[data-state="running"] > :is(.agent-tool-group-summary, .agent-command-summary) .agent-execution-label::after {
+  position: absolute;
+  inset: 0 auto 0 -45%;
+  width: 38%;
+  background: linear-gradient(105deg, transparent, var(--processing-status-shimmer), transparent);
+  content: '';
+  pointer-events: none;
+  transform: skewX(-18deg);
+  animation: processing-status-shimmer 1.35s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce), (forced-colors: active) {
+  html[data-theme] .conversation-page :is(.agent-tool-group, .agent-command)[data-state="running"] > :is(.agent-tool-group-summary, .agent-command-summary) .agent-execution-label::after {
+    display: none;
+    animation: none;
+  }
+}

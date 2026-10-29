@@ -1,0 +1,42 @@
+/**
+ * ============================================================================
+ * Android Toolkit 字体系统规范 (Typography System)
+ * 可切换界面字体 + JetBrains Mono 等宽代码字体
+ * ============================================================================
+ */
+
+body {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 400;
+  letter-spacing: 0;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+/* 标题规范 */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--text-primary);
+}
+
+/* 等宽数值与代码规范 (开启数字等宽对齐，防止跳动) */
+code, kbd, samp, pre, .text-mono {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 常用文本颜色辅助类 */
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted { color: var(--text-muted); }
+.text-accent { color: var(--accent-primary); }
+.text-success { color: var(--status-success-text); }
+.text-danger { color: var(--status-danger-text); }

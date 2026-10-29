@@ -1,0 +1,530 @@
+/* ==========================================================================
+   NoticePanel — one card per notice, spanning the composer column.
+   Width is fixed to the container (the chat footer column), not to content:
+   a notice must not grow or shrink when it expands, and the +N −N file row
+   needs room reserved for it before it opens.
+
+     width: 100%  → matches the 860px / 100%-48px composer column
+     no max-content, no per-kind cap → expanding never changes the outer size
+   ========================================================================== */
+
+/* 通知卡是浮在对话内容上方的，**不能带透明度**：主题里的 --bg-card 本身是
+   rgba（亮色 .85 / 暗色渐变 .98），白字黑底或黑字白底都会从卡片里透出来，
+   滚动时尤其明显。这里换成一层不透明的卡片底色：先在 --bg-canvas（页面底色）
+   上叠 --bg-card，再把 alpha 吃掉 —— 既保留卡片与画布之间的色差，又保证
+   填充完全不透明。两套主题、自定义主题都走同一条规则。 */
+.ui-notice {
+  --notice-fill: color-mix(in srgb, var(--bg-card) 100%, var(--bg-canvas));
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  background-color: var(--bg-canvas);
+  background-image: linear-gradient(var(--notice-fill), var(--notice-fill));
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.ui-notice-heading {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+}
+
+/* The summary is a library Button (variant="bare"). `.btn` sets display and
+   gap at (0,1,0); this rule must win over it, so it carries the .btn prefix. */
+.ui-notice-summary.btn.btn-bare {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 36px;
+  /* Symmetric padding: the hover fill must reach both edges, no right gutter. */
+  padding: 4px 12px;
+  border: 0;
+  border-radius: 0;
+  color: var(--text-primary);
+  background: transparent;
+  box-shadow: none;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+/* Hover must outrank the base rule above: that one is written as
+   `.ui-notice-summary.btn.btn-bare` (0,3,0), so a plain `:hover` (0,2,0) would
+   lose and the fill would never appear. */
+.ui-notice-summary.btn.btn-bare:hover:not(:disabled) {
+  background: var(--button-hover-bg);
+}
+
+.ui-notice-summary:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: -2px;
+}
+
+.ui-notice-icon {
+  display: inline-flex;
+  flex: 0 0 15px;
+  width: 15px;
+  height: 15px;
+  color: var(--text-secondary);
+}
+
+.ui-notice-icon svg { width: 15px; height: 15px; stroke-width: 1.7; }
+
+.ui-notice-label {
+  flex: 0 0 auto;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.ui-notice-meta {
+  flex: 0 0 auto;
+  margin-left: 4px;
+}
+
+.ui-notice-preview {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--control-text);
+}
+
+/* Diff counts: the only place colour enters the summary line. */
+.ui-notice-preview em {
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  margin-right: 6px;
+}
+
+.ui-notice-preview em:first-child { color: var(--status-success-text); }
+.ui-notice-preview em:last-child { color: var(--status-danger-text); }
+
+/* `count` (任务数/文件数) sits at the far right; `meta` (进度 pill) must stay
+   next to the summary text, so only count gets the auto margin. */
+.ui-notice-count {
+  flex: 0 0 auto;
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ui-notice-chevron {
+  flex: 0 0 auto;
+  margin-left: 6px;
+  color: var(--text-tertiary);
+  transition: transform 0.15s ease;
+}
+
+/* 收起态 = 直角箭头（朝右 > ），展开态 = 下箭头（v）——权限申请、AI 询问、任务编排、
+   后台任务和追加消息卡全部同一套，靠这里统一，不要再按 variant 各写一份。 */
+.ui-notice.is-expanded > .ui-notice-heading .ui-notice-chevron { transform: rotate(90deg); }
+.ui-notice.is-compact.is-expanded > .ui-notice-heading .ui-notice-chevron { transform: rotate(90deg); }
+/* 收起态 = 直角箭头（朝右），展开态 = 下箭头。inline 卡的汇总头自己带箭头，
+   不走 `.ui-notice-heading` 那条规则，单独给。 */
+.ui-notice.is-inline.is-expanded > .ui-notice-summary.is-static .ui-notice-chevron { transform: rotate(90deg); }
+
+.ui-notice-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+/* A status ring in the badge slot (后台任务) must not stretch the heading:
+   the shared indicator is 18px, taller than the 11px count text it replaced. */
+.ui-notice-heading .ui-notice-badge,
+.ui-notice-heading > .agent-activity-status {
+  flex: 0 0 auto;
+  margin-left: 2px;
+}
+
+/* Expanded body stays inside the same card, divided by a hairline. */
+.ui-notice-content {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  min-width: 0;
+  padding: 10px 12px;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+/* ── Compact rows (文件改动): half width, fixed before and after expand ──
+   The product caps compact rows with width: max-content / max-width 420px.
+   Here the width is fixed instead so opening the file list never resizes the
+   card: half the column, capped, with a floor so paths stay readable. */
+.ui-notice.is-compact {
+  width: min(50%, 420px);
+  min-width: 300px;
+}
+
+.ui-notice.is-compact .ui-notice-heading { padding-right: 0; }
+.ui-notice.is-compact .ui-notice-preview { flex: 0 0 auto; overflow: visible; }
+.ui-notice.is-compact .ui-notice-summary { padding: 5px 12px; }
+
+/* ── Tone tints the icon and the card edge, never the fill ──────────────── */
+.ui-notice.is-attention .ui-notice-icon { color: var(--accent-primary); }
+.ui-notice.is-attention { border-color: color-mix(in srgb, var(--accent-primary) 32%, var(--border-subtle)); }
+
+.ui-notice.is-warning .ui-notice-icon { color: var(--status-warning-text); }
+.ui-notice.is-warning { border-color: color-mix(in srgb, var(--warning-text) 34%, var(--border-subtle)); }
+
+.ui-notice.is-danger .ui-notice-icon { color: var(--status-danger-text); }
+.ui-notice.is-danger { border-color: color-mix(in srgb, var(--danger-text) 34%, var(--border-subtle)); }
+
+.ui-notice.is-success .ui-notice-icon { color: var(--status-success-text); }
+
+/* ── Inline rows (追加消息) ──────────────────────────────────────────────
+   内联卡片不折叠，但外壳必须和其它通知一模一样：同一个圆角、同一圈描边、
+   同一层阴影，头部一行（图标 + 名称 + 摘要 + 计数）只是不可点击。
+   Placement and the input-corner inset belong to the composer dock. */
+.ui-notice.is-inline {
+  width: 100%;
+  margin-inline: 0;
+  padding: 0;
+  gap: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  /* 与 `.ui-notice` 同一套不透明填充（见文件顶部），不要再写回 var(--bg-card)。 */
+  background-color: var(--bg-canvas);
+  background-image: linear-gradient(var(--notice-fill), var(--notice-fill));
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+/* 静态头部与可点击头部的内边距/行高对齐（.ui-notice-summary 是 4px 12px / 36px）。 */
+.ui-notice-heading.is-static {
+  min-height: 36px;
+  padding: 4px 12px;
+  box-sizing: border-box;
+}
+
+.ui-notice-heading.is-static .ui-notice-label,
+.ui-notice-heading.is-static .ui-notice-preview {
+  min-width: 0;
+}
+
+/* ── Queue rows inside a notice ─────────────────────────────────────────── */
+/* 样式来自 design-drafts/steer-cards：单条是「灵动浮岛胶囊」，多条是
+   「汇总头 + 行列表」。按钮逻辑不变，只换壳。 */
+.ui-notice-queue-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  /* 行高向普通通知头（36px）看齐：设计稿的 40/44px 放在我们这套密集停靠区里
+     比「AI 询问」高一大截，一张卡就把输入框顶上去半屏。 */
+  min-height: 32px;
+  padding: 4px 12px 4px 14px;
+  box-sizing: border-box;
+  background: transparent;
+  transition: background var(--transition-base, 0.22s var(--ease-spring, cubic-bezier(0.16, 1, 0.3, 1)));
+}
+.ui-notice-queue-row.is-single {
+  gap: 8px;
+  min-height: 36px;
+  padding: 6px 12px 6px 14px;
+}
+/* 单条胶囊没有排序可言，拖拽柄整个隐去（键盘上/下移也随之无意义）。 */
+.ui-notice-queue-row.is-single .ui-notice-queue-drag { display: none; }
+
+/* 排队行本身不做 hover 铺底：整行不是可点目标（可点的是行尾那几个图标按钮），
+   一 hover 就浮出一块底色会让整张卡看起来在闪。按钮自己保留 hover。 */
+
+/* 行号：mono 11px 灰，占 18px 槽位 */
+.ui-notice-queue-index {
+  flex: 0 0 18px;
+  width: 18px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 单条形态：呼吸灯 + 「等待中：」都要跟正文拉开距离——8px 时圆点几乎贴住「已」字，
+   呼吸环外扩之后还会压到字上，所以圆点占 10px 槽位、整体 gap 加到 8px。 */
+.ui-notice-queue-dot {
+  flex: 0 0 8px;
+  width: 8px;
+  height: 8px;
+  margin: 0 2px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  position: relative;
+}
+.ui-notice-queue-dot::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1.5px solid var(--accent-primary);
+  /* 性能：原来是 infinite。这个环会从 0.7 倍扩到 2.4 倍，每帧都在毛玻璃
+     面板上扫过大片区域，实测占掉约 35% 单核。改成只播 3 次：出现时足够
+     提示「有排队消息」，之后静止，稳态不再产帧。 */
+  animation: ui-queue-pulse-ring 1.8s cubic-bezier(0.24, 0, 0.38, 1) 3;
+}
+@keyframes ui-queue-pulse-ring {
+  0% { transform: scale(0.7); opacity: 0.9; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ui-notice-queue-dot::after { animation: none; opacity: 0; }
+}
+
+.ui-notice-queue-single-label {
+  flex: 0 0 auto;
+  margin-right: 5px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.ui-notice-queue-drag.btn.btn-bare { flex: 0 0 18px; width: 18px; min-width: 18px; height: 22px; padding: 0; color: var(--text-tertiary); cursor: grab; touch-action: none; user-select: none; }
+.ui-notice-queue-drag.btn.btn-bare:active { cursor: grabbing; }
+.ui-notice-queue-drag.btn.btn-bare:hover:not(:disabled) { color: var(--text-secondary); background: var(--bg-hover); }
+.ui-notice-queue-row.is-dragging { opacity: .52; }
+.ui-notice-queue-preview { display: flex; align-items: center; gap: 4px; flex: 0 0 auto; }
+.ui-notice-queue-thumbnail { display: grid; place-items: center; width: 18px; height: 18px; padding: 0; border: 1px solid var(--border-subtle); border-radius: 4px; background: var(--bg-surface); color: var(--text-tertiary); overflow: hidden; cursor: pointer; }
+.ui-notice-queue-thumbnail img { width: 100%; height: 100%; object-fit: cover; }
+.ui-notice-queue-preview small { color: var(--text-tertiary); font-size: 11px; }
+.ui-notice-queue-file { display: inline-flex; align-items: center; gap: 4px; max-width: 72px; min-width: 0; height: 18px; padding: 0 5px; border: 1px solid var(--border-subtle); border-radius: 4px; color: var(--text-secondary); background: var(--bg-surface); font-size: 10.5px; }
+.ui-notice-queue-file > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ui-notice-queue-file .local-path-icon { width: 14px; height: 14px; flex: 0 0 auto; }
+.ui-notice-queue-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  font-weight: 450;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ui-notice-queue-text.is-single-text { color: var(--text-secondary); }
+
+.ui-notice-queue-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+/* 三按钮 = 设计稿 `.s1-action-btn`：26×26、radius 7、15px 图标、中性灰底色，
+   hover 才浮出 `--bg-hover`。三个按钮共用同一套中性灰，强调色只留给状态与进度，
+   卡片上不出现第二处彩色焦点（m10690：上一版把「追加」画成强调色是错的）。 */
+.ui-notice-queue-actions .btn.btn-bare { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; min-width: 26px; padding: 0; gap: 0; border: 0; border-radius: 7px; background: transparent; color: var(--text-tertiary); font: 500 12px/1.4 var(--font-sans); }
+.ui-notice-queue-actions .btn svg { width: 15px; height: 15px; }
+.ui-notice-queue-actions .btn.btn-bare:hover:not(:disabled) { color: var(--text-primary); background: var(--bg-hover); }
+.ui-notice-queue-actions .btn.btn-bare:disabled { opacity: 0.32; }
+
+/* ── File rows inside a notice ──────────────────────────────────────────── */
+.ui-notice-file-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font: 11.5px/1.5 var(--font-mono);
+}
+
+.ui-notice-file-row:hover { background: var(--bg-hover); }
+
+.ui-notice-file-row > span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+
+.ui-notice-file-row em {
+  text-align: right;
+  flex: 0 0 auto;
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  color: var(--status-success-text);
+}
+
+.ui-notice-file-row i {
+  text-align: right;
+  flex: 0 0 auto;
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  color: var(--status-danger-text);
+}
+
+/* Progress pill used by 任务编排's meta slot. */
+.composer-task-progress-pill {
+  flex: 0 0 auto;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--accent-subtle);
+  color: var(--accent-primary);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Narrow windows: half the column is too tight for file paths, so compact
+   rows take the full width there instead of shrinking further. */
+@media (max-width: 720px) {
+  .ui-notice.is-compact {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-notice-chevron,
+  .ui-notice-summary { transition: none; }
+}
+
+/* Shared 09 bodies: the showcase and production adapters use these same rows. */
+.ui-notice-body-stack, .ui-notice-background-task { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.ui-notice-body-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.ui-notice-code { margin: 0; padding: 10px; border-radius: 8px; background-color: var(--bg-surface); background-image: linear-gradient(var(--markdown-code-bg), var(--markdown-code-bg)); font: 11.5px/1.6 var(--font-mono); overflow: auto; white-space: pre; }
+.ui-notice-reply { display: flex; align-items: center; gap: 8px; }
+.ui-notice-reply > .input-shell { flex: 1; min-width: 0; }
+.ui-notice-detail { color: var(--text-tertiary); font-size: 11px; }
+.ui-notice-background-task { gap: 8px; }
+.ui-notice-background-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; }
+/* 标题行本身是折叠开关：整行可点，但只用 bare 按钮占住「图标+文字」那段，
+   右侧的用时/停止按钮仍然是独立可点的动作，不会连带折叠。 */
+.ui-notice-background-toggle.btn.btn-bare {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+}
+.ui-notice-background-toggle.btn.btn-bare:hover:not(:disabled) { color: var(--text-primary); }
+.ui-notice-background-toggle > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ui-notice-background-chevron {
+  flex: 0 0 auto;
+  color: var(--text-tertiary);
+  transition: transform 140ms ease;
+}
+.ui-notice-background-task.is-expanded .ui-notice-background-chevron { transform: rotate(90deg); }
+.ui-notice-background-body { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+/* `hidden` 必须显式压回 none：上面给了 display:flex，否则收起时内容照样在。 */
+.ui-notice-background-body[hidden] { display: none; }
+.ui-notice-background-log { max-height: 200px; font-size: 11px; }
+.ui-notice-background-task details { min-width: 0; color: var(--text-secondary); font-size: 11px; }
+.ui-notice-background-task details summary { cursor: pointer; }
+.ui-notice-background-task details[open] > :not(summary) { margin-top: 8px; }
+@media (prefers-reduced-motion: reduce) {
+  .ui-notice-background-chevron { transition: none; }
+}
+
+/* 「任务详情」套一层独立的卡片壳：标题行和上面的日志面本身就是两块有填充的
+   面板，details 直接铺在通知底色上会被读成底色的一部分，而不是又一块内容。
+   这里复用组件库的 Card，但压平为 inset 填充（不加第二层浮起阴影）。 */
+html[data-theme] .ui-notice-background-task .ui-notice-background-detail {
+  padding: 8px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: var(--surface-inset-bg);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+html[data-theme] .ui-notice-background-task .ui-notice-background-detail::after { display: none; }
+.ui-notice-background-detail > details { min-width: 0; }
+
+/* 日志块和「任务详情」是卡片里再套的两层填充，同样不能带 alpha：暗色主题的
+   --markdown-code-bg 是 rgba(18,22,30,.92)、亮色是 rgba(255,255,255,.95)，
+   叠在不透明卡片上仍会让上层的文字/滚动内容透出来。这里先把每一层的 alpha
+   吃掉（混进卡片自己的 --notice-fill），再把卡片拆成「--bg-canvas 垫底 +
+   去 alpha 的填充盖面」，两层都不透明；顺序反过来会留下一个半透明的底色。 */
+html[data-theme] .ui-notice .ui-notice-code {
+  background-color: var(--notice-fill);
+  background-image: linear-gradient(
+    color-mix(in srgb, var(--markdown-code-bg) 100%, var(--notice-fill)),
+    color-mix(in srgb, var(--markdown-code-bg) 100%, var(--notice-fill))
+  );
+}
+html[data-theme] .ui-notice-background-task .ui-notice-background-detail {
+  background-color: var(--bg-canvas);
+  background-image: linear-gradient(
+    color-mix(in srgb, var(--surface-inset-bg) 100%, var(--notice-fill)),
+    color-mix(in srgb, var(--surface-inset-bg) 100%, var(--notice-fill))
+  );
+}
+
+/* 亮色主题下 --markdown-code-bg 是 rgba(255,255,255,.95)、--surface-inset-bg 是
+   白底混 2% 文字色，两者都贴住通知的白色外壳：日志块和「任务详情」的卡片边界
+   于是整个消失（暗色主题下面板有自己的深底色，对比本来就够，所以只修亮色）。
+   这里换成一层可见的浅灰填充 + 淡边框；详情卡内部的命令块再回到白底，
+   保证「日志块 → 任务详情卡 → 命令块」三层仍然分得开。
+   `background-color` 只是不透明垫底，可见的那一层仍是上面的去 alpha 填充。 */
+html[data-theme="light"] .ui-notice .ui-notice-code,
+html[data-theme="light"] .ui-notice .ui-notice-background-detail {
+  background-color: var(--bg-canvas);
+  background-image: linear-gradient(
+    color-mix(in srgb, var(--text-primary) 8%, var(--bg-surface)),
+    color-mix(in srgb, var(--text-primary) 8%, var(--bg-surface))
+  );
+  border: 1px solid color-mix(in srgb, var(--text-primary) 12%, transparent);
+}
+html[data-theme="light"] .ui-notice .ui-notice-background-detail .ui-notice-code {
+  background-color: var(--bg-canvas);
+  background-image: linear-gradient(var(--bg-surface), var(--bg-surface));
+  border-color: color-mix(in srgb, var(--text-primary) 8%, transparent);
+}
+.ui-notice-error { margin: 0; color: var(--status-danger-text); overflow-wrap: anywhere; }
+.ui-notice-file-list { display: flex; flex-direction: column; gap: 4px; }
+.ui-notice-file-row.btn.btn-bare { display: flex; width: 100%; min-width: 0; gap: 8px; padding: 4px 8px; border-radius: 8px; font: 11.5px/1.5 var(--font-mono); text-align: left; }
+.ui-notice-file-row.is-deleted > span { text-decoration: line-through; }
+/* 卡片外壳现在由 `.ui-notice.is-inline` 提供：这里只负责纵向排布，不再画第二圈
+   描边/底色（否则卡片里套一层卡，圆角还会互相打架）。单条形态没有行分隔线，
+   行列表形态保留 1px 分隔 + 6px 细滚动条（steer-cards 规范）。 */
+.ui-notice-queue-list { display: flex; flex-direction: column; gap: 0; min-height: 0; overflow: auto; border: 0; border-radius: 0; background: transparent; scrollbar-width: thin; }
+.ui-notice-queue-list:not(.is-single) { border-top: 1px solid var(--border-subtle); max-height: 190px; box-sizing: border-box; padding-bottom: 2px; overscroll-behavior: contain; }
+.ui-notice-queue-list:not(.is-single)::-webkit-scrollbar { width: 6px; }
+.ui-notice-queue-list:not(.is-single)::-webkit-scrollbar-thumb { background: var(--border-medium, var(--border-subtle)); border-radius: 3px; }
+.ui-notice-queue-list:not(.is-single) .ui-notice-queue-row + .ui-notice-queue-row { border-top: 1px solid var(--border-subtle); }
+
+.ui-notice-plan-settings { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-subtle); display: flex; flex-direction: column; gap: 10px; }
+.ui-notice-plan-fields { display: flex; gap: 12px; flex-wrap: wrap; }
+.ui-notice-plan-fields > label { display: flex; align-items: center; gap: 8px; font-size: 11px; }
+.ui-notice-plan-fields .input-shell { width: 72px; }
+
+/* ── 追加消息卡：单条抬头即正文 ─────────────────────────────────────────────
+   单条时不显示列表，抬头就是「一条追加消息等待中：<正文>」，三个动作按钮挂在
+   抬头右侧（与「AI 询问」卡头同一行结构）；多条时抬头只有一句计数 + 展开箭头。 */
+.composer-notice-slot[data-notice-kind="queue"] .ui-notice-summary.is-static .ui-notice-actions { margin-left: 2px; }
+.composer-notice-slot[data-notice-kind="queue"] .ui-notice-preview { flex: 1; min-width: 0; }
+/* 单条形态没有汇总头：那一条消息本身就是卡片内容（一行里依次是 呼吸灯 → 「一条追加
+   消息等待中：」→ 附件 → 正文 → 三个按钮），所以整块 `.ui-notice-heading` 不渲染。 */
+.ui-notice.is-inline:has(.ui-notice-queue-list.is-single) > .ui-notice-heading { display: none; }
+.ui-notice-queue-list.is-single { border-top: 0; }
+/* 单条抬头：点/圆环 → 8px → 「一条追加消息等待中：」 → 4px → 正文 → 按钮。
+   正文只吃按钮左侧剩下的宽度，超出就省略号（title 里挂完整内容）。
+   呼吸环外扩到 -3px，所以圆点旁边必须留出真正的间距，否则环会压到字上。 */
+.ui-notice-queue-single-head { display: flex; align-items: center; gap: 0; min-width: 0; overflow: hidden; white-space: nowrap; font-size: 12.5px; font-weight: 400; color: var(--text-secondary); }
+.ui-notice-queue-single-head .ui-notice-queue-single-label { flex: 0 0 auto; margin-right: 4px; font-size: 12.5px; font-weight: 600; color: var(--text-primary); }
+.ui-notice-queue-single-head .ui-notice-queue-single-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-secondary); }

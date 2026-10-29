@@ -1,0 +1,189 @@
+/* ==========================================================================
+   FileChangeNotice — 文件改动 row above the composer.
+   只由本组件拥有；共享的 NoticePanel 不受影响。
+
+   布局：收起时是一行药丸；展开时药丸变成一张卡片，文件列表直接在卡片里
+   往下铺开（宽度和药丸一致，不会把整行撑满）。
+   交互：点击行切换展开/收起，Escape 收起；没有 hover 展开，点击外侧也不收起
+   （点击外侧收起属于弹窗语义，这一行是常驻的布局元素）。
+
+   不透明：整张卡（收起和展开）都用 `--notice-fill` 盖一层去透明度的实色，
+   `var(--bg-card)` 在亮色是 0.85 的白，直接拿它当底色会让上方对话文字透出来。
+   `--notice-fill` 由 notice-panel.css 定义成
+   `color-mix(in srgb, var(--bg-card) 100%, var(--bg-canvas))`；
+   本组件也可能被单独渲染（不在 `.ui-notice` 里），所以下面自己也声明一次。
+   -------------------------------------------------------------------------- */
+
+/* 外壳容器：收起是一行药丸，展开是同一列变成卡片。
+   `--notice-fill` 在这里声明，药丸和展开后的外壳都继承同一枚去 alpha 的填充。 */
+.ui-file-notice {
+  --notice-fill: color-mix(in srgb, var(--bg-card) 100%, var(--bg-canvas));
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+
+.ui-file-notice-row {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}
+
+/* 停靠区里的版本：上下间距由停靠区的 8px 节奏（gap）负责，行本身不再自带外边距。 */
+.ui-file-notice.composer-file-notice { margin-bottom: 0; }
+
+/* 收起状态：紧凑药丸，展开前后宽度不变，避免行本身跳动。 */
+.ui-file-notice-summary.btn.btn-bare {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: min(34%, 280px);
+  min-width: 220px;
+  min-height: 36px;
+  padding: 5px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  /* 与 NoticePanel 同一套不透明填充：垫底 `--bg-canvas` + 盖面 `--notice-fill`。
+     `background` 简写会把这两层一起重置，所以下面只用 `background-color`
+     做 hover 变色，否则 hover 时底又会透出来。 */
+  background-color: var(--bg-canvas);
+  background-image: linear-gradient(var(--notice-fill), var(--notice-fill));
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.ui-file-notice-summary.btn.btn-bare:hover:not(:disabled) {
+  background-color: var(--button-hover-bg, var(--bg-hover));
+}
+
+.ui-file-notice-summary.btn.btn-bare:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.ui-file-notice-icon {
+  display: inline-flex;
+  flex: 0 0 15px;
+  width: 15px;
+  height: 15px;
+  color: var(--text-secondary);
+}
+
+.ui-file-notice-icon svg { width: 15px; height: 15px; stroke-width: 1.7; }
+
+.ui-file-notice-label {
+  flex: 0 0 auto;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.ui-file-notice-diff {
+  flex: 0 0 auto;
+  display: inline-flex;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-file-notice-diff em { font-style: normal; color: var(--status-success-text); }
+.ui-file-notice-diff i { font-style: normal; color: var(--status-danger-text); }
+
+.ui-file-notice-count {
+  flex: 0 0 auto;
+  margin-left: auto;
+  color: var(--text-tertiary);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ui-file-notice-chevron {
+  flex: 0 0 auto;
+  margin-left: 6px;
+  color: var(--text-tertiary);
+  transition: transform 0.15s ease;
+}
+
+/* 列表向下展开，所以收起时的右箭头展开后转成向下（ChevronRight → ChevronDown）。 */
+.ui-file-notice.is-expanded .ui-file-notice-chevron { transform: rotate(90deg); }
+
+/* 展开态：药丸行变成整张卡片。宽度仍是同一枚药丸那档（min(34%,280px)），
+   所以展开的一瞬间宽度不变，不会横向跳一下；只是多出一块向下铺开的列表。 */
+.ui-file-notice.is-expanded > .ui-file-notice-row {
+  display: flex;
+  flex-direction: column;
+  width: min(34%, 280px);
+  min-width: 220px;
+  max-height: min(380px, 50vh);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  background-color: var(--bg-canvas);
+  background-image: linear-gradient(var(--notice-fill), var(--notice-fill));
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+/* 展开时额头交出自己的圆角/描边/底色：外壳已经是卡片，别套两道边。 */
+html[data-theme] .ui-file-notice.is-expanded > .ui-file-notice-row > .ui-file-notice-summary.btn.btn-bare {
+  width: 100%;
+  min-width: 0;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 0;
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+}
+
+/* hover 时仍然只换 background-color：上面那条把底图（不透明盖层）清掉了，
+   所以这里给一个不透明的 hover 色，别让 hover 一下又透出对话文字。 */
+html[data-theme] .ui-file-notice.is-expanded > .ui-file-notice-row > .ui-file-notice-summary.btn.btn-bare:hover:not(:disabled) {
+  border-radius: 0;
+  background-color: var(--button-hover-bg, var(--bg-hover));
+  background-image: none;
+  border-color: transparent;
+}
+
+/* 展开后的文件列表：卡片内部的一块，向下撑开而不是盖住上方对话。
+   底色透明 —— 不透明的那一层是上面的卡片壳，这里再叠一层只会出两道色差。 */
+.ui-file-notice-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px 10px;
+  border: 0;
+  border-top: 1px solid var(--border-subtle);
+  border-radius: 0;
+  background-color: transparent;
+  color: var(--text-primary);
+  box-shadow: none;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+/* 文件行沿用共享通知列表的样式。 */
+.ui-file-notice-body .ui-notice-file-list { gap: 2px; }
+
+/* 窄窗口：占满宽度，路径更好读。 */
+@media (max-width: 720px) {
+  .ui-file-notice-summary.btn.btn-bare,
+  .ui-file-notice.is-expanded > .ui-file-notice-row,
+  html[data-theme] .ui-file-notice.is-expanded > .ui-file-notice-row,
+  html[data-theme] .ui-file-notice.is-expanded > .ui-file-notice-row > .ui-file-notice-summary.btn.btn-bare {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-file-notice-chevron,
+  .ui-file-notice-summary.btn.btn-bare { transition: none; }
+}

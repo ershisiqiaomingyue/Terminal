@@ -1,0 +1,73 @@
+[package]
+name = "terminal-desktop"
+version = "2.0.0"
+description = "Terminal Desktop - 终端工作台 (React + Tauri 2)"
+authors = ["you"]
+edition = "2021"
+workspace = ".."
+# 有多个 [[bin]] 时必须指定默认运行哪个，否则 `cargo run`（tauri dev 用的）
+# 会报 "could not determine which binary to run"。
+default-run = "terminal-desktop"
+
+[lib]
+name = "terminal_desktop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+# 显式声明主程序：src/bin/ 下还有沙盒探针，不声明时 tauri 可能抓到探针当主程序，
+# 导致安装包只有几百 KB（只装了探针 exe）。
+[[bin]]
+name = "terminal-desktop"
+path = "src/main.rs"
+
+[[bin]]
+name = "sandbox_poc"
+path = "src/bin/sandbox_poc.rs"
+required-features = ["sandbox-poc"]
+
+[[bin]]
+name = "sandbox_poc_v2"
+path = "src/bin/sandbox_poc_v2.rs"
+required-features = ["sandbox-poc"]
+
+[features]
+# 沙盒探针仅在显式开启时装（cargo build --features sandbox-poc --bin sandbox_poc）。
+sandbox-poc = []
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["image-png"] }
+tauri-plugin-opener = "2"
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+base64 = "0.22"
+async-trait = "0.1"
+async-stream = "0.3"
+serde_json = "1"
+chrono = { version = "0.4", default-features = false, features = ["alloc", "clock"] }
+tokio = { version = "1", features = ["fs", "io-util", "sync", "time"] }
+tokio-util = "0.7"
+zip = { version = "2", default-features = false, features = ["deflate"] }
+rusqlite = { version = "0.32", features = ["bundled"] }
+sha2 = "0.10"
+flate2 = "1"
+tar = "0.4"
+tempfile = "3"
+portable-pty = "0.9"
+keyring = { version = "3", default-features = false, features = ["windows-native"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "stream"] }
+url = "2"
+serde_yaml = "0.9"
+agent-core = { package = "agent-core", path = "../crates/agent-core" }
+android-core = { path = "../crates/android-core" }
+futures-util = "0.3"
+regex = "1"
+encoding_rs = "0.8"
+log = "0.4"
+
+[target.'cfg(windows)'.dependencies]
+webview2-com = "=0.39.1"
+windows-core = "=0.62.2"
+# G3 spike：sandbox_poc 需要安全/令牌类 API（CreateRestrictedToken 等）。
+windows = { version = "0.61", features = ["Win32_Foundation", "Win32_System_Threading", "Win32_System_ProcessStatus", "Win32_System_Com", "Win32_System_SystemInformation", "Win32_System_Diagnostics_ToolHelp", "Win32_NetworkManagement", "Win32_NetworkManagement_IpHelper", "Win32_NetworkManagement_Ndis", "Win32_Storage_FileSystem", "Win32_Security", "Win32_System_Pipes"] }

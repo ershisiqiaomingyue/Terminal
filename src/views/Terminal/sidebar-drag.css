@@ -1,0 +1,53 @@
+/* ==========================================================================
+   左栏条目拖拽视觉（已打开终端 / 已保存服务器）。
+   ==========================================================================
+   与 terminal-workspace.css 的分工（先扫过现有规则才这么写的，避免重复叠加）：
+
+   - hover 底色**不在这里写**。已打开的终端由
+     `.terminal-session-item:hover`（terminal-workspace.css:425）负责；
+     已保存服务器由组件库 `.ui-list-item.is-interactive > .ui-list-item-row:hover`
+     （list-item.css:36）负责。两者都已生效，再加一条会变成两层底色叠加。
+
+   - `cursor: grab` 现有规则只覆盖了 `.terminal-session-item[draggable="true"]`
+     （terminal-workspace.css:967）。服务器条目是本期新变成可拖的，那条规则管不到，
+     所以这里补 `.terminal-server-item`；会话条目沿用旧规则，不重复声明。
+
+   - `:active` 伪装 grabbing 在 HTML5 拖拽里并不可靠（浏览器接管指针后
+     `:active` 状态会脱离元素），所以拖动中改用 `[data-dragging="true"]`
+     这个由 React 显式维护的状态属性。
+   ========================================================================== */
+
+/* 拖起源：半透明 + 虚线描边，明确告诉用户「这一项正在被拖走」。
+   描边用 outline 而不是 border —— 服务器条目是没有 border 的裸 div，
+   临时加 border 会让它在拖动开始/结束时抖 1px（会话条目虽然有
+   `border: 1px solid transparent`，但两条规则统一用 outline 更稳）。 */
+.terminal-session-item[data-dragging="true"],
+.terminal-server-item[data-dragging="true"] {
+  /* 只降透明度示意"正在被拖"，不再画虚线灰盒（用户反馈观感突兀）。 */
+  opacity: 0.45;
+}
+
+/* 服务器条目：本期新增的拖拽源，补抓取光标（会话条目的同款规则已存在）。 */
+.terminal-server-item {
+  cursor: grab;
+}
+
+/* 拖动中统一 grabbing。会话条目这里覆盖 terminal-workspace.css:971 的
+   `:active` 规则，因为拖动期间 :active 不可靠。 */
+.terminal-session-item[data-dragging="true"],
+.terminal-server-item[data-dragging="true"] {
+  cursor: grabbing;
+}
+
+/* 拖拽源不参与文本选择：否则按住拖动会顺手把行标题抹成蓝色选中态。 */
+.terminal-session-item[draggable="true"],
+.terminal-server-item[draggable="true"] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* 服务器条目容器本身不画底色（底色在 ListItem 内部 row 上），
+   这里只保证它是一个独立的定位/命中块。 */
+.terminal-server-item {
+  border-radius: var(--radius-base);
+}

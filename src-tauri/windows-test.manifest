@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+  Application manifest for Rust TEST targets.
+
+  Test binaries link the same code as the desktop app, including `rfd`, which
+  imports comctl32 v6-only entry points (TaskDialogIndirect, SetWindowSubclass,
+  RemoveWindowSubclass, DefSubclassProc). Without a manifest Windows binds
+  C:\Windows\System32\comctl32.dll (5.82), whose export table lacks
+  TaskDialogIndirect, so the loader kills the process before main() with
+  STATUS_ENTRYPOINT_NOT_FOUND (0xC0000139): every test in the suite dies with no
+  output at all.
+
+  How it is applied: `scripts/test-rust.ps1` builds the test binaries and copies
+  this file next to each one as `<exe>.manifest`, which Windows honours for an
+  executable that carries no embedded manifest.
+
+  Why not from `build.rs`: cargo's `rustc-link-arg` applies to EVERY target,
+  including the application binary, where tauri's `resource.lib` already carries
+  an RT_MANIFEST resource. The extra `/MANIFESTINPUT:` then aborts the link with
+  `CVTRES : fatal error CVT1100` (duplicate resource) followed by
+  `LINK : fatal error LNK1123`. Scoping it with `rustc-link-arg-tests` is
+  rejected outright by cargo ("The package androidtool-desktop v1.0.0 does not
+  have a test target"). Keeping this out of the build script is what keeps the
+  application binary linkable.
+
+  NOTE: this comment must never contain a double hyphen; XML forbids it inside
+  comments and the linker then rejects the whole manifest (SxS error 14001).
+-->
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+  <dependency>
+    <dependentAssembly>
+      <assemblyIdentity type="win32" name="Microsoft.Windows.Common-Controls" version="6.0.0.0" processorArchitecture="*" publicKeyToken="6595b64144ccf1df" language="*" />
+    </dependentAssembly>
+  </dependency>
+</assembly>

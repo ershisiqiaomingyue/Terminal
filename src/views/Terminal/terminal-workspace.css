@@ -1,0 +1,2525 @@
+/* 文件预览悬浮窗 1:1 复用代码查看器文件页的渲染样式（CodeHighlightEditor /
+   MarkdownFilePreview 产出的 .code-viewer-* 类）。这份样式由代码查看器与
+   终端两处共享，改一处即两处同步。@import 必须在所有规则之前。 */
+/* 整套代码查看器样式（v3 §22 四轮）：文件面板 1:1 使用 CodeFileTree，悬浮预览
+   1:1 使用文件页渲染。CodeViewer 路由是懒加载，不在这里引入的话首次进终端页
+   这些类全是裸的；code-viewer.css 自身会再引入 filepage 那份。 */
+@import "@/views/CodeViewer/code-viewer.css";
+/* 树行皮肤（.archive-tree-item / .archive-tree-scroll-list）在 ArchiveInspector
+   的样式表里，该路由同样懒加载——不引入则文件面板是一棵"裸树"。 */
+@import "@/views/ArchiveInspector/archive-inspector.css";
+/* 弹层样式（十五轮）：ToolbarPopover（下载历史/设置/标签溢出菜单）与传输
+   状态点的规则在这里，而该表原本只被 CodeViewerToolbar（页面组件）引入。 */
+@import "@/views/CodeViewer/code-viewer-toolbar.css";
+
+/* ==========================================================================
+   Terminal Workspace - 三栏终端页（左：终端列表 / 中：终端内容 / 右：状态抽屉）
+   - 布局骨架与顶栏胶囊按 design-drafts/terminal/index.html 还原
+   - 只用 src/styles/tokens.css 的既有令牌，亮暗双主题自动适配
+   ========================================================================== */
+
+.terminal-workspace {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  background: var(--bg-canvas);
+  overflow: hidden;
+}
+
+/* ---------------------------------------------------------------- 顶栏 --- */
+
+.terminal-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 48px;
+  padding: 0 12px 0 10px;
+  background: var(--page-header-bg);
+  border-bottom: var(--divider-subtle);
+  flex-shrink: 0;
+}
+
+.terminal-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+/* 顶栏胶囊三连（4.4）：身份 → git → 内核。
+   颜色由 Badge 变体决定，这里只统一尺寸与字距。 */
+.terminal-capsule-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.terminal-pill {
+  height: 20px;
+  min-height: 20px;
+  padding: 0 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+/* git 占位：虚线边框表示「组件未接入」，绿色沿用旧观感。 */
+.terminal-pill-placeholder {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: var(--radius-full);
+  border: 1px dashed var(--border-strong, var(--border-subtle));
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* 当前会话胶囊：shell 名 + 路径 + 状态徽章 */
+.terminal-focus-capsule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: var(--radius-full);
+  background: var(--surface-inset-bg);
+  border: 1px solid var(--border-subtle);
+}
+
+.terminal-capsule-shell {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.terminal-capsule-divider {
+  width: 1px;
+  height: 12px;
+  background: var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.terminal-capsule-path {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.terminal-capsule-badges {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.terminal-capsule-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.terminal-capsule-pill.is-red {
+  color: var(--status-danger-text);
+  background: var(--status-danger-bg);
+}
+
+.terminal-capsule-pill.is-green {
+  color: var(--status-success-text);
+  background: var(--status-success-bg);
+}
+
+.terminal-capsule-pill.is-blue {
+  color: var(--accent-primary);
+  background: var(--accent-subtle);
+}
+
+.terminal-capsule-pill[data-engine="core"] {
+  color: var(--accent-primary);
+  background: var(--accent-subtle);
+}
+
+.terminal-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* -------------------------------------------------------------- 三栏骨架 --- */
+
+.terminal-workspace-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------------- 左栏 --- */
+
+.terminal-sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 246px;
+  flex-shrink: 0;
+  min-height: 0;
+  background: var(--bg-panel);
+  border-right: var(--divider-subtle);
+}
+
+.terminal-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 38px;
+  padding: 0 8px 0 12px;
+  flex-shrink: 0;
+}
+
+.terminal-sidebar-heading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.terminal-sidebar-heading svg {
+  color: var(--text-tertiary);
+}
+
+.terminal-add-wrap {
+  position: relative;
+}
+
+/* `+` 与下箭头是两个独立按钮，用一条分隔线视觉上拼成一组（需求 1）。 */
+.terminal-add-group {
+  display: inline-flex;
+  align-items: stretch;
+  height: 24px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  overflow: hidden;
+}
+
+.terminal-add-group .terminal-add-btn {
+  height: 100%;
+  padding: 0 6px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.terminal-add-group .terminal-add-btn.is-primary {
+  padding: 0 7px;
+}
+
+.terminal-add-group .terminal-add-btn.is-caret {
+  padding: 0 4px;
+  border-left: 1px solid var(--border-subtle);
+}
+
+.terminal-add-group .terminal-add-btn:hover {
+  color: var(--accent-primary);
+  background: var(--bg-hover);
+}
+
+.terminal-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.14s, border-color 0.14s;
+}
+
+.terminal-add-btn:hover {
+  color: var(--accent-primary);
+  border-color: var(--accent-border);
+}
+
+/* 新建终端下拉菜单 */
+.terminal-add-menu {
+  position: absolute;
+  top: 28px;
+  right: 0;
+  z-index: 40;
+  width: 232px;
+  padding: 5px;
+  border-radius: var(--radius-base);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-lg);
+}
+
+.terminal-add-menu-group {
+  padding: 5px 8px 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.terminal-add-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 12px;
+  line-height: 18px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.terminal-add-menu button:hover:not(:disabled) {
+  background: var(--bg-hover);
+}
+
+.terminal-add-menu button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* 菜单项单行：图标与文字共用同一行高，靠 align-items:center 对齐。
+   之前是 "标题 + em 说明" 两行且 flex-start 对齐，图标看着偏高。 */
+.terminal-add-menu button > span {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.terminal-add-menu-icon {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.terminal-add-menu-divider {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--border-subtle);
+}
+
+/* 终端侧的新建 SSH 弹窗：沿用设置页的 provider-editor-dialog 外观，只是收窄。
+   720px 对六个单行字段太宽，输入框会被拉得很长反而难读。 */
+.terminal-ssh-dialog {
+  width: min(560px, 100%);
+}
+
+.terminal-sidebar-section {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0 8px 6px;
+}
+
+.terminal-sidebar-servers {
+  flex: 1;
+  border-top: var(--divider-subtle);
+  padding-top: 6px;
+}
+
+.terminal-sidebar-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 4px 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.terminal-sidebar-count {
+  display: inline-flex;
+  align-items: center;
+  height: 16px;
+  padding: 0 6px;
+  border-radius: var(--radius-full);
+  background: var(--accent-subtle);
+  color: var(--accent-primary);
+  font-size: 10px;
+}
+
+.terminal-sidebar-mini-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+
+.terminal-sidebar-mini-btn:hover {
+  background: var(--bg-hover);
+  color: var(--accent-primary);
+}
+
+.terminal-sidebar-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.terminal-sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.terminal-sidebar-scroll::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background: var(--terminal-scrollbar-thumb, rgba(148, 163, 184, 0.4));
+}
+
+.terminal-sidebar-empty {
+  padding: 8px 6px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+}
+
+/* 已打开的终端条目：行内容交给组件库 ListItem（4.1），
+   这层容器只负责「浅色胶囊」外观 + 承载拖拽/右键事件
+   （ListItem 的命中区是内部 button，HTML5 拖拽需要真实 DOM 元素）。 */
+.terminal-session-item {
+  border-radius: var(--radius-base);
+  background: var(--bg-surface);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.14s, border-color 0.14s, box-shadow 0.14s;
+}
+
+.terminal-session-item:hover {
+  background: var(--bg-hover);
+}
+
+.terminal-session-item.is-active {
+  background: var(--accent-subtle);
+  border-color: var(--accent-border);
+  box-shadow: var(--shadow-sm);
+}
+
+/* 工作目录：第三行灰色小字，超长省略（完整路径在 title 里）。
+   注意：已打开终端/已保存服务器都不再用 footer 显示第二行（用户要求一行），
+   这条规则只留给别处可能复用的场合。 */
+.terminal-session-root,
+.terminal-server-detail {
+  display: block;
+  max-width: 100%;
+  font-size: 10px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 右侧动作簇：类型徽标 + 关闭按钮排在同行，垂直居中（用户要求徽标放在 × 左侧）。 */
+.terminal-session-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+/* 左栏的条目现在都是单行（标题 + 徽标 + 关闭），图标/文字/动作需要垂直居中对齐；
+   组件库 ListItem 默认 flex-start 是给多行（含 description/footer）用的，
+   这里只在终端左栏范围内覆盖，不动设置页那份共用样式。 */
+.terminal-session-item .ui-list-item-row,
+.terminal-sidebar-list .ui-list-item-row {
+  align-items: center;
+}
+
+.terminal-session-item .ui-list-item-hit,
+.terminal-sidebar-list .ui-list-item-hit {
+  align-items: center;
+}
+
+.terminal-session-item .ui-list-item-leading,
+.terminal-sidebar-list .ui-list-item-leading {
+  margin-top: 0;
+}
+
+.terminal-session-item .ui-list-item-actions,
+.terminal-sidebar-list .ui-list-item-actions {
+  padding-top: 0;
+}
+
+.terminal-session-badge {
+  /* 配色完全交给组件库 Badge 变体（--status-*-bg/text），这里只压密度适配单行走。 */
+  flex-shrink: 0;
+  height: 18px;
+  padding: 0 7px;
+  font-size: 9.5px;
+  gap: 4px;
+  letter-spacing: 0.02em;
+}
+
+
+
+
+
+.terminal-session-badge[data-active="true"] {
+  color: var(--accent-primary);
+  background: var(--bg-surface);
+}
+
+/* 激活点：一眼看出哪一块正在接收键盘。 */
+
+.terminal-session-close {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  padding: 0;
+}
+
+.terminal-session-close:hover {
+  background: var(--status-danger-bg);
+  color: var(--status-danger-text);
+}
+
+/* 已保存服务器卡片 */
+.terminal-server-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-inset-bg);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.14s;
+}
+
+.terminal-server-card:hover {
+  border-color: var(--accent-border);
+}
+
+.terminal-server-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.terminal-server-kind {
+  display: inline-flex;
+  align-items: center;
+  height: 15px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+  background: var(--bg-surface);
+  flex-shrink: 0;
+}
+
+/* ---- 主机状态：数据源提示条（跟随激活终端切换，需求 4） ---------------- */
+.terminal-drawer-source {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-inset-bg);
+  border: 1px solid var(--border-subtle);
+}
+
+.terminal-drawer-source-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.terminal-drawer-source-hint {
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--text-tertiary);
+}
+
+.terminal-drawer-empty-inline {
+  font-size: 10px;
+  color: var(--text-tertiary);
+}
+
+/* 变更文件条目：单行、紧凑高度（需求 7：卡片太高），
+   顺序是 状态 → 文件名 → 目录（从尾部截断）→ 行数差，
+   保证最关心的"文件末尾"优先出现在视觉焦点区。 */
+.terminal-drawer-change {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 22px;
+  padding: 1px 2px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+}
+
+.terminal-drawer-change:hover {
+  background: var(--bg-hover);
+}
+
+.terminal-drawer-change-name {
+  flex-shrink: 0;
+  max-width: 55%;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.terminal-drawer-change-dir {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+}
+
+.terminal-drawer-change-diff {
+  display: inline-flex;
+  gap: 4px;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.terminal-drawer-change-diff .is-added {
+  color: var(--status-success-text, var(--success));
+}
+
+.terminal-drawer-change-diff .is-removed {
+  color: var(--status-danger-text, var(--danger, #f85149));
+}
+
+/* 线程 ID 徽标：跟在进程名后面，不抢主文本的宽度。 */
+.terminal-drawer-thread-id {
+  margin-left: 5px;
+  padding: 0 4px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-style: normal;
+  color: var(--text-tertiary);
+  background: var(--surface-inset-bg);
+}
+
+/* 文件预览正文：等宽、可滚动、不撑破右栏（需求 6）。
+   内容区已 1:1 换成代码查看器的 .code-viewer-file-content / CodeHighlightEditor，
+   这里只剩读取失败时的一行说明文本，保留等宽与换行即可。 */
+.terminal-drawer-preview-body {
+  margin: 0;
+  padding: 14px 18px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow: auto;
+}
+
+/* 预览内容区 1:1 复用代码查看器的文件页。组件库的 .ui-preview-content 默认
+   overflow:auto（给纯文本用），而文件页自己要滚动，所以这里补上 flex 容器契约；
+   渲染规则本身来自上面的 code-viewer-filepage.css。 */
+.floating-window .ui-preview-content:has(> .code-viewer-file-content) {
+  display: flex;
+  overflow: hidden;
+  scrollbar-gutter: auto;
+}
+
+
+/* ---- 文件预览悬浮窗（用户反馈：要能拖拽位置、左右也能放大缩小） --------
+   设计稿是 .floating-file-preview-card：绝对/固定定位浮在整个主区域上，
+   标题栏 cursor:move 拖动，右下角可缩放。这里把"右下角"扩成八向手柄，
+   因为用户明确说了"左右也可以放大缩小"——只给一个角做不到左右单独调。
+
+   关键：position 必须是 fixed 且 portal 到 body。终端的 .terminal-panel-card
+   带 backdrop-filter，absolute 子元素会退化成相对它定位，卡片会被困在父容器。
+   坐标由 floatingWindow.ts 算好（视口坐标），这里只负责画。 */
+.floating-window {
+  position: fixed;
+  z-index: 120;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  border-radius: var(--radius-lg, 14px);
+  /* 圆角裁切交给卡片自己（卡片有 border），外层只负责投影。
+     注意不能用 overflow:hidden，否则八向手柄会被裁掉。 */
+  filter: drop-shadow(0 18px 42px rgba(6, 10, 24, 0.28));
+}
+
+.floating-window[data-dragging] {
+  /* 拖动/缩放时去掉过渡，否则会有一帧"追不上指针"的滞后感 */
+  transition: none;
+}
+
+/* 浮窗补代码查看器变量作用域（v3 §22 八轮）：--code-viewer-content-bg 只挂在
+   .code-viewer-container 上，浮窗缺位时编辑器背景/前景整条声明失效，文字
+   样式与文件页不一致。此处按同款主题分支复刻，不引入容器级副作用。 */
+.floating-window-card {
+  --code-viewer-content-bg: transparent;
+  font-family: var(--font-sans);
+}
+html[data-custom-theme] .floating-window-card {
+  --code-viewer-content-bg: var(--code-background);
+}
+
+.floating-window-card {
+  flex: 1;
+  display: flex; /* 文件页 article 需要纵向撑满（v3 §22 十轮：否则编辑区高度 0 = 空窗） */
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  /* 实体背景（用户要求不透明）：主题卡色带透明度（浅色 0.85 / 暗色 0.98），
+     浮窗叠在终端画布上必须完全不透明——先垫一层实底 --bg-app，再叠主题卡色
+     （暗色=渐变图像生效；浅色卡色是纯色值、不能当图层，会整条失效退回实底，
+     两个主题下都得到不透明的卡片）。 */
+  background-color: var(--bg-app);
+  background-image: var(--card-bg);
+  border: var(--divider-subtle);
+}
+
+/* 让头部变成拖拽把手（设计稿 cursor: move） */
+.floating-window .ui-preview-header {
+  cursor: move;
+  user-select: none;
+}
+
+/* 文件页形态的标签条（archive-preview-titlebar）在浮窗里是裸的：它的样式
+   定义在归档页的样式表里（archive-inspector.css 只随那个视图加载），缺位时
+   标签区没有底色与分隔线，看起来是一块直角裸区。
+   用户定稿：标签区要**四边可见的小圆角**——整条从卡片四边内缩 6px 再给
+   8px 圆角，四个角都是圆的；不再依赖卡片外框裁剪（那种只有顶上是圆的）。 */
+.floating-window-card .archive-preview-titlebar.code-viewer-tab-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  margin: 6px 6px 0;
+  padding: 4px 8px 4px 10px;
+  border-radius: 8px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-tertiary);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.floating-window-card .archive-preview-actions {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+/* 头部是代码查看器文件页工具栏的 1:1 复制：同一个 44px 高、同一套内边距、
+   同一条分隔线，标题 12.5px 粗体 + 10px 副标题。组件库默认是 8px 10px 的
+   紧凑内边距，只在这个浮窗里对齐到文件页，其他调用方（聊天文件预览）不受影响。 */
+.floating-window .ui-preview-header {
+  box-sizing: border-box;
+  height: 44px;
+  min-height: 44px;
+  padding: 0 8px 0 12px;
+  gap: 6px;
+  border-bottom: 1px solid var(--divider-color);
+  background: transparent;
+}
+
+.floating-window .ui-preview-header .ui-preview-title strong {
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.floating-window .ui-preview-header .ui-preview-title small {
+  font-size: 10px;
+}
+
+.floating-window .ui-preview-header .ui-preview-tools {
+  gap: 2px;
+}
+
+/* 浮窗卡片是上下两段 flex：头部固定高度、内容区吃掉剩余高度。
+   内容区（.ui-preview-content）已经在上面被设成 display:flex 的二级容器，
+   这里只需要把卡片本身也定成列方向，否则内容区拿不到剩余高度、塌成 0。 */
+.floating-window .ui-preview {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.floating-window .ui-preview-content {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  scrollbar-gutter: auto;
+}
+
+/* 底部状态行：代码查看器文件页在那里放的是 Git 条（同一套 32px 高度、
+   10.5px 等宽字体、上下分隔线）。浮窗没有 Git 语义，所以把它做成「文件信息条」：
+   尺寸 / 编码口径与文件页一致，视觉上仍是那一条。 */
+.floating-window .ui-preview-meta {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 12px;
+  border-top: 1px solid var(--divider-color);
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.floating-window .ui-preview-meta em {
+  font-style: normal;
+  color: var(--text-tertiary);
+}
+
+/* 等宽正文里出现横向溢出时，滚动条贴着正文而不是贴着眼眶，
+   与文件页 textarea 自带滚动条视觉一致。 */
+.floating-window .code-viewer-editor-stack {
+  scrollbar-width: thin;
+}
+
+/* 八向缩放手柄：视觉上只显一条细线，命中区域比线宽得多 */
+.floating-window-grip {
+  position: absolute;
+  z-index: 1;
+  display: block;
+  touch-action: none;
+}
+
+.floating-window-grip[data-edge="n"],
+.floating-window-grip[data-edge="s"] {
+  left: 10px;
+  right: 10px;
+  height: 10px;
+}
+
+.floating-window-grip[data-edge="n"] {
+  top: -5px;
+  cursor: ns-resize;
+}
+
+.floating-window-grip[data-edge="s"] {
+  bottom: -5px;
+  cursor: ns-resize;
+}
+
+.floating-window-grip[data-edge="e"],
+.floating-window-grip[data-edge="w"] {
+  top: 10px;
+  bottom: 10px;
+  width: 10px;
+}
+
+.floating-window-grip[data-edge="e"] {
+  right: -5px;
+  cursor: ew-resize;
+}
+
+.floating-window-grip[data-edge="w"] {
+  left: -5px;
+  cursor: ew-resize;
+}
+
+.floating-window-grip[data-edge="ne"],
+.floating-window-grip[data-edge="nw"],
+.floating-window-grip[data-edge="se"],
+.floating-window-grip[data-edge="sw"] {
+  width: 14px;
+  height: 14px;
+}
+
+.floating-window-grip[data-edge="ne"] {
+  top: -6px;
+  right: -6px;
+  cursor: nesw-resize;
+}
+
+.floating-window-grip[data-edge="nw"] {
+  top: -6px;
+  left: -6px;
+  cursor: nwse-resize;
+}
+
+.floating-window-grip[data-edge="se"] {
+  right: -6px;
+  bottom: -6px;
+  cursor: nwse-resize;
+}
+
+.floating-window-grip[data-edge="sw"] {
+  left: -6px;
+  bottom: -6px;
+  cursor: nesw-resize;
+}
+
+/* 右下角视觉提示（设计稿 resize:both 的原生手柄等价物） */
+.floating-window-grip[data-edge="se"]::after {
+  content: "";
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  width: 10px;
+  height: 10px;
+  border-right: 2px solid var(--border-strong, var(--border-subtle));
+  border-bottom: 2px solid var(--border-strong, var(--border-subtle));
+  border-bottom-right-radius: 3px;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.terminal-center {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 10px;
+}
+
+/* ---- 多面板（v3 定稿）：行 flex 布局，每行独立比例 ----------------------
+   网格 = 垂直 flex 的行；行 = 水平 flex 的面板单元。分隔条是内联 flex 子元素
+   （不占位会错位的老问题随之消失），拖动预览由 JS 直写单元的 style.flex。 */
+.terminal-pane-grid {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  gap: 4px;
+  padding: 6px;
+}
+
+.terminal-pane-row {
+  display: flex;
+  /* 默认撑满网格剩余高度；2x2 首行的比例由内联 style 覆盖。没有这行，
+     单行布局会缩回内容高度——整个面板区只剩一条缝（用户实测踩中）。 */
+  flex: 1 1 0%;
+  min-width: 0;
+  min-height: 0;
+  gap: 4px;
+}
+
+.terminal-pane-cell {
+  position: relative;
+  display: flex;
+  flex: 1 1 0%;
+  min-width: 0;
+  min-height: 0;
+  /* 覆盖空面板 = 对侧比例压到 0（槽位保留可回拖恢复）：0 宽格必须裁掉
+     内部内容，否则占位板按钮会溢出到相邻格上（v3 §22 二十三轮终）。 */
+  overflow: hidden;
+}
+
+.terminal-pane-cell > .terminal-pane {
+  flex: 1;
+}
+
+/* 覆盖态 0 宽格：内容/占位板/焦点描边全部隐藏（描边会显成一条蓝线），
+   只留拖动条（.terminal-pane-edge 是 cell 直接子元素，不受此规则影响）。 */
+.terminal-pane-cell.is-collapsed > *:not(.terminal-pane-edge) {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* 分隔条：内联元素，命中区 12px、视觉 2px 线。 */
+.terminal-pane-splitter {
+  position: relative;
+  flex: 0 0 12px;
+  z-index: 4;
+  background: transparent;
+  touch-action: none;
+}
+
+.terminal-pane-splitter[data-axis="col"] {
+  width: 12px;
+  align-self: stretch;
+  cursor: col-resize;
+}
+
+.terminal-pane-splitter[data-axis="row"] {
+  height: 12px;
+  width: auto;
+  align-self: stretch;
+  cursor: row-resize;
+}
+
+/* 中线：平时几乎不可见，悬停/拖动时才亮起来。 */
+.terminal-pane-splitter::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  background: transparent;
+  border-radius: 2px;
+  transition: background 0.14s ease;
+}
+
+.terminal-pane-splitter[data-axis="col"]::after {
+  width: 2px;
+  height: 100%;
+}
+
+.terminal-pane-splitter[data-axis="row"]::after {
+  width: 100%;
+  height: 2px;
+}
+
+.terminal-pane-splitter:hover::after,
+.terminal-pane-splitter[data-dragging="true"]::after {
+  background: var(--accent-primary, #6366f1);
+}
+
+.terminal-pane-splitter:focus-visible {
+  outline: none;
+}
+
+.terminal-pane-splitter:focus-visible::after {
+  background: var(--accent-primary, #6366f1);
+  box-shadow: 0 0 0 2px var(--accent-subtle, rgba(99, 102, 241, 0.12));
+}
+
+/* 单个面板：头部（标题 + 类型徽标）+ 终端宿主。 */
+.terminal-pane {
+  display: flex;
+  flex-direction: column;
+  /* 面板内联提示条（.terminal-pane-banner）以此为定位基准。 */
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg-surface);
+}
+
+/* 焦点面板加一圈高亮，用户才知道键盘进了哪块（设计文档 §3.3）。 */
+.terminal-pane[data-focused="true"] {
+  border-color: var(--accent-border, var(--accent));
+  box-shadow: 0 0 0 1px var(--accent-border, var(--accent)) inset;
+}
+
+.terminal-pane-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  border-bottom: var(--divider-subtle);
+  background: var(--surface-inset-bg);
+}
+
+.terminal-pane-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  flex: 1;
+}
+
+.terminal-pane-title > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.terminal-pane-tag {
+  flex-shrink: 0;
+  padding: 0 5px;
+  border-radius: 4px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+  background: var(--bg-surface);
+}
+
+.terminal-pane-dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-tertiary);
+}
+
+.terminal-pane-dot[data-live="true"] {
+  background: var(--success, #2ea043);
+}
+
+/* 面板叉：只解绑该面板，页签仍在左栏（需求 8）。 */
+.terminal-pane-close {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s, color 0.12s, background 0.12s;
+}
+
+/* 平时隐藏，悬停面板或聚焦时才显形，避免一排叉号干扰阅读。 */
+.terminal-pane:hover .terminal-pane-close,
+.terminal-pane[data-focused="true"] .terminal-pane-close {
+  opacity: 1;
+}
+
+.terminal-pane-close:hover {
+  color: var(--danger, #f85149);
+  background: var(--bg-hover);
+}
+
+/* 拖拽落点提示：左栏卡片拖到中栏面板时高亮目标槽位。 */
+.terminal-pane[data-drag-over="true"] {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px var(--accent-border) inset;
+}
+
+/* 左栏卡片可拖动：给一个抓取光标提示。 */
+.terminal-session-item[draggable="true"] {
+  cursor: grab;
+}
+
+.terminal-session-item[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+/* 终端宿主必须撑满并且可定位：实例池把容器绝对定位塞进来。 */
+.terminal-pane > .terminal-output-viewport {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 面板内联提示条：连接/断连反馈只属于出问题的那一块面板（不飘到全窗口）。
+   绝对定位在面板卡片右上角内侧，不挤占终端高度；`pointer-events` 只放开给自己，
+   否则终端拿不到点击焦点。 */
+.terminal-pane-banner {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: min(100% - 16px, 460px);
+  padding: 5px 7px;
+  /* 颜色全部取终端主题变量（--terminal-canvas-bg / --terminal-foreground /
+     --success-text …），白天黑夜两套值在 tokens.css 里已经分好：写死底色会在
+     亮色主题里留下一块发暗的补丁。 */
+  border: 1px solid color-mix(in srgb, var(--terminal-foreground) 22%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--terminal-canvas-bg) 88%, var(--terminal-foreground));
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--terminal-foreground) 18%, transparent);
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--terminal-foreground);
+  pointer-events: auto;
+  animation: terminal-pane-banner-in 0.16s ease-out;
+}
+
+@keyframes terminal-pane-banner-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.terminal-pane-banner.is-error {
+  border-color: color-mix(in srgb, var(--danger-text) 55%, transparent);
+  color: var(--terminal-foreground);
+}
+
+.terminal-pane-banner.is-success {
+  border-color: color-mix(in srgb, var(--success-text) 50%, transparent);
+}
+
+.terminal-pane-banner.is-warning {
+  border-color: color-mix(in srgb, var(--warning-text) 55%, transparent);
+}
+
+.terminal-pane-banner-icon {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+.terminal-pane-banner.is-error .terminal-pane-banner-icon {
+  color: var(--danger-text);
+}
+
+.terminal-pane-banner.is-success .terminal-pane-banner-icon {
+  color: var(--success-text);
+}
+
+.terminal-pane-banner.is-info .terminal-pane-banner-icon {
+  color: var(--accent-primary, #6366f1);
+}
+
+.terminal-pane-banner.is-warning .terminal-pane-banner-icon {
+  color: var(--warning-text);
+}
+
+.terminal-pane-banner-text {
+  min-width: 0;
+  flex: 1 1 auto;
+  max-height: 4.2em;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.terminal-pane-banner-text small {
+  display: block;
+  margin-top: 2px;
+  color: color-mix(in srgb, var(--terminal-foreground) 68%, transparent);
+  font-size: 10px;
+}
+
+.terminal-pane-banner-action,
+.terminal-pane-banner-close {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  border: 1px solid color-mix(in srgb, var(--terminal-foreground) 24%, transparent);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font-size: 10.5px;
+  cursor: pointer;
+}
+
+.terminal-pane-banner-action:hover,
+.terminal-pane-banner-close:hover {
+  background: color-mix(in srgb, var(--terminal-foreground) 12%, transparent);
+}
+
+.terminal-pane-banner-close {
+  padding: 3px;
+}
+
+.terminal-pane-empty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--text-tertiary);
+  font-size: 12px;
+}
+
+.terminal-pane-empty small {
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+/* ---- 空闲面板上的「新建终端」悬浮选择器 -------------------------------
+   菜单是悬浮层（绝对定位），展开时不再参与面板的 flex 布局——否则会把
+   面板里的提示内容挤变形（用户实测反馈）。 */
+.terminal-pane-empty {
+  position: relative;
+}
+
+.terminal-pane-empty-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  padding: 5px 12px;
+  border-radius: var(--radius-sm, 6px);
+  border: 1px dashed var(--accent-border, var(--divider-subtle));
+  background: transparent;
+  color: var(--accent-primary, var(--text-secondary));
+  font-family: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: background-color 0.14s ease, border-color 0.14s ease;
+}
+
+.terminal-pane-empty-add:hover {
+  background: var(--accent-subtle, rgba(99, 102, 241, 0.12));
+  border-color: var(--accent-primary, var(--text-secondary));
+}
+
+.terminal-pane-empty[data-picker-open="true"] .terminal-pane-empty-add {
+  background: var(--accent-subtle, rgba(99, 102, 241, 0.12));
+  border-style: solid;
+}
+
+.terminal-pane-picker {
+  position: absolute;
+  top: calc(50% + 44px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9;
+  display: flex;
+  flex-direction: column;
+  min-width: 176px;
+  padding: 4px;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--divider-subtle);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-popover, 0 12px 30px rgba(6, 10, 24, 0.22));
+}
+
+.terminal-pane-picker-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: var(--radius-sm, 6px);
+  background: transparent;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.terminal-pane-picker-item:hover {
+  background: var(--bg-hover);
+}
+
+.terminal-pane-picker-hint {
+  color: var(--text-tertiary);
+  font-size: 10.5px;
+}
+
+/* ---- 布局切换器（面板标题栏右侧） ------------------------------------- */
+.terminal-layout-switch {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+  padding: 2px;
+  border-radius: 7px;
+  background: var(--surface-inset-bg);
+}
+
+.terminal-layout-switch > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  color: var(--text-tertiary);
+  background: transparent;
+  cursor: pointer;
+}
+
+.terminal-layout-switch > button:hover {
+  color: var(--text-primary);
+  background: var(--bg-surface);
+}
+
+.terminal-layout-switch > button[data-active="true"] {
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+}
+
+/* ADB 会话才出现的设备切换条（独立一行，不挤占标题栏） */
+.terminal-device-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border-bottom: var(--divider-subtle);
+  background: var(--surface-inset-bg);
+  overflow-x: auto;
+}
+
+.terminal-device-switch {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.terminal-device-switch > svg {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.terminal-device-switch .adb-root-badge {
+  flex-shrink: 0;
+}
+
+/* ---------------------------------------------------------------- 右栏 --- */
+
+/* 拖拽条：和代码查看器工程栏同一套视觉（透明命中区，hover/拖拽时才显形）。
+   它是三栏之间的独立一列（占据 6px），不覆盖终端内容，避免挡住终端右缘的
+   xterm 选中/滚动。 */
+.terminal-drawer-resizer {
+  position: relative;
+  flex: 0 0 6px;
+  width: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: col-resize;
+  touch-action: none;
+  z-index: 1;
+}
+
+.terminal-drawer-resizer::after {
+  content: "";
+  position: absolute;
+  /* 命中区仍是整条 6px（好抓），可见的只有中间 2px：整条填色看着像一根粗柱子。 */
+  inset: 0 2px;
+  border-radius: 1px;
+  background: var(--border-subtle);
+  transition: background 120ms ease, opacity 120ms ease;
+}
+
+.terminal-drawer-resizer:hover::after,
+.terminal-drawer-resizer:focus-visible::after {
+  background: var(--accent-primary);
+  opacity: 0.32;
+}
+
+.terminal-drawer-resizer.is-dragging::after {
+  background: var(--accent-primary);
+  opacity: 0.55;
+}
+
+.terminal-drawer-resizer:focus-visible {
+  outline: none;
+}
+
+.terminal-drawer {
+  display: flex;
+  flex-direction: column;
+  width: var(--terminal-drawer-width, 262px);
+  flex-shrink: 0;
+  min-height: 0;
+  background: var(--bg-panel);
+  border-left: var(--divider-subtle);
+}
+
+.terminal-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 34px;
+  padding: 0 8px 0 12px;
+  flex-shrink: 0;
+  border-bottom: var(--divider-subtle);
+}
+
+.terminal-drawer-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.terminal-drawer-title svg {
+  color: var(--text-tertiary);
+}
+
+.terminal-drawer-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+
+.terminal-drawer-close:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* 树的作用域规则复刻（v3 §22 九轮）：这些规则原本挂在 .code-viewer-container
+   上——图标着色、软链徽标定位（absolute 右下角）、断链红色、名称截断。抽屉里
+   缺这些规则时软链徽标会内联错位，即"文件夹映射图标不对"的根因。 */
+.terminal-drawer .archive-tree-item svg { flex: 0 0 auto; color: var(--text-tertiary); }
+.terminal-drawer .archive-tree-item > svg:last-child { margin-left: auto; }
+.terminal-drawer .archive-tree-item:disabled { cursor: default; opacity: .6; }
+.terminal-drawer .code-viewer-tree-icon .code-viewer-link-badge { position: absolute; right: -2px; bottom: -3px; color: var(--accent-primary); background: var(--page-pane-bg); border-radius: 2px; }
+.terminal-drawer .code-viewer-tree-label .tree-name { flex: 0 1 auto; }
+.terminal-drawer .is-linked .tree-name { max-width: 50%; }
+.terminal-drawer .is-broken-link :is(.tree-name, .code-viewer-link-target, .code-viewer-link-badge) { color: var(--danger-text); }
+
+/* 悬浮预览窗 = 代码查看器文件页（九轮）：拖拽把手从 ui-preview-header 换成标签条。 */
+/* 双层编辑器上层 textarea 必须文字透明（v3 §22 十四轮，注释双重渲染根因）：
+   本页级联里 filepage 的 `.code-viewer-editor-stack > .code-viewer-editor-input`
+   缺位后，code-viewer.css 后置的 `.code-viewer-editor { color: var(--code-foreground) }`
+   以同优先级胜出，上层文字可见 → 与下层高亮叠印成"两个渲染"。浮窗作用域
+   提高优先级兜底；字体两层均来自 --font-mono（含用户字体偏好），无需干预。 */
+/* 注意排除 is-plain（大文件纯文本模式）：该模式没有下层高亮，上层必须可见，
+   否则整个编辑区隐形——文字复制得到但看不见，即「白屏」（v3 §22 十八轮）。 */
+.floating-window .code-viewer-editor-stack:not(.is-plain) > .code-viewer-editor-input {
+  color: transparent;
+}
+.floating-window .code-viewer-editor-stack:not(.is-plain) > .code-viewer-editor-input::selection {
+  color: transparent;
+}
+.floating-window .code-viewer-editor-stack.is-plain > .code-viewer-editor-input {
+  color: var(--code-foreground);
+}
+
+.floating-window-card > .archive-main-article {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+.floating-window .code-viewer-tab-bar {
+  cursor: move;
+  user-select: none;
+}
+
+/* 文件面板（v3 §22 八轮）：控制行 44px 满幅通栏、树占满剩余——与代码查看器
+   左栏一致。默认 body 有 10px 内边距 + 8px 间隙，会把控制行挤成"悬浮条"，
+   三点按钮到不了最右缘。 */
+.terminal-drawer-body:has(> .code-browser-controls) {
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+
+.terminal-drawer-body {
+  position: relative; /* 文件预览卡片的定位基准（见 .terminal-drawer-float） */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+  padding: 10px;
+  overflow-y: auto;
+}
+
+.terminal-drawer-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.terminal-drawer-body::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background: var(--terminal-scrollbar-thumb, rgba(148, 163, 184, 0.4));
+}
+
+.terminal-drawer-card {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px 10px;
+  border-radius: var(--radius-base);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-inset-bg);
+}
+
+.terminal-drawer-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.terminal-drawer-card-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.terminal-drawer-card-hint {
+  font-size: 10px;
+  color: var(--text-tertiary);
+}
+
+.terminal-drawer-card-value {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.terminal-drawer-meter {
+  height: 4px;
+  border-radius: 2px;
+  /* 轨道底色加深一档：原 --bg-hover 与卡片底几乎同色，空进度条看不清。 */
+  background: color-mix(in srgb, var(--text-tertiary) 22%, transparent);
+  overflow: hidden;
+}
+
+.terminal-drawer-meter-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.terminal-drawer-meter-fill.is-accent {
+  background: var(--accent-primary);
+}
+
+.terminal-drawer-meter-fill.is-warning {
+  background: var(--status-warning-text);
+}
+
+.terminal-drawer-diff {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10.5px;
+  font-family: var(--font-mono);
+  color: var(--text-tertiary);
+}
+
+.terminal-drawer-diff .is-added {
+  color: var(--status-success-text);
+}
+
+.terminal-drawer-diff .is-removed {
+  color: var(--status-danger-text);
+}
+
+.terminal-drawer-list-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 8px 6px 6px;
+  border-radius: var(--radius-base);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-inset-bg);
+}
+
+.terminal-drawer-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 5px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.terminal-drawer-list-head > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.terminal-drawer-count {
+  display: inline-flex;
+  align-items: center;
+  height: 16px;
+  padding: 0 6px;
+  border-radius: var(--radius-full);
+  background: var(--bg-hover);
+  font-size: 9.5px;
+}
+
+.terminal-drawer-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 4px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  color: var(--text-primary);
+}
+
+.terminal-drawer-row:hover {
+  background: var(--bg-hover);
+}
+
+.terminal-drawer-row code {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--accent-primary);
+  flex-shrink: 0;
+}
+
+.terminal-drawer-row-main {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.terminal-drawer-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  flex-shrink: 0;
+  background: var(--bg-hover);
+  color: var(--text-tertiary);
+}
+
+.terminal-drawer-status.is-modified {
+  color: var(--status-warning-text);
+  background: var(--status-warning-bg);
+}
+
+.terminal-drawer-status.is-created {
+  color: var(--status-success-text);
+  background: var(--status-success-bg);
+}
+
+.terminal-drawer-status.is-deleted {
+  color: var(--status-danger-text);
+  background: var(--status-danger-bg);
+}
+
+.terminal-drawer-empty {
+  padding: 6px 4px;
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+}
+
+.terminal-drawer-path {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-inset-bg);
+  border: 1px solid var(--border-subtle);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
+.terminal-drawer-path > span {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  direction: rtl;
+  text-align: left;
+}
+
+.terminal-drawer-files {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* 文件树行：改用 ListItem（组件库化）后把行高压到抽屉密度 */
+.terminal-drawer-files .ui-list-item-hit {
+  padding: 2px 4px;
+  border-radius: var(--radius-sm);
+}
+
+.terminal-drawer-files .ui-list-item-body {
+  width: 100%;
+  min-width: 0;
+}
+
+.terminal-drawer-files .ui-list-item-head {
+  flex-wrap: nowrap;
+  width: 100%;
+  gap: 6px;
+}
+
+.terminal-drawer-files .ui-list-item-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+  font-weight: 400;
+}
+
+.terminal-drawer-files .ui-list-item-leading {
+  color: var(--text-tertiary);
+}
+
+.terminal-drawer-files .ui-list-item-meta {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--text-tertiary);
+}
+
+/* 右侧竖排入口条 */
+.terminal-drawer-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 40px;
+  flex-shrink: 0;
+  padding: 8px 0;
+  background: var(--bg-panel);
+  border-left: var(--divider-subtle);
+}
+
+.terminal-rail-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: color 0.14s, background 0.14s, border-color 0.14s;
+}
+
+.terminal-rail-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.terminal-rail-btn.active {
+  background: var(--accent-subtle);
+  border-color: var(--accent-border);
+  color: var(--accent-primary);
+}
+
+.terminal-rail-sep {
+  width: 18px;
+  height: 1px;
+  margin: 3px 0;
+  background: var(--border-subtle);
+}
+
+/* ---- 底部指令发送栏（设计稿 .terminal-card-footer，用户反馈：指令发送在底部） ----
+   常驻在 .terminal-panel-card 最下方，`flex-shrink: 0` 保证面板开合与终端重排
+   都不会把它挤掉；`.terminal-pane-grid` 是 `flex: 1`，自然让出空间。
+   注意不要给它 `flex: 1`，否则会把画布压扁。 */
+.terminal-card-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 6px 10px;
+  background: var(--bg-hover);
+  border-top: 1px solid var(--border-subtle);
+  position: relative;
+  z-index: 2;
+}
+
+/* AI 行：自然语言 → 生成命令草稿（不直接执行） */
+.ai-smart-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  background: var(--accent-subtle);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-sm);
+  transition: background 0.14s, border-color 0.14s, box-shadow 0.14s;
+}
+
+.ai-smart-line:focus-within {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.22);
+}
+
+.ai-smart-line[data-blocked="true"] {
+  opacity: 0.6;
+}
+
+.ai-smart-icon {
+  flex-shrink: 0;
+  color: var(--accent-primary);
+}
+
+.ai-smart-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+}
+
+.ai-smart-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.ai-smart-input:disabled {
+  cursor: not-allowed;
+}
+
+.ai-smart-send {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--accent-primary);
+  cursor: pointer;
+  transition: background 0.14s, color 0.14s;
+}
+
+.ai-smart-send:hover:not(:disabled) {
+  background: var(--accent-subtle);
+}
+
+.ai-smart-send:disabled {
+  color: var(--text-tertiary);
+  cursor: not-allowed;
+}
+
+/* CLI 行：手输命令 → 回车执行 */
+.cli-exec-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.cli-exec-line[data-blocked="true"] {
+  opacity: 0.6;
+}
+
+.cli-arrow {
+  flex-shrink: 0;
+  color: var(--accent-primary);
+  font-weight: 700;
+}
+
+.cli-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.cli-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.cli-input:disabled {
+  cursor: not-allowed;
+}
+
+/* ------------------------------------------------------------ 窄屏降级 --- */
+
+@media (max-width: 1080px) {
+  .terminal-sidebar {
+    width: 200px;
+  }
+}
+
+@media (max-width: 900px) {
+  .terminal-sidebar {
+    display: none;
+  }
+}
+
+/* ---- v3 R6：Git 变更文件列表固定高度、内部滚动（需求：不把右栏撑长） ---- */
+.terminal-drawer-list-card.terminal-drawer-changes {
+  max-height: min(40vh, 360px);
+  overflow-y: auto;
+  /* 滚动条只压在列表上，卡片头随内容一起滚是可接受的（头只有一行）。 */
+  scrollbar-width: thin;
+}
+
+/* ---- v3 R8：左栏已保存服务器的连接状态点（与顶栏呼吸灯同状态源、同视觉） ---- */
+.terminal-server-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.terminal-server-item {
+  position: relative;
+}
+
+.terminal-server-dot {
+  /* 钉在条目本体的最右缘（用户要求），不受 ListItem 内部内边距影响。 */
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  /* 未连接的常态灰点也常显（用户要求三态可见：绿/红/灰）。 */
+  background: var(--text-tertiary);
+}
+
+.terminal-server-dot[data-status="failed"] {
+  background: var(--danger-text);
+}
+
+.terminal-server-dot[data-status="connected"] {
+  color: var(--success-text);
+  /* 性能：已连接是稳态，原呼吸动画在动 box-shadow（非合成属性），每帧都要
+     重绘这个点及其背后的毛玻璃卡片。改为静态外环，语义不变。 */
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 22%, transparent);
+}
+
+.terminal-server-dot[data-status="connecting"] {
+  color: var(--warning-text);
+  animation: terminal-server-breathe 1.2s ease-in-out infinite;
+}
+
+.terminal-server-dot[data-status="connected"],
+.terminal-server-dot[data-status="connecting"] {
+  /* currentColor 跟随上面设置的语义色，绿/黄共用同一组关键帧。 */
+  background: currentColor;
+}
+
+@keyframes terminal-server-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 22%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 5px color-mix(in srgb, currentColor 0%, transparent);
+  }
+}
+
+/* ---- v3 修复：焦点面板描边按设计稿 .terminal-window-card.focused 口径 ----
+   50% 透明 accent 边框 + 1px 实色环（design-drafts/terminal/index.html:735）。
+   环必须画在**内侧**（inset）：设计稿里卡片四周留白、外环完整可见；实际布局中
+   面板填满 cell 且 cell 是 overflow:hidden（覆盖态裁剪需要），外环四条直边会被
+   cell 裁掉、只剩圆角内收处的弧线显示出来——看起来就是"左上/右上多了两个蓝色
+   圆角"。inset 环贴着边框内侧走，不经过 cell 边界，四边完整、圆角干净。 */
+.terminal-pane[data-focused="true"] {
+  border-color: color-mix(in srgb, var(--accent-primary) 50%, transparent);
+  box-shadow: 0 0 0 1px var(--accent-primary) inset;
+}
+
+/* ---- 嵌入模式（chromeless，对话页等复用方）：面板卡片的外框/圆角/焦点环
+   全部让位给宿主容器自己的框架，终端内容直接铺进去——不出现双层圆角，
+   也不重复渲染标题栏/关闭按钮（宿主已有自己的页签与按钮行）。 ---- */
+.terminal-pane[data-chromeless="true"] {
+  border: none;
+  border-radius: 0;
+}
+
+.terminal-pane[data-chromeless="true"][data-focused="true"] {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+/* ---- v3 修复：左栏条目强制单行（带状态点/徽标时标题不再折成两行） ---- */
+.terminal-sidebar .ui-list-item-title,
+.terminal-session-item .ui-list-item-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.terminal-server-meta {
+  flex: 0 0 auto;
+}
+
+/* 指针拖拽的跟随拖影（替代被 WebView2 吞掉的 HTML5 DnD 拖影）。 */
+.terminal-drag-ghost {
+  position: fixed;
+  z-index: 9999;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 11px;
+  pointer-events: none;
+  box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.25));
+  white-space: nowrap;
+}
+
+
+/* ---- v3：面板标题栏 = 拖动把手（指针拖拽换位） ---- */
+.terminal-pane-head {
+  cursor: grab;
+}
+
+.terminal-pane-head:active {
+  cursor: grabbing;
+}
+
+.terminal-pane-head .terminal-pane-close {
+  cursor: pointer;
+}
+
+/* ---- v3：终端工作区作用域提示（连接中/失败）----
+   只做定位：钉在终端中栏顶部居中；视觉结构复用组件库 ui-toast
+   （悬浮底/阴影/图标语气/完整换行/裸×），与全局 Toast 同一套设计语言。 */
+.terminal-center {
+  position: relative;
+}
+
+.terminal-area-notice {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  pointer-events: none;
+}
+
+.terminal-area-notice .ui-toast.is-static {
+  width: auto;
+  max-width: min(560px, 86%);
+  pointer-events: auto;
+  animation: ui-toast-rise 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ---- v3：SSH 远端状态富视图 ---- */
+.terminal-ssh-rich {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* 统计格：标签行 + 数据行，全部居中（延迟/网速两列、内存三列）。 */
+.terminal-stat-grid {
+  display: grid;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: var(--radius-base);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-inset-bg);
+}
+
+.terminal-stat-grid.is-net {
+  grid-template-columns: 0.7fr 1.7fr;
+}
+
+.terminal-stat-grid.is-mem {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.terminal-stat-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.terminal-stat-cell > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  color: var(--text-secondary);
+}
+
+.terminal-stat-cell > b {
+  max-width: 100%;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+/* 每核进度条列表：一行一核（编号 + 标准 Meter + 百分比），超长滚动。
+   （这两条规则曾被 stat-grid 手术误删，导致每核行退化为 block 逐元素换行。） */
+.terminal-core-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px 6px;
+  max-height: 104px;
+  overflow-y: auto;
+  padding: 2px 0;
+  scrollbar-width: thin;
+}
+
+/* 纯展示行（不做悬停反馈：没有可操作的东西，悬停亮底反而误导）。 */
+.terminal-core-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 2px 4px;
+  border-radius: 8px;
+}
+
+/* 前置圆形编号章（Tasks 状态圆的同族语言，15px 实线圆环）。 */
+.terminal-core-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 15px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 1px solid var(--border-subtle);
+  font-size: 8px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-tertiary);
+}
+
+
+.terminal-core-row .terminal-drawer-meter {
+  flex: 1;
+}
+
+.terminal-core-value {
+  flex: 0 0 26px;
+  text-align: right;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+/* 负载圆环 */
+.terminal-load-row {
+  display: flex;
+  justify-content: space-around;
+  padding: 4px 0 2px;
+}
+
+.terminal-load-ring {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  color: var(--accent-primary);
+}
+
+.terminal-load-ring.is-warning {
+  color: var(--warning-text);
+}
+
+.terminal-load-ring.is-danger {
+  color: var(--danger-text);
+}
+
+.terminal-load-ring.is-unknown {
+  color: var(--text-tertiary);
+}
+
+.terminal-load-ring-track {
+  fill: none;
+  stroke: var(--border-subtle);
+  stroke-width: 4;
+}
+
+.terminal-load-ring-fill {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 4;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+  transition: stroke-dasharray 0.5s ease;
+}
+
+.terminal-load-ring-value {
+  position: absolute;
+  top: 9px;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.terminal-load-ring-label {
+  font-size: 9.5px;
+  color: var(--text-tertiary);
+}
+
+/* 挂载点行 */
+.terminal-disk-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+}
+
+.terminal-disk-row .terminal-drawer-meter {
+  flex: 1;
+}
+
+.terminal-disk-mount {
+  flex: 0 0 auto;
+  min-width: 44px;
+  font-size: 10.5px;
+  color: var(--text-secondary);
+}
+
+.terminal-disk-detail {
+  flex: 0 0 auto;
+  font-size: 10px;
+  color: var(--text-tertiary);
+}
+
+/* 进程排名 */
+.terminal-proc-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 1px 0;
+  font-size: 11px;
+}
+
+.terminal-proc-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  background: var(--surface-inset-bg);
+}
+
+.terminal-proc-rank[data-rank="1"] {
+  color: var(--status-danger-text, var(--danger-text));
+  background: color-mix(in srgb, var(--danger-text) 14%, transparent);
+}
+
+.terminal-proc-rank[data-rank="2"] {
+  color: var(--warning-text);
+  background: color-mix(in srgb, var(--warning-text) 14%, transparent);
+}
+
+.terminal-proc-rank[data-rank="3"] {
+  color: var(--accent-primary);
+  background: color-mix(in srgb, var(--accent-primary) 14%, transparent);
+}
+
+.terminal-proc-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+
+.terminal-proc-name em {
+  font-style: normal;
+  color: var(--text-tertiary);
+  font-size: 10px;
+}
+
+.terminal-proc-row code {
+  flex: 0 0 auto;
+  font-size: 10.5px;
+  color: var(--text-secondary);
+}
+
+
+/* 抽屉统一加载态：居中 + 圆圈 */
+.terminal-drawer-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 22px 0;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+/* 文件页签工具栏（交互对齐代码查看器文件页）：搜索 + 三个点菜单 */
+.terminal-files-menu-anchor {
+  position: relative;
+  display: inline-flex;
+}
+
+.terminal-files-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+}
+
+.terminal-files-menu {
+  position: absolute;
+  top: 20px;
+  right: 0;
+  z-index: 31;
+  min-width: 128px;
+  padding: 4px;
+  border-radius: var(--radius-base);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-md, 0 6px 20px rgba(0, 0, 0, 0.28));
+  display: flex;
+  flex-direction: column;
+}
+
+.terminal-files-menu button {
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm, 8px);
+  font-size: 11px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.terminal-files-menu button:hover {
+  background: var(--bg-hover);
+}
+
+.terminal-files-menu button[data-checked="true"]::before {
+  content: "✓ ";
+  color: var(--accent-primary);
+}
+
+.terminal-files-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-inset-bg);
+  color: var(--text-tertiary);
+}
+
+.terminal-files-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  font-size: 11px;
+  color: var(--text-primary);
+  outline: none;
+}
+
+/* ---- v3：边框拖拽热区（盖在面板内容之上，贴近边框 9px 即可拖） ---- */
+.terminal-pane-edge {
+  position: absolute;
+  z-index: 6;
+}
+
+.terminal-pane-edge.is-col {
+  top: 0;
+  bottom: 0;
+  width: 9px;
+  cursor: col-resize;
+}
+
+.terminal-pane-edge.is-row {
+  left: 0;
+  right: 0;
+  height: 9px;
+  cursor: row-resize;
+}

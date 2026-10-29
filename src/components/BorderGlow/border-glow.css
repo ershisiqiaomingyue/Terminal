@@ -1,0 +1,31 @@
+.border-glow-card {
+  position: relative;
+  display: grid;
+  isolation: isolate;
+  overflow: visible;
+  border: 0;
+  box-shadow: none;
+}
+
+.border-glow-layer {
+  position: absolute;
+  inset: -1px;
+  z-index: 0;
+  pointer-events: none;
+  box-sizing: border-box;
+  /* Cut out the interior instead of painting over it with a translucent surface. */
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  opacity: var(--glow-opacity, 0);
+  transition: opacity 0.2s ease-out;
+}
+
+.border-glow-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}

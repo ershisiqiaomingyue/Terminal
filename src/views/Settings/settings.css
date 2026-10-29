@@ -1,0 +1,8 @@
+/* Import order preserves the existing theme and component cascade. */
+@import "./styles/settings-shell.css";
+@import "./styles/settings-controls.css";
+@import "./styles/settings-providers.css";
+@import "./styles/settings-connections.css";
+@import "./styles/settings-automation.css";
+@import "./styles/settings-terminal.css";
+@import "./styles/settings-skills.css";

@@ -1,0 +1,722 @@
+/* ==========================================================================
+   Package Manager View Styles - 应用包管理器组件库高级设计规范
+   - 默认态加肉眼清晰可见的高级灰底座 (--pm-item-bg)
+   - 彻底移除外框线 (No Border / No Box-Shadow Outline)，纯背景色切换
+   - 只有权限列表和左侧包列表具备内部滚动条，杜绝外层页面多重滚动条
+   - 顶部悬浮 Toast 胶囊通知 (复制路径与操作反馈)
+   - 全动态亮色 (Light) / 暗色 (Dark) 双主题自适应
+   ========================================================================== */
+
+.pm-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  background: var(--bg-canvas);
+  overflow: hidden;
+
+  /* 亮色模式专属：清晰可见的微灰实体底色，告别与白背景融为一体 */
+  --pm-item-bg: var(--bg-card);
+  --pm-item-hover: var(--bg-hover);
+  --pm-item-icon-bg: var(--bg-selected);
+  --pm-slot-bg: var(--surface-inset-bg);
+}
+
+/* 深色模式自适应 */
+html[data-theme="dark"] .pm-container,
+[data-theme="dark"] .pm-container {
+  --pm-item-bg: var(--bg-card);
+  --pm-item-hover: var(--bg-hover);
+  --pm-item-icon-bg: var(--bg-selected);
+  --pm-slot-bg: var(--surface-inset-bg);
+}
+
+/* 顶部页面标题栏 */
+.pm-top-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 48px;
+  padding: 0 16px;
+  background: var(--page-header-bg);
+  border-bottom: var(--divider-subtle);
+  flex-shrink: 0;
+}
+
+.pm-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pm-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pm-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.pm-subtitle {
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+}
+
+/* 顶部全局悬浮 Toast 胶囊通知 */
+.pm-toast-pill {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 18px;
+  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid transparent;
+  box-shadow: var(--popover-shadow);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  z-index: 1000;
+  animation: toastSlideDown 0.22s var(--ease-spring) forwards;
+  pointer-events: none;
+}
+
+.pm-toast-icon {
+  color: var(--status-success-text);
+  flex-shrink: 0;
+}
+
+/* 主内容容器 (严格禁止外层滚动条，充满整个可视区) */
+.pm-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: 12px;
+  padding: 14px 18px 16px;
+  background: var(--bg-canvas);
+  overflow: hidden;
+}
+
+/* 顶部操作区 (标题、副标题与全局操作 Button) */
+.pm-action-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+.pm-action-titles h1 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.pm-action-titles p {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+}
+
+.pm-action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ==========================================================================
+   设备卡片选择条 (默认态加实体底色，纯背景色切换，无生硬外框线)
+   ========================================================================== */
+.pm-devices-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.pm-devices-label {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--text-secondary);
+  margin-right: 2px;
+  white-space: nowrap;
+}
+
+/* 设备卡片默认态：拥有清晰肉眼可见的底色，绝不与白底融为一体 */
+.pm-device-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  min-width: 220px;
+  border-radius: var(--control-radius);
+  border: var(--card-border);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm), var(--card-rim);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: left;
+  user-select: none;
+  outline: none;
+}
+
+.pm-device-card:hover:not(.active) {
+  background: var(--pm-item-hover);
+}
+
+/* 设备卡片激活态：纯背景色切换为微蓝浅底，绝无外框线 */
+.pm-device-card.active {
+  background: var(--accent-subtle);
+  border: none;
+  box-shadow: none;
+  outline: none;
+}
+
+.pm-device-icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  background: var(--pm-item-icon-bg);
+  color: var(--text-secondary);
+  border: none;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.pm-device-card:hover:not(.active) .pm-device-icon-box {
+  color: var(--text-primary);
+}
+
+.pm-device-card.active .pm-device-icon-box {
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+}
+
+.pm-device-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  gap: 1px;
+}
+
+.pm-device-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pm-device-serial {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ==========================================================================
+   主工作区分栏 (Workspace: 严格充满可视区，禁止外层滚动条)
+   ========================================================================== */
+.pm-workspace {
+  display: grid;
+  grid-template-columns: minmax(350px, 40%) 1fr;
+  flex: 1;
+  min-height: 0;
+  gap: 14px;
+  overflow: hidden;
+}
+
+/* 左侧：应用包列表卡片 */
+.pm-list-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  border-radius: var(--card-radius);
+  border: var(--card-border);
+  background: var(--bg-card);
+  box-shadow: var(--card-shadow), var(--card-rim);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  overflow: hidden;
+}
+
+.pm-list-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--bg-surface);
+  border-bottom: var(--divider-subtle);
+  flex-shrink: 0;
+}
+
+.pm-list-toolbar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pm-search-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 组件库原生 Segmented 分段控制器应用 */
+.pm-segmented-wrap {
+  width: 100%;
+}
+
+.pm-segmented-wrap .segmented-glass {
+  width: 100%;
+  display: flex;
+}
+
+.pm-segmented-wrap .seg-btn {
+  flex: 1;
+  text-align: center;
+  padding: 5px 6px;
+  font-size: 12px;
+}
+
+/* 应用列表行容器 (左侧内部平滑滚动) */
+.pm-rows-container {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+html[data-theme="dark"] .pm-rows-container,
+[data-theme="dark"] .pm-rows-container {
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+.pm-rows-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.pm-rows-container::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 999px;
+}
+
+.pm-rows-container::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+html[data-theme="dark"] .pm-rows-container::-webkit-scrollbar-thumb,
+[data-theme="dark"] .pm-rows-container::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+}
+
+/* 应用单项默认态：拥有清晰肉眼可见的底色，绝无外框线 */
+.pm-app-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--control-radius);
+  border: none;
+  background: var(--pm-item-bg);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  text-align: left;
+  user-select: none;
+  box-shadow: none;
+  outline: none;
+}
+
+.pm-app-row:hover:not(.active) {
+  background: var(--pm-item-hover);
+}
+
+/* 应用单项激活态：纯背景色切换为微蓝浅底，绝无外框线 */
+.pm-app-row.active {
+  background: var(--accent-subtle);
+  border: none;
+  box-shadow: none;
+  outline: none;
+}
+
+.pm-app-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--pm-item-icon-bg);
+  border: none;
+  color: var(--accent-primary);
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.pm-app-row.active .pm-app-icon-wrap {
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+}
+
+.pm-app-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  gap: 2px;
+}
+
+.pm-app-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pm-app-row.active .pm-app-name {
+  font-weight: 700;
+  color: var(--accent-primary);
+}
+
+.pm-app-path {
+  font-size: 10.5px;
+  font-family: var(--font-mono);
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   右侧：应用详情卡片 (Detail Card) - 整体无滚动条，仅权限列表滚动
+   ========================================================================== */
+.pm-detail-card {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  border-radius: var(--card-radius);
+  border: var(--card-border);
+  background: var(--bg-card);
+  box-shadow: var(--card-shadow), var(--card-rim);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  overflow: hidden;
+}
+
+.pm-detail-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-bottom: var(--divider-subtle);
+  background: var(--bg-surface);
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+.pm-detail-title-group small {
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+}
+
+.pm-detail-title-group h2 {
+  margin: 2px 0 0;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+/* 核心：卡片主体绝对不可整体滚动 (overflow: hidden) */
+.pm-detail-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding: 14px 18px;
+  gap: 10px;
+  overflow: hidden;
+}
+
+/* 属性网格容器 (固定在顶部，不滚) */
+.pm-properties-wrapper {
+  flex-shrink: 0;
+}
+
+/* APK 存储路径专用展示卡片 (横向舒展，带复制) */
+.pm-path-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: var(--control-radius);
+  background: var(--pm-slot-bg);
+  border: none;
+  flex-shrink: 0;
+}
+
+.pm-path-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pm-path-label-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 650;
+  color: var(--text-secondary);
+}
+
+.pm-path-copy-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+  background: var(--surface-action-bg);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.pm-path-copy-btn:hover {
+  background: var(--surface-action-hover-bg);
+  color: var(--text-primary);
+  border-color: transparent;
+}
+
+.pm-path-value {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-primary);
+  background: var(--input-bg-sunken);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  word-break: break-all;
+  user-select: all;
+  line-height: 1.4;
+}
+
+/* 动作分组 (固定在中间，不滚) */
+.pm-action-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.pm-action-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  letter-spacing: 0.05em;
+}
+
+/* 控制操作按钮矩阵 */
+.pm-actions-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   权限清单区 (重点：独占剩余垂直高度，只有这里加滚动条！)
+   ========================================================================== */
+.pm-permissions-section {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.pm-permissions-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.pm-permissions-head-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* 权限独立滚动槽位 (占满剩余空间并平滑滚动，全页面唯一的右侧滚动条) */
+.pm-permissions-scroll-box {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding: 8px 10px;
+  background: var(--pm-slot-bg);
+  border-radius: var(--control-radius);
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+html[data-theme="dark"] .pm-permissions-scroll-box,
+[data-theme="dark"] .pm-permissions-scroll-box {
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+.pm-permissions-scroll-box::-webkit-scrollbar {
+  width: 6px;
+}
+
+.pm-permissions-scroll-box::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pm-permissions-scroll-box::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 999px;
+  transition: background var(--transition-fast);
+}
+
+.pm-permissions-scroll-box::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+html[data-theme="dark"] .pm-permissions-scroll-box::-webkit-scrollbar-thumb,
+[data-theme="dark"] .pm-permissions-scroll-box::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+}
+
+html[data-theme="dark"] .pm-permissions-scroll-box::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"] .pm-permissions-scroll-box::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* 权限行条目：清晰拥有默认条目底色，绝无外框线 */
+.pm-permission-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--pm-item-bg);
+  border: none;
+  transition: background-color var(--transition-fast);
+}
+
+.pm-permission-item:hover {
+  background: var(--pm-item-hover);
+}
+
+.pm-permission-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.pm-permission-icon {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.pm-permission-name {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  word-break: break-all;
+}
+
+/* 空状态 */
+.pm-empty-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 10px;
+  color: var(--text-tertiary);
+  padding: 40px;
+  text-align: center;
+}
+
+.pm-empty-placeholder span {
+  font-size: 12.5px;
+}
+
+@keyframes toastSlideDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@media (max-width: 900px) {
+  .pm-workspace { grid-template-columns: minmax(230px, 36%) minmax(0, 1fr); }
+  .pm-action-strip, .pm-detail-card-header { flex-wrap: wrap; gap: 8px; }
+  .pm-title-wrap { min-width: 0; flex-wrap: wrap; gap: 2px; }
+}
+@media (max-width: 600px) {
+  .pm-content { overflow-y: auto; scrollbar-gutter: stable; }
+  .pm-workspace { grid-template-columns: minmax(0, 1fr); flex: 0 0 auto; overflow: visible; }
+  .pm-list-card { height: 300px; }
+  .pm-detail-card { height: auto; min-height: 440px; }
+  .pm-permissions-scroll-box { max-height: 220px; }
+  .pm-devices-bar { min-height: 60px; }
+}

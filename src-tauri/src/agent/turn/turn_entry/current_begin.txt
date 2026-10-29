@@ -1,0 +1,25 @@
+) -> Result<TurnInput<'a>, String> {
+    let TurnInput {
+        mut app,
+        state,
+        mcp_state,
+        request,
+        session_id,
+        turn_id,
+        mut request_guard,
+        ssh_context: _,
+        ssh_connection_id: _,
+        wsl_root: _,
+        wsl_context: _,
+        default_ssh_host: _,
+        bound_ssh_hosts: _,
+        is_ssh_target: _,
+        is_wsl_target: _,
+        default_environment: _,
+    } = input;
+    let TurnRequest {
+        mut request,
+        is_ssh_target,
+        is_wsl_target,
+        default_environment,
+    } = prepare_input(request)?;

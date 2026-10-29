@@ -1,0 +1,486 @@
+/* ==========================================================================
+   Android-Tool Modern Design System - Master Index
+   - 整合所有 Token、原子样式、独立组件及视图
+   - 遵循 macOS Studio Dark & 柔和蓝灰多色弥散光斑亮色双模系统
+   - 支持很虚的分割线 (Subtle Divider) 与高可迁移性
+   ========================================================================== */
+
+/* 1. 基础规范与字体 */
+@import './fonts.css';
+@import './terminal-app.css';
+@import './tokens.css';
+@import './typography.css';
+@import './ambient.css';
+
+/* 2. 独立原子与分子级组件 */
+@import '../components/Divider/divider.css';
+@import '../components/Button/button.css';
+@import '../components/Input/input.css';
+@import '../components/Select/select.css';
+@import '../components/Switch/switch.css';
+@import '../components/Badge/badge.css';
+@import '../components/Table/table.css';
+@import './terminal.css';
+@import '../components/PropertyGrid/property-grid.css';
+@import '../components/Card/card.css';
+@import '../components/ui/toast.css';
+@import '../components/ui/list-item.css';
+@import '../components/ui/notice-panel.css';
+@import '../components/ui/attachment.css';
+@import '../components/ui/progress-ring.css';
+@import '../components/ui/spinner.css';
+@import '../components/ui/compaction-progress.css';
+@import '../components/ui/usage-metrics.css';
+@import '../components/ui/file-preview-panel.css';
+@import '../components/ui/file-diff-view.css';
+@import '../components/ui/file-change-card.css';
+@import '../components/ui/file-change-notice.css';
+@import '../components/Sidebar/sidebar.css';
+@import '../components/Topbar/topbar.css';
+@import '../components/BootScreen/boot-screen.css';
+
+/* 3. 业务视图 */
+@import '../views/Home/home.css';
+@import '../views/Settings/settings.css';
+
+/* ==========================================================================
+   App Overall Layout - 全局三段/左右/上下布局结构
+   ========================================================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root { height: 100%; overflow: hidden; }
+
+/* Reserve space in editable fields before their growing content needs a scrollbar.
+   Scrollable components declare the same gutter alongside their overflow rule;
+   layout wrappers and terminal-managed viewports must not reserve extra space. */
+textarea,
+.composer-input[contenteditable] {
+  scrollbar-gutter: stable;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-ambient);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+  transition: background var(--transition-base), color var(--transition-base);
+}
+
+/* 浏览器的 UA 样式会给表单控件钉上一套自带字体（Arial / Segoe UI），
+   所以没有套 .btn / .input / .modern-select 的原生 button、input
+   不会跟随设置里的界面字体切换（换成思源宋体、霞鹜文楷时仍是系统字形）。
+   这里统一让它们继承，组件类仍然可以用更高的优先级覆盖。 */
+button,
+input,
+select,
+textarea,
+optgroup,
+option {
+  font-family: inherit;
+}
+
+/* 全局防 SVG 撑爆核心防御规则 */
+svg {
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+  max-width: 100%;
+}
+
+/* 核心视窗外壳 */
+.app-shell {
+  display: grid;
+  --navigation-rail-width: 72px;
+  --workspace-outline: rgba(255, 255, 255, 0.08);
+  --workspace-shadow: 0 2px 16px rgba(0, 0, 0, 0.18);
+  grid-template-columns: var(--navigation-rail-width) 248px minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+  background: var(--bg-ambient);
+}
+
+.app-shell::after {
+  display: none !important;
+}
+
+.app-shell::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: 44px;
+  right: 8px;
+  bottom: 8px;
+  left: var(--navigation-rail-width);
+  border: 1px solid var(--divider-color);
+  border-radius: 16px;
+  background: var(--workspace-panel-bg);
+  box-shadow: var(--shadow-sm);
+  pointer-events: none;
+}
+
+/* Focus and outline defaults */
+html[data-theme] :is(button, input, textarea, select, [role="tab"], [role="option"]) {
+  outline: none;
+}
+
+html[data-theme] :is(button:not(.btn-primary):not(.btn-danger), [role="tab"], [role="option"]):focus-visible {
+  background-color: var(--chrome-selected);
+  color: var(--chrome-ink);
+}
+
+.app-shell.navigation-collapsed {
+  grid-template-columns: var(--navigation-rail-width) 0 minmax(0, 1fr);
+}
+
+.app-shell.navigation-collapsed::before {
+  display: none;
+}
+
+.global-notification-stack {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 11000;
+  display: flex;
+  width: min(380px, calc(100vw - 40px));
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.global-notification {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-base);
+  color: var(--text-primary);
+  background: var(--popover-bg);
+  box-shadow: var(--popover-shadow);
+  font-size: 12px;
+  line-height: 1.45;
+  pointer-events: auto;
+  animation: global-notification-in var(--transition-fast) both;
+}
+
+.global-notification svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.global-notification.success svg { color: var(--status-success-text); }
+.global-notification.error svg { color: var(--status-danger-text); }
+.global-notification.warning svg { color: var(--status-warning-text); }
+.global-notification.info svg { color: var(--accent-primary); }
+
+@keyframes global-notification-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* One shared workspace frame; feature pages keep ownership of scrolling. */
+.app-main {
+  grid-column: 3;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  margin: 8px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--divider-color);
+  border-radius: 16px;
+  background: var(--bg-canvas);
+  box-shadow: var(--shadow-sm);
+}
+
+.navigation-collapsed .app-main { margin-left: 8px; }
+
+/* 视图滚动视口 */
+.app-viewport {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 24px 32px 48px;
+  position: relative;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+  scrollbar-gutter: stable;
+}
+
+.app-viewport.is-fill {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  scrollbar-gutter: auto;
+}
+
+.app-viewport.is-fill.is-chat,
+.app-viewport.is-fill.is-tool {
+  padding: 0;
+}
+
+.app-viewport.is-fill > * {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+
+@media (max-width: 680px) {
+  .app-shell,.app-shell.navigation-collapsed { --navigation-rail-width: 48px; grid-template-columns: var(--navigation-rail-width) 0 minmax(0, 1fr); }
+  .app-main { margin: 8px; }
+  .navigation-collapsed .app-main { margin-left: 8px; }
+
+  .app-viewport:not(.is-fill) {
+    padding: 18px 18px 32px;
+  }
+}
+
+/* 自定义苹果原生晶莹圆角滚动条 */
+.app-viewport::-webkit-scrollbar,
+.settings-content-area::-webkit-scrollbar,
+.sidebar-nav-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.app-viewport::-webkit-scrollbar-track,
+.settings-content-area::-webkit-scrollbar-track,
+.sidebar-nav-scroll::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  border-radius: var(--radius-full);
+}
+
+.app-viewport::-webkit-scrollbar-thumb,
+.settings-content-area::-webkit-scrollbar-thumb,
+.sidebar-nav-scroll::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: var(--radius-full);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.2s ease;
+}
+
+.app-viewport::-webkit-scrollbar-thumb:hover,
+.settings-content-area::-webkit-scrollbar-thumb:hover,
+.sidebar-nav-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+/* 视图显示与切换动画 */
+.view-panel {
+  display: none;
+  animation: fadeInView 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.view-panel.active {
+  display: block;
+}
+
+.method-profiler-header,
+.simpleperf-header,
+.heap-dump-header,
+.benchmark-header,
+.native-sym-header,
+.device-control-header,
+.device-capture-header,
+.device-files-header,
+.logcat-top-header,
+.adb-terminal-top-header,
+.aosp-top-header,
+.pm-top-header,
+.archive-top-header,
+.adb-dev-top-header {
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.method-profiler-header > div:first-child,
+.simpleperf-header > div:first-child,
+.heap-dump-header > div:first-child,
+.benchmark-header > div:first-child,
+.native-sym-header > div:first-child,
+.device-control-header > div:first-child,
+.device-capture-header > div:first-child,
+.device-files-header > div:first-child {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  min-width: 0;
+  flex: 1;
+  gap: 10px;
+}
+
+.method-profiler-header h2,
+.simpleperf-header h2,
+.heap-dump-header h2,
+.benchmark-header h2,
+.native-sym-header h2,
+.device-control-header h2,
+.device-capture-header h2,
+.device-files-header h2,
+.logcat-top-header h2,
+.adb-terminal-top-header h2,
+.aosp-top-header h2,
+.pm-top-header h2,
+.archive-top-header h2,
+.adb-dev-top-header h2 {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.method-profiler-header .modern-select,
+.simpleperf-header .modern-select,
+.heap-dump-header .modern-select,
+.benchmark-header .modern-select,
+.native-sym-header .modern-select,
+.device-control-header .modern-select,
+.device-capture-header .modern-select,
+.device-files-header .modern-select {
+  width: 260px !important;
+  min-width: 260px !important;
+  max-width: 260px !important;
+  flex: 0 0 260px;
+}
+
+@keyframes fadeInView {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* Lazy tool views keep their surrounding workbench geometry while their chunk loads. */
+.app-view-loading {
+  display: grid;
+  flex: 1 1 auto;
+  align-self: stretch;
+  width: 100%;
+  min-height: 0;
+  place-items: center;
+  color: var(--text-tertiary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
+/* ==========================================================================
+   Universal Card Specifications (Scheme 2 - Slate Indigo 雾霾冷靛青)
+   - 覆盖全应用所有视图卡片容器：统一圆角、实色卡片、高光内沿及环境阴影
+   - 不用 backdrop-filter：卡片本身已接近不透明，模糊看不出差别，
+     却会让卡片内任何动画每帧重算整块背景模糊（空闲态 GPU 进程吃满的主因）
+   ========================================================================== */
+:is(
+  .card,
+  .card-tool,
+  .home-tool-row,
+  .setting-card-group,
+  .device-control-card,
+  .heap-dump-config-card,
+  .heap-dump-table-wrap,
+  .method-profiler-config-card,
+  .method-profiler-table-wrap,
+  .simpleperf-config-card,
+  .simpleperf-table-wrap,
+  .native-sym-config-card,
+  .native-sym-viewport,
+  .device-capture-action-card,
+  .device-capture-preview-screen,
+  .pm-list-card,
+  .pm-detail-card,
+  .terminal-panel-card,
+  .aosp-build-controls-card,
+  .aosp-task-status-card,
+  .aosp-console-viewport,
+  .benchmark-table-wrap,
+  .device-files-preview-box,
+  .property-grid-card
+),
+.code-viewer-container .code-viewer-pane-card {
+  border-radius: var(--card-radius);
+  background: var(--bg-card);
+  border: var(--card-border);
+  box-shadow: var(--card-shadow), var(--card-rim);
+}
+
+/* The left edge is a structural divider shared with the navigation pane.
+   Only the outside corners on the right belong to the rounded window surface. */
+.app-shell:not(.navigation-collapsed) > .app-main {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+/* ─── 统一墨灰高对比度滚动条（custom-scrollbar）──────────────────
+   定义提升为全局：这个类被跨视图复用（代码编辑器 textarea、Markdown 预览、
+   文档目录、diff 视图），此前只定义在 AdbDevices 的样式表里——没打开过
+   那个页面的会话里它是裸的，暗色主题下退回浏览器默认浅色滚动条。
+   注意标准属性是必须的：Chromium 里元素一旦设置了 `scrollbar-width`
+   （编辑器/预览都设了 thin），整套 ::-webkit-scrollbar 规则会被忽略，
+   不给标准 `scrollbar-color` 就仍是默认浅色。 ─── */
+.custom-scrollbar {
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--bg-hover);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+html[data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-track,
+[data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--bg-hover);
+}
+
+html[data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-thumb,
+[data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+}
+
+html[data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* 窗口不可见（最小化/完全遮挡）时暂停装饰动画：合成器对动画是逐帧产帧的，
+   窗口看不见也照样烧 CPU。由 src/platform/animationIdleThrottle.ts 负责挂属性。 */
+html[data-app-idle] *,
+html[data-app-idle] *::before,
+html[data-app-idle] *::after {
+  animation-play-state: paused !important;
+}

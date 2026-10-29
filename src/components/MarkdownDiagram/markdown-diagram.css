@@ -1,0 +1,19 @@
+.markdown-diagram { min-width:0; margin:10px 0; overflow:hidden; border:0; border-radius:8px; color:var(--text-primary); background:var(--markdown-code-bg); }
+.markdown-diagram-toolbar { display:flex; align-items:center; gap:4px; padding:7px 10px; color:var(--control-text); font:12px/1.4 var(--font-sans); }
+.markdown-diagram-toolbar > span { margin-right:auto; }
+.markdown-diagram-toolbar button { display:inline-flex; align-items:center; justify-content:center; gap:5px; min-height:26px; padding:4px 6px; border:0; border-radius:5px; color:inherit; background:transparent; font:inherit; cursor:pointer; }
+.markdown-diagram-toolbar button:hover:not(:disabled), .markdown-diagram-toolbar button[aria-pressed="true"] { color:var(--text-primary); background:var(--markdown-inline-code-bg); }
+.markdown-diagram-toolbar button:disabled { opacity:.4; cursor:default; }
+.markdown-diagram-toolbar button:focus-visible { outline:2px solid var(--accent-primary); outline-offset:2px; }
+.markdown-diagram-views { display:flex; gap:2px; margin-right:4px; }
+.markdown-diagram-canvas { padding:12px; overflow:auto; scrollbar-gutter: stable; text-align:center; }
+.markdown-diagram-canvas svg { display:block; max-width:100%; height:auto; margin:0 auto; }
+.markdown-diagram-status { margin:0!important; padding:4px 12px 8px; color:var(--control-text); font-size:12px; }
+.markdown-diagram-status.error { color:var(--status-danger-text); }
+html[data-theme] :is(.markdown-body,.code-viewer-markdown) .markdown-diagram-code { max-height:360px; margin:0; padding:10px 12px 14px; overflow:auto; scrollbar-gutter: stable; border:0; background:transparent; box-shadow:none; white-space:pre; overflow-wrap:normal; }
+html[data-theme] :is(.markdown-body,.code-viewer-markdown) .markdown-diagram-code code { padding:0; color:var(--text-primary); background:transparent; box-shadow:none; }
+.markdown-diagram-dialog { position:fixed; inset:0; width:calc(100vw - 48px); max-width:1400px; height:calc(100vh - 48px); max-height:none; margin:auto; padding:0; border:0; border-radius:12px; color:var(--text-primary); background:var(--context-navigation-bg); }
+.markdown-diagram-dialog::backdrop { background:var(--overlay-bg); }
+.markdown-diagram-viewport { height:calc(100% - 44px); padding:24px; overflow:auto; scrollbar-gutter: stable; }
+.markdown-diagram-enlarged svg { display:block; width:100%; max-width:none!important; height:auto; }
+@media(max-width:600px) { .markdown-diagram-dialog { width:calc(100vw - 16px); height:calc(100vh - 16px); } .markdown-diagram-viewport { padding:12px; } }

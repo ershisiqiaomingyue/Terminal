@@ -1,0 +1,149 @@
+/* ==========================================================================
+   Property Grid Component Styles - 属性键值遥测表格 (图2 原生规范)
+   - 包含极虚的分割线 (--divider-subtle)
+   - 左右两列对齐，左侧图标+标签，右侧加粗等宽数值
+   ========================================================================== */
+
+.property-grid-card {
+  background: var(--bg-card);
+  border: var(--card-border);
+  border-radius: var(--card-radius);
+  padding: 18px 22px;
+  box-shadow: var(--card-shadow), var(--card-rim);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  transition: all var(--transition-base);
+}
+
+html[data-theme="dark"] .property-grid-card,
+[data-theme="dark"] .property-grid-card {
+  background: var(--bg-card);
+  border: var(--card-border);
+  box-shadow: var(--card-shadow), var(--card-rim);
+}
+
+.property-grid-card:hover {
+  /* no border-color change - only bg transitions allowed */
+}
+
+/* 双栏网格布局：左右之间包含极虚垂直分割线 */
+.property-grid-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 0;
+  row-gap: 0;
+}
+
+.property-grid-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.property-grid-columns > .property-grid-col:first-child {
+  padding-right: 28px;
+  border-right: 1px solid var(--property-divider); /* 左右列之间的很虚分割线 */
+}
+
+.property-grid-columns > .property-grid-col:last-child {
+  padding-left: 28px;
+}
+
+@media (max-width: 860px) {
+  .property-grid-columns {
+    grid-template-columns: 1fr;
+  }
+  .property-grid-columns > .property-grid-col:first-child {
+    padding-right: 0;
+    border-right: none;
+    border-bottom: 1px solid var(--property-divider);
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+  }
+  .property-grid-columns > .property-grid-col:last-child {
+    padding-left: 0;
+  }
+}
+
+/* 单个属性行 */
+.property-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 8px;
+  border-bottom: 1px solid var(--property-divider); /* 很虚的分割线 */
+  transition: background-color var(--transition-fast);
+  border-radius: var(--radius-sm);
+}
+
+.property-row:hover {
+  background: var(--property-hover-bg);
+}
+
+/* 每一列的最后一行可以去除下边线，也可以全保留虚线 */
+.property-label-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  user-select: none;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.property-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.property-name {
+  font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.property-value {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--property-value-text);
+  font-family: var(--font-mono);
+  flex: 1;
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  word-break: normal;
+  line-height: 1.4;
+}
+
+/* 特殊高亮值 */
+.property-value.value-orange {
+  color: var(--warning-text);
+}
+
+.property-value.value-green {
+  color: var(--success-text);
+}
+
+.property-value.value-accent {
+  color: var(--accent-primary);
+}
+
+.property-value.value-unknown {
+  color: var(--property-unknown-text);
+  font-family: var(--font-sans);
+  font-weight: 500;
+}
+
+.property-value.value-danger { color: var(--status-danger-text); }

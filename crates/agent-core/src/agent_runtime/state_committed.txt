@@ -1,0 +1,2467 @@
+use crate::{
+    AgentChatRequest, AgentSteerRequest, QueuedThreadItem, ThreadEvent, ThreadSnapshot,
+    ThreadUpdate,
+};
+use std::borrow::Cow;
+use std::collections::{HashMap, HashSet, VecDeque};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+use tokio::sync::mpsc;
+use tokio_util::sync::CancellationToken;
+
+#[derive(Clone, Default)]
+pub struct AgentRuntimeState {
+    pub requests: Arc<Mutex<HashMap<String, AgentRequestControl>>>,
+    pub threads: Arc<Mutex<HashMap<String, ThreadSnapshot>>>,
+    thread_event_ids:
+        Arc<Mutex<HashMap<String, VecDeque<(std::mem::Discriminant<ThreadEvent>, String)>>>>,
+    pending_thread_publications: Arc<Mutex<HashSet<String>>>,
+    thread_updates: Arc<Mutex<HashMap<String, ThreadUpdateJournal>>>,
+    scheduler: Arc<Mutex<ThreadScheduler>>,
+    pub permissions: Arc<Mutex<HashMap<(String, String), PendingPermission>>>,
+    pub session_approvals: Arc<Mutex<HashSet<(String, String)>>>,
+    pub one_time_approvals: Arc<Mutex<HashSet<(String, String)>>>,
+    /// P8-C：per-(session, model) 的 token 估算漂移校准器（EMA）。key 为
+    /// "{session_id}:{model_id}"。内存态，重启重置——几轮报告后重新收敛。
+    pub token_calibrators:
+        Arc<Mutex<HashMap<String, crate::models::TokenEstimateCalibrator>>>,
+    /// P8-E：per-session 的压缩触发滞回状态。压缩过一次之后触发线下移一段
+    /// 安全带，避免「压完立刻又跨线」的抖动。内存态，重启重置。
+    pub compaction_hysteresis:
+        Arc<Mutex<HashMap<String, crate::models::CompactionHysteresis>>>,
+}
+
+#[derive(Default)]
+struct ThreadUpdateJournal {
+    events: VecDeque<(u64, usize, ThreadEvent)>,
+    bytes: usize,
+    published_revision: Option<u64>,
+}
+
+#[derive(Default)]
+struct ThreadScheduler {
+    queued: HashMap<String, VecDeque<QueuedAgentRequest>>,
+    claimed: HashMap<String, QueuedAgentClaim>,
+    dispatching: HashSet<String>,
+}
+
+#[derive(Debug, Clone)]
+struct QueuedAgentRequest {
+    id: String,
+    request: AgentChatRequest,
+}
+
+/// A queue item remains recoverable while a dispatcher or steer operation is
+/// trying to hand it to an Agent turn. The caller must explicitly acknowledge
+/// or reject the lease; dropping this value never destroys the queued request.
+#[derive(Debug, Clone)]
+pub struct QueuedAgentClaim {
+    pub id: String,
+    pub lease_id: String,
+    pub request: AgentChatRequest,
+    original_index: usize,
+}
+
+impl AgentRuntimeState {
+    pub fn reset_idle_thread(&self, session_id: &str) -> Option<ThreadSnapshot> {
+        if self.requests.lock().ok()?.contains_key(session_id) {
+            return None;
+        }
+        self.thread_event_ids.lock().ok()?.remove(session_id);
+        let mut threads = self.threads.lock().ok()?;
+        let revision = threads
+            .get(session_id)
+            .map_or(1, |snapshot| snapshot.revision.saturating_add(1));
+        let mut snapshot = ThreadSnapshot::new(session_id);
+        snapshot.revision = revision;
+        threads.insert(session_id.into(), snapshot.clone());
+        self.thread_updates.lock().ok()?.remove(session_id);
+        self.pending_thread_publications
+            .lock()
+            .ok()?
+            .remove(session_id);
+        Some(snapshot)
+    }
+
+    pub fn read_thread_snapshot(&self, session_id: &str) -> Option<ThreadSnapshot> {
+        self.read_thread_snapshot_after(session_id, None)
+    }
+
+    pub fn read_thread_snapshot_after(
+        &self,
+        session_id: &str,
+        after_revision: Option<u64>,
+    ) -> Option<ThreadSnapshot> {
+        let threads = self.threads.lock().ok()?;
+        let snapshot = threads.get(session_id)?;
+        if after_revision.is_some_and(|revision| snapshot.revision <= revision) {
+            return None;
+        }
+        Some(snapshot.clone())
+    }
+
+    pub fn apply_thread_event(&self, event: ThreadEvent) -> Option<ThreadSnapshot> {
+        self.apply_thread_event_once(event, None)
+    }
+
+    pub fn apply_thread_event_once(
+        &self,
+        event: ThreadEvent,
+        event_id: Option<&str>,
+    ) -> Option<ThreadSnapshot> {
+        self.update_thread_event(event, event_id, |snapshot| snapshot.clone())
+    }
+
+    /// Apply high-frequency deltas without copying the growing conversation.
+    pub fn apply_thread_event_deferred(&self, event: ThreadEvent, event_id: Option<&str>) -> bool {
+        self.update_thread_event(event, event_id, |_| ()).is_some()
+    }
+
+    pub fn schedule_thread_publication(&self, session_id: &str) -> bool {
+        self.pending_thread_publications
+            .lock()
+            .is_ok_and(|mut pending| pending.insert(session_id.to_string()))
+    }
+
+    pub fn take_thread_publication(&self, session_id: &str) -> Option<ThreadSnapshot> {
+        self.pending_thread_publications
+            .lock()
+            .ok()?
+            .remove(session_id);
+        self.read_thread_snapshot(session_id)
+    }
+
+    pub fn take_thread_update(&self, session_id: &str) -> Option<ThreadUpdate> {
+        self.pending_thread_publications
+            .lock()
+            .ok()?
+            .remove(session_id);
+        let threads = self.threads.lock().ok()?;
+        let snapshot = threads.get(session_id)?;
+        let mut journals = self.thread_updates.lock().ok()?;
+        let journal = journals.entry(session_id.to_string()).or_default();
+        let previous = journal.published_revision;
+        if previous == Some(snapshot.revision) {
+            return None;
+        }
+        journal.published_revision = Some(snapshot.revision);
+        if let Some(base_revision) = previous {
+            let events = journal
+                .events
+                .iter()
+                .filter(|(revision, _, _)| *revision > base_revision)
+                .collect::<Vec<_>>();
+            let contiguous = events.len() as u64 == snapshot.revision.saturating_sub(base_revision)
+                && events
+                    .first()
+                    .is_some_and(|(revision, _, _)| *revision == base_revision + 1);
+            if contiguous {
+                return Some(ThreadUpdate::Delta {
+                    id: snapshot.id.clone(),
+                    base_revision,
+                    revision: snapshot.revision,
+                    metadata: ThreadSnapshot {
+                        items: Vec::new(),
+                        id: snapshot.id.clone(),
+                        revision: snapshot.revision,
+                        status: snapshot.status,
+                        active_turn: snapshot.active_turn.clone(),
+                        pending_permission: snapshot.pending_permission.clone(),
+                        runtime: snapshot.runtime.clone(),
+                        queue: snapshot.queue.clone(),
+                    },
+                    events: events
+                        .into_iter()
+                        .map(|(_, _, event)| event.clone())
+                        .collect(),
+                });
+            }
+        }
+        Some(ThreadUpdate::Snapshot {
+            snapshot: snapshot.clone(),
+        })
+    }
+
+    fn update_thread_event<T>(
+        &self,
+        event: ThreadEvent,
+        event_id: Option<&str>,
+        project: impl FnOnce(&ThreadSnapshot) -> T,
+    ) -> Option<T> {
+        let session_id = match &event {
+            ThreadEvent::TurnStarted { thread_id, .. }
+            | ThreadEvent::ItemAdded { thread_id, .. }
+            | ThreadEvent::ToolCallInputDelta { thread_id, .. }
+            | ThreadEvent::ToolCallOutput { thread_id, .. }
+            | ThreadEvent::AgentDelta { thread_id, .. }
+            | ThreadEvent::AgentFinal { thread_id, .. }
+            | ThreadEvent::PermissionRequested { thread_id, .. }
+            | ThreadEvent::PermissionResolved { thread_id, .. }
+            | ThreadEvent::TurnCompleted { thread_id, .. }
+            | ThreadEvent::RuntimeUpdated { thread_id, .. }
+            | ThreadEvent::UsageUpdated { thread_id, .. }
+            | ThreadEvent::ExecutionTargetUpdated { thread_id, .. } => thread_id,
+        };
+        if let Some(event_id) = event_id.filter(|value| !value.trim().is_empty()) {
+            // One source event can update both timeline and usage projections.
+            let projection = std::mem::discriminant(&event);
+            let mut event_ids = self.thread_event_ids.lock().ok()?;
+            let ids = event_ids.entry(session_id.clone()).or_default();
+            if ids
+                .iter()
+                .any(|(kind, existing)| *kind == projection && existing == event_id)
+            {
+                return None;
+            }
+            ids.push_back((projection, event_id.to_string()));
+            if ids.len() > 2_048 {
+                ids.pop_front();
+            }
+        }
+        let mut threads = self.threads.lock().ok()?;
+        let snapshot = threads
+            .entry(session_id.clone())
+            .or_insert_with(|| ThreadSnapshot::new(session_id));
+        let retained = event.clone();
+        if !snapshot.apply(event) {
+            return None;
+        }
+        if let Ok(mut journals) = self.thread_updates.lock() {
+            let journal = journals.entry(snapshot.id.clone()).or_default();
+            // Bound replay memory independently of the durable history.
+            let bytes = serde_json::to_vec(&retained).map_or(512 * 1024 + 1, |value| value.len());
+            journal.bytes += bytes;
+            journal
+                .events
+                .push_back((snapshot.revision, bytes, retained));
+            while journal.events.len() > 256 || journal.bytes > 512 * 1024 {
+                if let Some((_, bytes, _)) = journal.events.pop_front() {
+                    journal.bytes -= bytes;
+                } else {
+                    break;
+                }
+            }
+        }
+        Some(project(snapshot))
+    }
+
+    pub fn enqueue_agent_request(
+        &self,
+        session_id: &str,
+        id: String,
+        request: AgentChatRequest,
+    ) -> Result<(ThreadSnapshot, bool), String> {
+        let request_is_active = self.has_active_agent_request(session_id);
+        let (queue, should_dispatch) = {
+            let mut scheduler = self
+                .scheduler
+                .lock()
+                .map_err(|_| "请求队列不可用".to_string())?;
+            let queue = {
+                let queued = scheduler.queued.entry(session_id.to_string()).or_default();
+                if queued.len() >= 20 {
+                    return Err("待发送队列最多保留 20 条消息。".to_string());
+                }
+                queued.push_back(QueuedAgentRequest { id, request });
+                queue_items(queued)
+            };
+            let should_dispatch =
+                !request_is_active && scheduler.dispatching.insert(session_id.to_string());
+            (queue, should_dispatch)
+        };
+        Ok((
+            self.replace_thread_queue(session_id, queue),
+            should_dispatch,
+        ))
+    }
+
+    pub fn dispatch_queued_request(&self, session_id: &str) -> bool {
+        if self.has_active_agent_request(session_id) {
+            return false;
+        }
+        let Ok(mut scheduler) = self.scheduler.lock() else {
+            return false;
+        };
+        scheduler
+            .queued
+            .get(session_id)
+            .is_some_and(|queue| !queue.is_empty())
+            && scheduler.dispatching.insert(session_id.to_string())
+    }
+
+    /// Claims the oldest pending request without deleting it. This is the
+    /// in-memory half of the durable queue lease; callers should use the same
+    /// lease id in SQLite and call `ack_agent_queue_claim` only after the turn
+    /// has acquired its request guard.
+    pub fn claim_next_queued_agent_request(
+        &self,
+        session_id: &str,
+        lease_id: String,
+    ) -> Result<Option<(QueuedAgentClaim, ThreadSnapshot)>, String> {
+        let queue_id = {
+            let scheduler = self
+                .scheduler
+                .lock()
+                .map_err(|_| "请求队列不可用".to_string())?;
+            if scheduler.claimed.contains_key(session_id) {
+                return Ok(None);
+            }
+            scheduler
+                .queued
+                .get(session_id)
+                .and_then(|queue| queue.front())
+                .map(|item| item.id.clone())
+        };
+        let Some(queue_id) = queue_id else {
+            if let Ok(mut scheduler) = self.scheduler.lock() {
+                scheduler.dispatching.remove(session_id);
+            }
+            return Ok(None);
+        };
+        self.claim_queued_agent_request(session_id, &queue_id, lease_id)
+    }
+
+    /// Claims one exact pending request. Using this operation for queued steer
+    /// messages makes reservation and removal from the dispatcher-visible
+    /// queue atomic, so the same message cannot also start a later turn.
+    pub fn claim_queued_agent_request(
+        &self,
+        session_id: &str,
+        queue_id: &str,
+        lease_id: String,
+    ) -> Result<Option<(QueuedAgentClaim, ThreadSnapshot)>, String> {
+        if lease_id.trim().is_empty() {
+            return Err("队列 lease id 不能为空".to_string());
+        }
+        let (claim, queue) = {
+            let mut scheduler = self
+                .scheduler
+                .lock()
+                .map_err(|_| "请求队列不可用".to_string())?;
+            if scheduler.claimed.contains_key(session_id) {
+                return Ok(None);
+            }
+            let Some(queued) = scheduler.queued.get_mut(session_id) else {
+                return Ok(None);
+            };
+            let Some(index) = queued.iter().position(|item| item.id == queue_id) else {
+                return Ok(None);
+            };
+            let queued_request = queued
+                .remove(index)
+                .expect("queue index was obtained from the same collection");
+            let claim = QueuedAgentClaim {
+                id: queued_request.id,
+                lease_id,
+                request: queued_request.request,
+                original_index: index,
+            };
+            let queue = queue_items(queued);
+            if queued.is_empty() {
+                scheduler.queued.remove(session_id);
+            }
+            scheduler
+                .claimed
+                .insert(session_id.to_string(), claim.clone());
+            (claim, queue)
+        };
+        let snapshot = self.replace_thread_queue(session_id, queue);
+        Ok(Some((claim, snapshot)))
+    }
+
+    /// Permanently removes a claimed request from the live queue cache.
+    pub fn ack_agent_queue_claim(
+        &self,
+        session_id: &str,
+        queue_id: &str,
+        lease_id: &str,
+    ) -> Result<ThreadSnapshot, String> {
+        let queue = {
+            let mut scheduler = self
+                .scheduler
+                .lock()
+                .map_err(|_| "请求队列不可用".to_string())?;
+            let matches = scheduler
+                .claimed
+                .get(session_id)
+                .is_some_and(|claim| claim.id == queue_id && claim.lease_id == lease_id);
+            if !matches {
+                return Err("队列 lease 已失效或不属于该消息".to_string());
+            }
+            scheduler.claimed.remove(session_id);
+            scheduler
+                .queued
+                .get(session_id)
+                .map(queue_items)
+                .unwrap_or_default()
+        };
+        Ok(self.replace_thread_queue(session_id, queue))
+    }
+
+    /// Releases a failed handoff and restores the message at its original
+    /// position. The dispatcher flag is cleared so a later trigger can retry.
+    pub fn nack_agent_queue_claim(
+        &self,
+        session_id: &str,
+        queue_id: &str,
+        lease_id: &str,
+    ) -> Result<ThreadSnapshot, String> {
+        let queue = {
+            let mut scheduler = self
+                .scheduler
+                .lock()
+                .map_err(|_| "请求队列不可用".to_string())?;
+            let matches = scheduler
+                .claimed
+                .get(session_id)
+                .is_some_and(|claim| claim.id == queue_id && claim.lease_id == lease_id);
+            if !matches {
+                return Err("队列 lease 已失效或不属于该消息".to_string());
+            }
+            let claim = scheduler
+                .claimed
+                .remove(session_id)
+                .expect("claim existence was checked above");
+            let queued = scheduler.queued.entry(session_id.to_string()).or_default();
+            let index = claim.original_index.min(queued.len());
+            queued.insert(
+                index,
+                QueuedAgentRequest {
+                    id: claim.id,
+                    request: claim.request,
+                },
+            );
+            let queue = queue_items(queued);
+            scheduler.dispatching.remove(session_id);
+            queue
+        };
+        Ok(self.replace_thread_queue(session_id, queue))
+    }
+
+    /// Rebuilds one session's pending queue from the durable store. Claimed
+    /// items must be recovered in SQLite before this method is called.
+    pub fn replace_queued_agent_requests(
+        &self,
+        session_id: &str,
+        requests: Vec<(String, AgentChatRequest)>,
+    ) -> Result<ThreadSnapshot, String> {
+        if requests.len() > 20 {
+            return Err("待发送队列最多保留 20 条消息。".to_string());
+        }
+        let queue = {
+            let mut scheduler = self
+                .scheduler
+                .lock()
+                .map_err(|_| "请求队列不可用".to_string())?;
+            let mut ids = HashSet::new();
+            let mut queued = VecDeque::with_capacity(requests.len());
+            for (id, request) in requests {
+                if id.trim().is_empty() || !ids.insert(id.clone()) {
+                    return Err("持久化队列包含空 id 或重复消息".to_string());
+                }
+                queued.push_back(QueuedAgentRequest { id, request });
+            }
+            let queue = queue_items(&queued);
+            if queued.is_empty() {
+                scheduler.queued.remove(session_id);
+            } else {
+                scheduler.queued.insert(session_id.to_string(), queued);
+            }
+            scheduler.claimed.remove(session_id);
+            scheduler.dispatching.remove(session_id);
+            queue
+        };
+        Ok(self.replace_thread_queue(session_id, queue))
+    }
+
+    pub fn dequeue_agent_request(
+        &self,
+        session_id: &str,
+    ) -> Option<(AgentChatRequest, ThreadSnapshot)> {
+        let (request, queue) = {
+            let mut scheduler = self.scheduler.lock().ok()?;
+            let request = scheduler
+                .queued
+                .get_mut(session_id)
+                .and_then(VecDeque::pop_front);
+            if request.is_none() {
+                scheduler.queued.remove(session_id);
+                scheduler.dispatching.remove(session_id);
+            }
+            let queue = scheduler
+                .queued
+                .get(session_id)
+                .map(queue_items)
+                .unwrap_or_default();
+            (request, queue)
+        };
+        let snapshot = self.replace_thread_queue(session_id, queue);
+        request.map(|queued| (queued.request, snapshot))
+    }
+
+    pub fn restore_queued_agent_request(
+        &self,
+        session_id: &str,
+        request: AgentChatRequest,
+    ) -> ThreadSnapshot {
+        let queue = {
+            let mut scheduler = self
+                .scheduler
+                .lock()
+                .expect("thread scheduler lock should be available");
+            let queue = {
+                let queued = scheduler.queued.entry(session_id.to_string()).or_default();
+                queued.push_front(QueuedAgentRequest {
+                    id: format!(
+                        "retry-{}",
+                        SystemTime::now()
+                            .duration_since(UNIX_EPOCH)
+                            .unwrap_or_default()
+                            .as_nanos()
+                    ),
+                    request,
+                });
+                queue_items(queued)
+            };
+            scheduler.dispatching.remove(session_id);
+            queue
+        };
+        self.replace_thread_queue(session_id, queue)
+    }
+
+    pub fn queued_agent_request(
+        &self,
+        session_id: &str,
+        queue_id: &str,
+    ) -> Option<AgentChatRequest> {
+        self.scheduler
+            .lock()
+            .ok()?
+            .queued
+            .get(session_id)?
+            .iter()
+            .find(|item| item.id == queue_id)
+            .map(|item| item.request.clone())
+    }
+
+    pub fn queued_session_ids(&self) -> Vec<String> {
+        let mut ids: Vec<String> = self
+            .scheduler
+            .lock()
+            .map(|scheduler| {
+                scheduler
+                    .queued
+                    .iter()
+                    .filter(|(_, queue)| !queue.is_empty())
+                    .map(|(session_id, _)| session_id.clone())
+                    .collect()
+            })
+            .unwrap_or_default();
+        ids.sort();
+        ids
+    }
+
+    pub fn remove_queued_agent_request(
+        &self,
+        session_id: &str,
+        queue_id: &str,
+    ) -> Option<ThreadSnapshot> {
+        let queue = {
+            let mut scheduler = self.scheduler.lock().ok()?;
+            let queued = scheduler.queued.get_mut(session_id)?;
+            let index = queued.iter().position(|item| item.id == queue_id)?;
+            queued.remove(index);
+            let queue = queue_items(queued);
+            if queued.is_empty() {
+                scheduler.queued.remove(session_id);
+            }
+            queue
+        };
+        Some(self.replace_thread_queue(session_id, queue))
+    }
+
+    pub fn reorder_queued_agent_requests(
+        &self,
+        session_id: &str,
+        queue_ids: &[String],
+    ) -> Result<ThreadSnapshot, String> {
+        let queue = {
+            let mut scheduler = self
+                .scheduler
+                .lock()
+                .map_err(|_| "请求队列不可用".to_string())?;
+            if scheduler.claimed.contains_key(session_id) {
+                return Err("队列正在发送，稍后再调整顺序。".to_string());
+            }
+            let queued = scheduler
+                .queued
+                .get_mut(session_id)
+                .ok_or_else(|| "待发送队列已变化，请重试。".to_string())?;
+            if queue_ids.len() != queued.len() {
+                return Err("待发送队列已变化，请重试。".to_string());
+            }
+            let mut reordered = VecDeque::with_capacity(queued.len());
+            for id in queue_ids {
+                let Some(index) = queued.iter().position(|item| &item.id == id) else {
+                    return Err("待发送队列已变化，请重试。".to_string());
+                };
+                if reordered.iter().any(|item: &QueuedAgentRequest| &item.id == id) {
+                    return Err("队列顺序包含重复消息。".to_string());
+                }
+                reordered.push_back(queued[index].clone());
+            }
+            *queued = reordered;
+            queue_items(queued)
+        };
+        Ok(self.replace_thread_queue(session_id, queue))
+    }
+
+    /// Read-only inbox projection; does not populate the legacy scheduler.
+    pub fn project_external_queue(
+        &self,
+        session_id: &str,
+        queue: Vec<QueuedThreadItem>,
+    ) -> ThreadSnapshot {
+        self.replace_thread_queue(session_id, queue)
+    }
+
+    fn replace_thread_queue(
+        &self,
+        session_id: &str,
+        queue: Vec<QueuedThreadItem>,
+    ) -> ThreadSnapshot {
+        let mut threads = self
+            .threads
+            .lock()
+            .expect("thread snapshot lock should be available");
+        let snapshot = threads
+            .entry(session_id.to_string())
+            .or_insert_with(|| ThreadSnapshot::new(session_id));
+        snapshot.replace_queue(queue);
+        snapshot.clone()
+    }
+
+    fn has_active_agent_request(&self, session_id: &str) -> bool {
+        self.requests
+            .lock()
+            .map(|requests| requests.contains_key(session_id))
+            .unwrap_or(true)
+    }
+
+    pub fn record_tool_call_started(
+        &self,
+        session_id: &str,
+        turn_id: &str,
+        call_id: &str,
+    ) -> Option<usize> {
+        let mut requests = self.requests.lock().ok()?;
+        let control = requests.get_mut(session_id)?;
+        if control.turn_id != turn_id {
+            return None;
+        }
+        control.last_progress_at = Instant::now();
+        if !control.started_tool_call_ids.insert(call_id.to_string()) {
+            return None;
+        }
+        control.active_tool_call_ids.insert(call_id.to_string());
+        control.tool_call_count += 1;
+        Some(control.tool_call_count)
+    }
+
+    pub fn tool_call_count(&self, session_id: &str, turn_id: &str) -> usize {
+        self.requests
+            .lock()
+            .ok()
+            .and_then(|requests| {
+                requests
+                    .get(session_id)
+                    .filter(|control| control.turn_id == turn_id)
+                    .map(|control| control.tool_call_count)
+            })
+            .unwrap_or_default()
+    }
+
+    pub fn record_turn_progress(&self, session_id: &str, turn_id: &str) {
+        if let Ok(mut requests) = self.requests.lock() {
+            if let Some(control) = requests
+                .get_mut(session_id)
+                .filter(|control| control.turn_id == turn_id)
+            {
+                control.last_progress_at = Instant::now();
+            }
+        }
+    }
+
+    pub fn record_tool_call_finished(
+        &self,
+        session_id: &str,
+        turn_id: &str,
+        call_id: &str,
+        tool_name: &str,
+        failed: bool,
+    ) -> Option<String> {
+        let mut requests = self.requests.lock().ok()?;
+        let control = requests.get_mut(session_id)?;
+        if control.turn_id != turn_id {
+            return None;
+        }
+        control.last_progress_at = Instant::now();
+        control.active_tool_call_ids.remove(call_id);
+        if !failed {
+            control.consecutive_tool_failures.remove(tool_name);
+            return None;
+        }
+        let failures = control
+            .consecutive_tool_failures
+            .entry(tool_name.to_string())
+            .or_default();
+        *failures += 1;
+        if *failures < MAX_CONSECUTIVE_TOOL_FAILURES || control.cancellation.load(Ordering::Relaxed)
+        {
+            return None;
+        }
+        let reason = format!("工具 {tool_name} 连续失败 {failures} 次");
+        control.request_cancellation(&reason);
+        Some(reason)
+    }
+
+    pub fn cancel_if_turn_idle(
+        &self,
+        session_id: &str,
+        turn_id: &str,
+        cancellation: &Arc<AtomicBool>,
+        max_idle: Duration,
+    ) -> Option<String> {
+        let mut requests = self.requests.lock().ok()?;
+        let control = requests.get_mut(session_id)?;
+        if control.turn_id != turn_id
+            || !Arc::ptr_eq(&control.cancellation, cancellation)
+            || control.cancellation.load(Ordering::Relaxed)
+            || !control.active_tool_call_ids.is_empty()
+            || control.last_progress_at.elapsed() < max_idle
+        {
+            return None;
+        }
+        let reason = format!("[turn_idle_timeout] 连续 {} 秒未收到模型或工具进度", max_idle.as_secs());
+        control.request_cancellation(&reason);
+        Some(reason)
+    }
+}
+
+/// 让直接持有取消标志 `Arc` 的代码路径与令牌保持同步（P1-B/P2 回归
+/// 保护）：标志被置位时必须同时 cancel 令牌，否则等待在 `await` 上的
+/// 阶段无法被打断。按标志身份匹配当前活跃回合，匹配失败时静默跳过。
+pub fn cancel_request_token_if_matching(
+    state: &AgentRuntimeState,
+    session_id: &str,
+    cancellation: &Arc<AtomicBool>,
+) {
+    if let Ok(requests) = state.requests.lock() {
+        if let Some(control) = requests.get(session_id) {
+            if Arc::ptr_eq(&control.cancellation, cancellation) {
+                control.cancellation_token.cancel();
+            }
+        }
+    }
+}
+
+pub const MAX_CONSECUTIVE_TOOL_FAILURES: usize = 8;
+
+/// Host-generated requests (background shell completion reports) are dispatched
+/// turns, not user-authored follow-ups: they must not surface as queue rows, or
+/// the user sees an "追加消息" card for a message they never typed.
+fn is_host_generated(item: &QueuedAgentRequest) -> bool {
+    item.request
+        .turn_id
+        .as_deref()
+        .is_some_and(|turn| turn.starts_with(crate::background::BACKGROUND_RESULT_PREFIX))
+}
+
+fn queue_items(queue: &VecDeque<QueuedAgentRequest>) -> Vec<QueuedThreadItem> {
+    queue
+        .iter()
+        .filter(|item| !is_host_generated(item))
+        .map(|item| QueuedThreadItem {
+            id: item.id.clone(),
+            content: item.request.message.clone(),
+            images: item.request.attachments.iter().filter_map(|image| {
+                image.path.as_ref().map(|path| crate::QueuedThreadImage {
+                    name: image.name.clone(),
+                    media_type: image.media_type.clone(),
+                    path: path.clone(),
+                })
+            }).collect(),
+            artifacts: item.request.artifacts.iter().filter(|artifact| {
+                artifact.status != "workspace_context"
+                    && !(artifact.kind == "directory"
+                        && item.request.workspace_path.as_deref().is_some_and(|workspace| {
+                            artifact.path.trim_end_matches('/').trim_end_matches('\\')
+                                .eq_ignore_ascii_case(workspace.trim_end_matches('/').trim_end_matches('\\'))
+                        }))
+            }).map(|artifact| crate::QueuedThreadArtifact {
+                name: artifact.name.clone(),
+                kind: artifact.kind.clone(),
+                path: artifact.path.clone(),
+                size: artifact.size,
+            }).collect(),
+        })
+        .collect()
+}
+
+/// G5-A 第一步：执行单元的种类。当前内核统一跑 turn，协作 worker 的 turn
+/// 标记为 Subagent（诊断/预算归属用）；WorkflowNode 为 run_workflow 编排的
+/// 节点预留——完整 ExecutionUnit trait 等第三种执行单元真正落地时再抽。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum UnitKind {
+    Turn,
+    Subagent,
+    WorkflowNode,
+}
+
+impl UnitKind {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            UnitKind::Turn => "turn",
+            UnitKind::Subagent => "subagent",
+            UnitKind::WorkflowNode => "workflow_node",
+        }
+    }
+}
+
+pub struct AgentRequestControl {
+    pub turn_id: String,
+    /// G5-A：本控制块所属的执行单元种类（缺省 Turn；协作 admission 标记
+    /// Subagent）。运行时可查——诊断、预算归属、将来的 ExecutionUnit 抽象
+    /// 都以它为锚点。
+    pub unit_kind: std::sync::atomic::AtomicU8,
+    /// G5-A/G2：本单元归属的 goal id（单委托 job 关联的 goal）。
+    pub parent_goal: Mutex<Option<String>>,
+    pub cancellation: Arc<AtomicBool>,
+    pub cancellation_reason: Arc<Mutex<Option<String>>>,
+    /// 取消令牌（P1-B）。与 `cancellation` 标志同生同灭：置位标志的代码
+    /// 必须经由 [`AgentRequestControl::request_cancellation`] 同时 cancel
+    /// 令牌，等待在任意 `await` 上的准备阶段才能被立刻打断，而不是等执行
+    /// 流自己走到下一个 `is_cancelled` 检查点。
+    pub cancellation_token: CancellationToken,
+    /// 回合任务的硬中止句柄（P1-C 兜底）。仅在软取消宽限超时后由
+    /// `cancel_agent_request` 触发；正常完成路径从不使用。
+    pub task_abort_handle: Mutex<Option<tokio::task::AbortHandle>>,
+    pub steer_sender: mpsc::Sender<AgentSteerRequest>,
+    pub tool_call_count: usize,
+    started_tool_call_ids: HashSet<String>,
+    active_tool_call_ids: HashSet<String>,
+    consecutive_tool_failures: HashMap<String, usize>,
+    last_progress_at: Instant,
+}
+
+impl AgentRequestControl {
+    /// G5-A：标记本控制块的执行单元种类与目标归属（协作 admission 用）。
+    pub fn describe_unit(&self, kind: UnitKind, parent_goal: Option<String>) {
+        self.unit_kind.store(
+            match kind {
+                UnitKind::Turn => 0,
+                UnitKind::Subagent => 1,
+                UnitKind::WorkflowNode => 2,
+            },
+            Ordering::Relaxed,
+        );
+        if let Ok(mut goal) = self.parent_goal.lock() {
+            *goal = parent_goal;
+        }
+    }
+
+    /// G5-A：读取执行单元种类（诊断/预算归属）。
+    pub fn unit_kind(&self) -> UnitKind {
+        match self.unit_kind.load(Ordering::Relaxed) {
+            1 => UnitKind::Subagent,
+            2 => UnitKind::WorkflowNode,
+            _ => UnitKind::Turn,
+        }
+    }
+
+    /// 一致地请求取消：标志、原因与令牌必须同时生效（P1-B / P2 回归保护）。
+    /// 任何直接 `cancellation.store(true)` 的写法都会让令牌与标志失步，
+    /// 准备阶段的 `select!` 将追不上取消信号。
+    pub fn request_cancellation(&self, reason: &str) {
+        self.cancellation.store(true, Ordering::Relaxed);
+        if let Ok(mut cancellation_reason) = self.cancellation_reason.lock() {
+            *cancellation_reason = Some(reason.to_string());
+        }
+        self.cancellation_token.cancel();
+    }
+
+    /// 登记回合任务的中止句柄，供 P1-C 兜底使用。
+    pub fn set_task_abort_handle(&self, handle: tokio::task::AbortHandle) {
+        if let Ok(mut slot) = self.task_abort_handle.lock() {
+            *slot = Some(handle);
+        }
+    }
+
+    /// P1-C 兜底：软取消宽限超时后硬中止回合任务。返回是否存在可中止的句柄。
+    pub fn abort_task(&self) -> bool {
+        match self.task_abort_handle.lock() {
+            Ok(mut slot) => slot.take().map(|handle| handle.abort()).is_some(),
+            Err(_) => false,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PermissionAction {
+    Once,
+    Session,
+    Deny,
+    Other,
+}
+
+impl PermissionAction {
+    pub fn parse(value: &str) -> Result<Self, String> {
+        match value {
+            "once" => Ok(Self::Once),
+            "session" => Ok(Self::Session),
+            "deny" => Ok(Self::Deny),
+            "other" => Ok(Self::Other),
+            _ => Err("权限决定无效，请选择 once、session、deny 或 other".to_string()),
+        }
+    }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Once => "once",
+            Self::Session => "session",
+            Self::Deny => "deny",
+            Self::Other => "other",
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct PermissionResponse {
+    pub action: PermissionAction,
+    pub instruction: Option<String>,
+    /// N1-A：true 表示这是超时合成的 Deny——没有人真正点过拒绝。调用方据此
+    /// 补发 `permission_resolved` 事件；否则 pending 条目已被移除但事件缺失，
+    /// 前端权限条永远等不到回应（N1 的 UI 卡死形态）。
+    pub timed_out: bool,
+}
+
+pub enum PermissionWaitResult {
+    Decision(PermissionResponse),
+}
+
+pub struct PendingPermission {
+    pub sender: mpsc::Sender<PermissionResponse>,
+    pub response_sent: bool,
+    pub approval_key: String,
+    pub call_id: String,
+    pub cancellation: Arc<AtomicBool>,
+    pub turn_id: String,
+    pub workspace_root: Option<String>,
+}
+
+pub fn is_cancelled(
+    state: &AgentRuntimeState,
+    session_id: &str,
+    cancellation: &Arc<AtomicBool>,
+) -> bool {
+    if cancellation.load(Ordering::Relaxed) {
+        return true;
+    }
+    state
+        .requests
+        .lock()
+        .map(|values| {
+            values
+                .get(session_id)
+                .map(|control| !Arc::ptr_eq(&control.cancellation, cancellation))
+                .unwrap_or(true)
+        })
+        .unwrap_or(true)
+}
+
+/// Resolve the cancellation token that identifies the live request of `session_id`.
+///
+/// Interaction tools (questions, connection prompts) must wait on this token
+/// instead of the round-scoped tool token handed to a tool handler:
+/// [`register_pending_permission`] and [`is_cancelled`] compare token *identity*,
+/// so a prompt registered with a tool token always looks like it belongs to a
+/// cancelled turn and fails immediately.
+pub fn request_cancellation(
+    state: &AgentRuntimeState,
+    session_id: &str,
+    turn_id: &str,
+) -> Result<Arc<AtomicBool>, String> {
+    state
+        .requests
+        .lock()
+        .map_err(|_| "请求状态不可用".to_string())?
+        .get(session_id)
+        .filter(|control| control.turn_id == turn_id)
+        .map(|control| control.cancellation.clone())
+        .ok_or_else(|| "请求已取消".to_string())
+}
+
+pub fn register_pending_permission(
+    state: &AgentRuntimeState,
+    session_id: &str,
+    request_id: String,
+    approval_key: String,
+    call_id: String,
+    cancellation: Arc<AtomicBool>,
+    turn_id: String,
+    workspace_root: Option<String>,
+) -> Result<mpsc::Receiver<PermissionResponse>, String> {
+    let request_is_active = state
+        .requests
+        .lock()
+        .map_err(|_| "请求状态不可用".to_string())?
+        .get(session_id)
+        .map(|control| {
+            control.turn_id == turn_id
+                && Arc::ptr_eq(&control.cancellation, &cancellation)
+                && !control.cancellation.load(Ordering::Relaxed)
+        })
+        .unwrap_or(false);
+    if !request_is_active {
+        return Err("请求已取消".to_string());
+    }
+    let (sender, receiver) = mpsc::channel(1);
+    state
+        .permissions
+        .lock()
+        .map_err(|_| "权限状态不可用".to_string())?
+        .insert(
+            (session_id.to_string(), request_id.clone()),
+            PendingPermission {
+                sender,
+                response_sent: false,
+                approval_key,
+                call_id,
+                cancellation: cancellation.clone(),
+                turn_id: turn_id.clone(),
+                workspace_root,
+            },
+        );
+    // Cancellation can race with the second lock acquisition above. Recheck
+    // ownership after insertion so a cancelled turn cannot leave an orphaned
+    // permission prompt behind.
+    let still_active = state
+        .requests
+        .lock()
+        .map(|values| {
+            values
+                .get(session_id)
+                .map(|control| {
+                    control.turn_id == turn_id
+                        && Arc::ptr_eq(&control.cancellation, &cancellation)
+                        && !control.cancellation.load(Ordering::Relaxed)
+                })
+                .unwrap_or(false)
+        })
+        .unwrap_or(false);
+    if !still_active {
+        state
+            .permissions
+            .lock()
+            .ok()
+            .and_then(|mut values| values.remove(&(session_id.to_string(), request_id)));
+        return Err("请求已取消".to_string());
+    }
+    Ok(receiver)
+}
+
+pub async fn wait_for_agent_cancellation(
+    state: &AgentRuntimeState,
+    session_id: &str,
+    cancellation: &Arc<AtomicBool>,
+) {
+    while !is_cancelled(state, session_id, cancellation) {
+        tokio::time::sleep(std::time::Duration::from_millis(25)).await;
+    }
+}
+
+/// A prompt has a bounded window. When it expires the request is answered with
+/// a synthetic `Deny`, which closes the prompt in the UI and lets the turn
+/// continue with a normal "skipped" result instead of an error.
+pub async fn wait_for_permission(
+    state: &AgentRuntimeState,
+    session_id: &str,
+    request_id: String,
+    cancellation: Arc<AtomicBool>,
+    mut receiver: mpsc::Receiver<PermissionResponse>,
+    timeout: Option<std::time::Duration>,
+) -> Result<PermissionWaitResult, String> {
+    let deadline = timeout.map(|value| tokio::time::Instant::now() + value);
+    loop {
+        if is_cancelled(state, session_id, &cancellation) {
+            state.permissions.lock().ok().and_then(|mut values| {
+                values.remove(&(session_id.to_string(), request_id.clone()))
+            });
+            return Err("请求已取消".to_string());
+        }
+        if deadline.is_some_and(|value| tokio::time::Instant::now() >= value) {
+            // Drop the pending entry so a late click cannot resolve a request
+            // the turn has already moved past.
+            state.permissions.lock().ok().and_then(|mut values| {
+                values.remove(&(session_id.to_string(), request_id.clone()))
+            });
+            return Ok(PermissionWaitResult::Decision(PermissionResponse {
+                action: PermissionAction::Deny,
+                instruction: None,
+                timed_out: true,
+            }));
+        }
+        tokio::select! {
+            biased;
+            result = receiver.recv() => {
+                if is_cancelled(state, session_id, &cancellation) {
+                    state
+                        .permissions
+                        .lock()
+                        .ok()
+                        .and_then(|mut values| values.remove(&(session_id.to_string(), request_id.clone())));
+                    return Err("请求已取消".to_string());
+                }
+                let result = result
+                    .map(PermissionWaitResult::Decision)
+                    .ok_or_else(|| "权限请求已关闭".to_string());
+                state
+                    .permissions
+                    .lock()
+                    .ok()
+                    .and_then(|mut values| values.remove(&(session_id.to_string(), request_id.clone())));
+                return result;
+            }
+            _ = tokio::time::sleep(std::time::Duration::from_millis(100)) => {}
+        }
+    }
+}
+
+pub struct AgentRequestGuard<'a> {
+    state: Cow<'a, AgentRuntimeState>,
+    session_id: String,
+    cancellation: Arc<AtomicBool>,
+    cancellation_reason: Arc<Mutex<Option<String>>>,
+    cancellation_token: CancellationToken,
+    steer_receiver: Option<mpsc::Receiver<AgentSteerRequest>>,
+}
+
+impl<'a> AgentRequestGuard<'a> {
+    pub fn start(
+        state: &'a AgentRuntimeState,
+        session_id: String,
+        turn_id: String,
+    ) -> Result<Self, String> {
+        Self::start_with_state(Cow::Borrowed(state), session_id, turn_id)
+    }
+
+    fn start_with_state(
+        state: Cow<'a, AgentRuntimeState>,
+        session_id: String,
+        turn_id: String,
+    ) -> Result<Self, String> {
+        let cancellation = Arc::new(AtomicBool::new(false));
+        let cancellation_reason = Arc::new(Mutex::new(None));
+        // P1-B：令牌与标志在同一处创建，控制表与守卫各持一份克隆，
+        // 取消时二者必须一起生效（见 `AgentRequestControl::request_cancellation`）。
+        let cancellation_token = CancellationToken::new();
+        let (steer_sender, steer_receiver) = mpsc::channel(16);
+        let mut requests = state
+            .requests
+            .lock()
+            .map_err(|_| "请求状态不可用".to_string())?;
+        if requests.contains_key(&session_id) {
+            return Err("当前会话已有 Agent 正在执行".to_string());
+        }
+        requests.insert(
+            session_id.clone(),
+            AgentRequestControl {
+                turn_id,
+                unit_kind: std::sync::atomic::AtomicU8::new(0),
+                parent_goal: Mutex::new(None),
+                cancellation: cancellation.clone(),
+                cancellation_reason: cancellation_reason.clone(),
+                cancellation_token: cancellation_token.clone(),
+                task_abort_handle: Mutex::new(None),
+                steer_sender,
+                tool_call_count: 0,
+                started_tool_call_ids: HashSet::new(),
+                active_tool_call_ids: HashSet::new(),
+                consecutive_tool_failures: HashMap::new(),
+                last_progress_at: Instant::now(),
+            },
+        );
+        drop(requests);
+        Ok(Self {
+            state,
+            session_id,
+            cancellation,
+            cancellation_reason,
+            cancellation_token,
+            steer_receiver: Some(steer_receiver),
+        })
+    }
+
+    pub fn cancellation(&self) -> Arc<AtomicBool> {
+        self.cancellation.clone()
+    }
+
+    pub fn cancellation_reason(&self) -> Arc<Mutex<Option<String>>> {
+        self.cancellation_reason.clone()
+    }
+
+    pub fn cancellation_token(&self) -> CancellationToken {
+        self.cancellation_token.clone()
+    }
+
+    pub fn take_steer_receiver(&mut self) -> mpsc::Receiver<AgentSteerRequest> {
+        self.steer_receiver
+            .take()
+            .expect("steer receiver can only be taken once")
+    }
+}
+
+impl AgentRequestGuard<'static> {
+    /// Retain native turn ownership independently of a frontend invocation.
+    pub fn start_owned(
+        state: &AgentRuntimeState,
+        session_id: String,
+        turn_id: String,
+    ) -> Result<Self, String> {
+        Self::start_with_state(Cow::Owned(state.clone()), session_id, turn_id)
+    }
+}
+
+impl Drop for AgentRequestGuard<'_> {
+    fn drop(&mut self) {
+        if let Ok(mut requests) = self.state.requests.lock() {
+            let owns_request = requests
+                .get(&self.session_id)
+                .map(|control| Arc::ptr_eq(&control.cancellation, &self.cancellation))
+                .unwrap_or(false);
+            if owns_request {
+                // Hold the session reservation until cleanup completes. A stale
+                // guard must not clear a newer turn's single-use approvals.
+                if let Ok(mut approvals) = self.state.one_time_approvals.lock() {
+                    approvals.retain(|(session_id, _)| session_id != &self.session_id);
+                }
+                requests.remove(&self.session_id);
+            }
+        }
+        if let Ok(mut permissions) = self.state.permissions.lock() {
+            permissions.retain(|(session_id, _), pending| {
+                session_id != &self.session_id
+                    || !Arc::ptr_eq(&pending.cancellation, &self.cancellation)
+            });
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{AgentRequestGuard, AgentRuntimeState};
+    use crate::{
+        AgentChatRequest, AgentExecutionTarget, AgentSteerRequest, ThreadEvent, ThreadUpdate,
+    };
+    use std::time::Duration;
+
+    #[test]
+    fn request_locks_are_scoped_to_a_session() {
+        let state = AgentRuntimeState::default();
+        let first = AgentRequestGuard::start(&state, "session-a".to_string(), "turn-a".to_string())
+            .expect("first session should start");
+        let second =
+            AgentRequestGuard::start(&state, "session-b".to_string(), "turn-b".to_string())
+                .expect("different session should start concurrently");
+
+        let duplicate =
+            AgentRequestGuard::start(&state, "session-a".to_string(), "turn-c".to_string());
+        assert!(duplicate.is_err());
+
+        drop(first);
+        AgentRequestGuard::start(&state, "session-a".to_string(), "turn-d".to_string())
+            .expect("session lock should release when its request ends");
+        drop(second);
+    }
+
+    #[test]
+    fn owned_guard_retains_shared_state_after_caller_is_dropped() {
+        let state = AgentRuntimeState::default();
+        let shared = state.clone();
+        let guard = AgentRequestGuard::start_owned(&state, "session".into(), "turn".into())
+            .expect("owned lease");
+        let cancellation = guard.cancellation();
+        drop(state);
+        assert!(!super::is_cancelled(&shared, "session", &cancellation));
+        assert!(AgentRequestGuard::start(&shared, "session".into(), "other".into()).is_err());
+        drop(guard);
+        assert!(super::is_cancelled(&shared, "session", &cancellation));
+        AgentRequestGuard::start_owned(&shared, "session".into(), "next".into())
+            .expect("lease released");
+    }
+
+    #[test]
+    fn stale_owned_guard_does_not_clear_new_turn_approvals_or_permissions() {
+        let state = AgentRuntimeState::default();
+        let stale = AgentRequestGuard::start_owned(&state, "session".into(), "old".into())
+            .expect("old lease");
+        let old_cancellation = stale.cancellation();
+        let _old_permission = super::register_pending_permission(
+            &state,
+            "session",
+            "old-permission".into(),
+            "old-key".into(),
+            "old-call".into(),
+            old_cancellation,
+            "old".into(),
+            None,
+        )
+        .expect("old permission");
+        state.requests.lock().unwrap().remove("session");
+        let current = AgentRequestGuard::start_owned(&state, "session".into(), "new".into())
+            .expect("new lease");
+        let _new_permission = super::register_pending_permission(
+            &state,
+            "session",
+            "new-permission".into(),
+            "new-key".into(),
+            "new-call".into(),
+            current.cancellation(),
+            "new".into(),
+            None,
+        )
+        .expect("new permission");
+        state
+            .one_time_approvals
+            .lock()
+            .unwrap()
+            .insert(("session".into(), "new-key".into()));
+        drop(stale);
+        assert_eq!(state.requests.lock().unwrap()["session"].turn_id, "new");
+        let permissions = state.permissions.lock().unwrap();
+        assert!(!permissions.contains_key(&("session".into(), "old-permission".into())));
+        assert!(permissions.contains_key(&("session".into(), "new-permission".into())));
+        drop(permissions);
+        assert!(state
+            .one_time_approvals
+            .lock()
+            .unwrap()
+            .contains(&("session".into(), "new-key".into())));
+        drop(current);
+        assert!(state.permissions.lock().unwrap().is_empty());
+        assert!(state.one_time_approvals.lock().unwrap().is_empty());
+    }
+
+    #[test]
+    fn steer_messages_are_scoped_to_their_session() {
+        let state = AgentRuntimeState::default();
+        let mut first =
+            AgentRequestGuard::start(&state, "session-a".to_string(), "turn-a".to_string())
+                .expect("first session should start");
+        let mut second =
+            AgentRequestGuard::start(&state, "session-b".to_string(), "turn-b".to_string())
+                .expect("second session should start");
+        let first_sender = state
+            .requests
+            .lock()
+            .expect("request state")
+            .get("session-a")
+            .expect("first request")
+            .steer_sender
+            .clone();
+        first_sender
+            .try_send(AgentSteerRequest {
+                message: "continue A".to_string(),
+                attachments: vec![],
+                artifacts: vec![],
+                source_message_id: None,
+            })
+            .expect("steer should enqueue");
+
+        assert_eq!(
+            first
+                .take_steer_receiver()
+                .try_recv()
+                .expect("first steer")
+                .message,
+            "continue A"
+        );
+        assert!(second.take_steer_receiver().try_recv().is_err());
+    }
+
+    #[test]
+    fn tool_call_counts_are_scoped_to_a_turn_and_deduplicate_call_ids() {
+        let state = AgentRuntimeState::default();
+        let _request =
+            AgentRequestGuard::start(&state, "session-a".to_string(), "turn-a".to_string())
+                .expect("request should start");
+
+        assert_eq!(
+            state.record_tool_call_started("session-a", "turn-a", "call-a"),
+            Some(1)
+        );
+        assert_eq!(
+            state.record_tool_call_started("session-a", "turn-a", "call-a"),
+            None
+        );
+        assert_eq!(state.tool_call_count("session-a", "turn-a"), 1);
+        assert_eq!(
+            state.record_tool_call_started("session-a", "stale-turn", "call-b"),
+            None
+        );
+        assert_eq!(state.tool_call_count("session-a", "stale-turn"), 0);
+    }
+
+    #[test]
+    fn request_cancellation_sets_flag_reason_and_token_together() {
+        let state = AgentRuntimeState::default();
+        let guard =
+            AgentRequestGuard::start(&state, "session-a".to_string(), "turn-a".to_string())
+                .expect("request should start");
+        let token = guard.cancellation_token();
+        assert!(!token.is_cancelled());
+
+        state
+            .requests
+            .lock()
+            .expect("request state")
+            .get("session-a")
+            .expect("control registered")
+            .request_cancellation("请求已取消");
+
+        assert!(guard
+            .cancellation()
+            .load(std::sync::atomic::Ordering::Relaxed));
+        assert_eq!(
+            guard
+                .cancellation_reason()
+                .lock()
+                .expect("reason lock")
+                .as_deref(),
+            Some("请求已取消")
+        );
+        assert!(token.is_cancelled());
+    }
+
+    #[test]
+    fn cancellation_reasons_are_scoped_to_the_request_guard() {
+        let state = AgentRuntimeState::default();
+        let first = AgentRequestGuard::start(&state, "session-a".to_string(), "turn-a".to_string())
+            .expect("first request should start");
+        let second =
+            AgentRequestGuard::start(&state, "session-b".to_string(), "turn-b".to_string())
+                .expect("second request should start");
+        *first.cancellation_reason().lock().expect("reason lock") = Some("执行超时".to_string());
+
+        assert_eq!(
+            first
+                .cancellation_reason()
+                .lock()
+                .expect("reason lock")
+                .as_deref(),
+            Some("执行超时")
+        );
+        assert_eq!(
+            second
+                .cancellation_reason()
+                .lock()
+                .expect("reason lock")
+                .as_deref(),
+            None
+        );
+    }
+
+    #[test]
+    fn circuit_breaker_cancels_only_the_failing_turn() {
+        let state = AgentRuntimeState::default();
+        let first = AgentRequestGuard::start(&state, "session-a".to_string(), "turn-a".to_string())
+            .expect("first request should start");
+        let second =
+            AgentRequestGuard::start(&state, "session-b".to_string(), "turn-b".to_string())
+                .expect("second request should start");
+
+        for index in 0..7 {
+            assert_eq!(
+                state.record_tool_call_finished(
+                    "session-a",
+                    "turn-a",
+                    &format!("call-{index}"),
+                    "shell",
+                    true
+                ),
+                None,
+            );
+        }
+        let reason = state
+            .record_tool_call_finished("session-a", "turn-a", "call-8", "shell", true)
+            .expect("eighth consecutive failure should cancel the turn");
+
+        assert_eq!(reason, "工具 shell 连续失败 8 次");
+        assert!(first
+            .cancellation()
+            .load(std::sync::atomic::Ordering::Relaxed));
+        assert!(!second
+            .cancellation()
+            .load(std::sync::atomic::Ordering::Relaxed));
+        assert_eq!(
+            second
+                .cancellation_reason()
+                .lock()
+                .expect("reason lock")
+                .as_deref(),
+            None
+        );
+    }
+
+    #[test]
+    fn idle_watchdog_ignores_active_tools_and_stale_turns() {
+        let state = AgentRuntimeState::default();
+        let request =
+            AgentRequestGuard::start(&state, "session-a".to_string(), "turn-a".to_string())
+                .expect("request should start");
+        state.record_tool_call_started("session-a", "turn-a", "call-a");
+
+        assert_eq!(
+            state.cancel_if_turn_idle(
+                "session-a",
+                "turn-a",
+                &request.cancellation(),
+                Duration::ZERO
+            ),
+            None,
+        );
+        state.record_tool_call_finished("session-a", "turn-a", "call-a", "shell", false);
+        assert!(state
+            .cancel_if_turn_idle(
+                "session-a",
+                "stale-turn",
+                &request.cancellation(),
+                Duration::ZERO
+            )
+            .is_none());
+        assert_eq!(
+            state.cancel_if_turn_idle(
+                "session-a",
+                "turn-a",
+                &request.cancellation(),
+                Duration::ZERO
+            ),
+            Some("[turn_idle_timeout] 连续 0 秒未收到模型或工具进度".to_string()),
+        );
+    }
+
+    #[test]
+    fn thread_snapshots_are_scoped_to_a_session() {
+        let state = AgentRuntimeState::default();
+        let snapshot = state
+            .apply_thread_event(ThreadEvent::TurnStarted {
+                thread_id: "session-a".to_string(),
+                turn_id: "turn-a".to_string(),
+            })
+            .expect("event should create a snapshot");
+        assert_eq!(snapshot.id, "session-a");
+        assert_eq!(state.read_thread_snapshot("session-b"), None);
+        assert_eq!(
+            state
+                .read_thread_snapshot("session-a")
+                .expect("snapshot should persist")
+                .revision,
+            1
+        );
+    }
+
+    #[test]
+    fn explicit_history_reset_is_monotonic_and_releases_old_projection_dedup() {
+        let state = AgentRuntimeState::default();
+        let event = || ThreadEvent::TurnStarted {
+            thread_id: "a".into(),
+            turn_id: "turn".into(),
+        };
+        state
+            .apply_thread_event_once(event(), Some("original-seq-1"))
+            .unwrap();
+        state
+            .apply_thread_event(update_text("a", "old text"))
+            .unwrap();
+        let before = state.read_thread_snapshot("a").unwrap();
+        let reset = state.reset_idle_thread("a").unwrap();
+        assert!(reset.revision > before.revision);
+        assert!(reset.items.is_empty());
+        assert!(matches!(
+            state.take_thread_update("a"),
+            Some(ThreadUpdate::Snapshot { .. })
+        ));
+        assert!(state
+            .apply_thread_event_once(event(), Some("original-seq-1"))
+            .is_some());
+        let _guard = AgentRequestGuard::start(&state, "a".into(), "active".into()).unwrap();
+        let active = state.read_thread_snapshot("a").unwrap();
+        assert!(state.reset_idle_thread("a").is_none());
+        assert_eq!(state.read_thread_snapshot("a"), Some(active));
+    }
+
+    #[test]
+    fn deferred_deltas_publish_once_and_terminal_state_keeps_all_text() {
+        let state = AgentRuntimeState::default();
+        state.apply_thread_event(ThreadEvent::TurnStarted {
+            thread_id: "a".into(),
+            turn_id: "turn".into(),
+        });
+        let chunks = [
+            "#", "#", " heading", "\n", "\n", "*", "*", "bold", "*", "*", "\n", "    ",
+        ];
+        for (index, text) in chunks.iter().enumerate() {
+            let event_id = format!("delta-{index}");
+            let delta = || ThreadEvent::AgentDelta {
+                thread_id: "a".into(),
+                turn_id: "turn".into(),
+                item_id: "assistant".into(),
+                text: text.to_string(),
+            };
+            assert!(state.apply_thread_event_deferred(delta(), Some(&event_id)));
+            assert!(!state.apply_thread_event_deferred(delta(), Some(&event_id)));
+            assert_eq!(state.schedule_thread_publication("a"), index == 0);
+        }
+        let completed = state
+            .apply_thread_event(ThreadEvent::TurnCompleted {
+                thread_id: "a".into(),
+                turn_id: "turn".into(),
+                status: crate::TurnStatus::Completed,
+                error: None,
+            })
+            .unwrap();
+        assert_eq!(completed.status, crate::ThreadStatus::Completed);
+        assert!(
+            matches!(&completed.items[0], crate::ThreadItem::AgentMessage { content, pending, .. } if content == &chunks.concat() && !pending)
+        );
+        assert_eq!(state.take_thread_publication("a"), Some(completed));
+        assert!(state.schedule_thread_publication("a"));
+    }
+
+    fn start_update_turn(state: &AgentRuntimeState, session_id: &str) {
+        assert!(state.apply_thread_event_deferred(
+            ThreadEvent::TurnStarted {
+                thread_id: session_id.into(),
+                turn_id: "turn".into(),
+            },
+            None
+        ));
+    }
+
+    fn update_text(session_id: &str, text: &str) -> ThreadEvent {
+        ThreadEvent::AgentDelta {
+            thread_id: session_id.into(),
+            turn_id: "turn".into(),
+            item_id: "assistant".into(),
+            text: text.into(),
+        }
+    }
+
+    #[test]
+    fn first_thread_update_is_an_authoritative_snapshot() {
+        let state = AgentRuntimeState::default();
+        assert!(state.take_thread_update("missing").is_none());
+        start_update_turn(&state, "a");
+        assert!(state.apply_thread_event_deferred(update_text("a", "hello"), None));
+        let ThreadUpdate::Snapshot { snapshot } = state.take_thread_update("a").unwrap() else {
+            panic!("the first publication must establish a baseline");
+        };
+        assert_eq!(snapshot, state.read_thread_snapshot("a").unwrap());
+        assert_eq!(snapshot.revision, 2);
+        assert!(state.take_thread_update("a").is_none());
+    }
+
+    #[test]
+    fn thread_delta_does_not_retransmit_existing_large_text() {
+        let state = AgentRuntimeState::default();
+        start_update_turn(&state, "a");
+        let existing = "large-existing-text".repeat(50_000);
+        assert!(state.apply_thread_event_deferred(update_text("a", &existing), None));
+        assert!(matches!(
+            state.take_thread_update("a"),
+            Some(ThreadUpdate::Snapshot { .. })
+        ));
+        assert!(state.apply_thread_event_deferred(update_text("a", "new tail"), None));
+        let update = state.take_thread_update("a").unwrap();
+        let ThreadUpdate::Delta {
+            base_revision,
+            revision,
+            metadata,
+            events,
+            ..
+        } = &update
+        else {
+            panic!("a small new event should use delta IPC");
+        };
+        assert_eq!((*base_revision, *revision), (2, 3));
+        assert!(metadata.items.is_empty());
+        assert_eq!(events.len(), 1);
+        assert!(matches!(&events[0], ThreadEvent::AgentDelta { text, .. } if text == "new tail"));
+        assert!(serde_json::to_vec(&update).unwrap().len() < 2_000);
+        assert!(matches!(&state.read_thread_snapshot("a").unwrap().items[0],
+            crate::ThreadItem::AgentMessage { content, .. } if content == &(existing + "new tail")));
+    }
+
+    #[test]
+    fn coalesced_thread_delta_replays_every_accepted_event() {
+        let state = AgentRuntimeState::default();
+        start_update_turn(&state, "a");
+        let ThreadUpdate::Snapshot { mut snapshot } = state.take_thread_update("a").unwrap() else {
+            panic!("initial snapshot expected");
+        };
+        for (index, text) in ["#", " heading", "\n\n", "**bold**"].iter().enumerate() {
+            assert!(state.apply_thread_event_deferred(update_text("a", text), None));
+            assert_eq!(state.schedule_thread_publication("a"), index == 0);
+        }
+        assert!(state.apply_thread_event_deferred(
+            ThreadEvent::TurnCompleted {
+                thread_id: "a".into(),
+                turn_id: "turn".into(),
+                status: crate::TurnStatus::Completed,
+                error: None,
+            },
+            None
+        ));
+        let ThreadUpdate::Delta {
+            base_revision,
+            revision,
+            metadata,
+            events,
+            ..
+        } = state.take_thread_update("a").unwrap()
+        else {
+            panic!("coalesced delta expected");
+        };
+        assert_eq!((base_revision, revision), (1, 6));
+        assert_eq!(events.len(), 5);
+        std::thread::sleep(std::time::Duration::from_millis(2));
+        for event in events {
+            assert!(snapshot.apply(event));
+        }
+        let authoritative = state.read_thread_snapshot("a").unwrap();
+        // Clients replay item events, then use the server's clock metadata.
+        assert_eq!(metadata.active_turn, authoritative.active_turn);
+        snapshot.active_turn = metadata.active_turn.clone();
+        assert_eq!(snapshot, authoritative);
+        assert_eq!(metadata.status, crate::ThreadStatus::Completed);
+        assert!(state.schedule_thread_publication("a"));
+        assert!(state.take_thread_update("a").is_none());
+    }
+
+    #[test]
+    fn queue_revision_gap_falls_back_to_snapshot_then_resumes_deltas() {
+        let state = AgentRuntimeState::default();
+        start_update_turn(&state, "a");
+        state.take_thread_update("a").unwrap();
+        state.replace_thread_queue(
+            "a",
+            vec![crate::QueuedThreadItem {
+                id: "queued".into(),
+                content: "next request".into(),
+                images: Vec::new(),
+                artifacts: Vec::new(),
+            }],
+        );
+        assert!(state.apply_thread_event_deferred(update_text("a", "text"), None));
+        let ThreadUpdate::Snapshot { snapshot } = state.take_thread_update("a").unwrap() else {
+            panic!("queue changes are not represented in the event journal");
+        };
+        assert_eq!(snapshot, state.read_thread_snapshot("a").unwrap());
+        assert_eq!(snapshot.queue.len(), 1);
+        assert!(state.apply_thread_event_deferred(update_text("a", " tail"), None));
+        assert!(matches!(
+            state.take_thread_update("a"),
+            Some(ThreadUpdate::Delta {
+                base_revision: 3,
+                revision: 4,
+                ..
+            })
+        ));
+    }
+
+    #[test]
+    fn journal_event_limit_falls_back_without_losing_text() {
+        let state = AgentRuntimeState::default();
+        start_update_turn(&state, "a");
+        state.take_thread_update("a").unwrap();
+        for _ in 0..257 {
+            assert!(state.apply_thread_event_deferred(update_text("a", "x"), None));
+        }
+        {
+            let journals = state.thread_updates.lock().unwrap();
+            let journal = &journals["a"];
+            assert_eq!(journal.events.len(), 256);
+            assert!(journal.bytes <= 512 * 1024);
+        }
+        let ThreadUpdate::Snapshot { snapshot } = state.take_thread_update("a").unwrap() else {
+            panic!("evicted events require a complete snapshot");
+        };
+        assert_eq!(snapshot.revision, 258);
+        assert!(
+            matches!(&snapshot.items[0], crate::ThreadItem::AgentMessage { content, .. }
+            if content == &"x".repeat(257))
+        );
+        assert!(state.apply_thread_event_deferred(update_text("a", "tail"), None));
+        assert!(matches!(
+            state.take_thread_update("a"),
+            Some(ThreadUpdate::Delta { .. })
+        ));
+    }
+
+    #[test]
+    fn journal_byte_limit_and_oversized_event_preserve_snapshot_recovery() {
+        let state = AgentRuntimeState::default();
+        start_update_turn(&state, "a");
+        state.take_thread_update("a").unwrap();
+        let text = "a".repeat(180_000);
+        for _ in 0..3 {
+            assert!(state.apply_thread_event_deferred(update_text("a", &text), None));
+        }
+        {
+            let journals = state.thread_updates.lock().unwrap();
+            let journal = &journals["a"];
+            assert!(journal.events.len() < 3);
+            assert_eq!(
+                journal.bytes,
+                journal
+                    .events
+                    .iter()
+                    .map(|(_, bytes, _)| bytes)
+                    .sum::<usize>()
+            );
+            assert!(journal.bytes <= 512 * 1024);
+        }
+        assert!(matches!(
+            state.take_thread_update("a"),
+            Some(ThreadUpdate::Snapshot { .. })
+        ));
+        let oversized = "b".repeat(600_000);
+        assert!(state.apply_thread_event_deferred(update_text("a", &oversized), None));
+        {
+            let journals = state.thread_updates.lock().unwrap();
+            assert!(journals["a"].events.is_empty());
+            assert_eq!(journals["a"].bytes, 0);
+        }
+        let ThreadUpdate::Snapshot { snapshot } = state.take_thread_update("a").unwrap() else {
+            panic!("the event size cap must never truncate authoritative state");
+        };
+        assert!(
+            matches!(&snapshot.items[0], crate::ThreadItem::AgentMessage { content, .. }
+            if content == &(text.repeat(3) + &oversized))
+        );
+    }
+
+    #[test]
+    fn rejected_duplicate_stale_and_empty_events_do_not_create_revision_gaps() {
+        let state = AgentRuntimeState::default();
+        start_update_turn(&state, "a");
+        state.take_thread_update("a").unwrap();
+        assert!(state.apply_thread_event_deferred(update_text("a", "accepted"), Some("event")));
+        assert!(!state.apply_thread_event_deferred(update_text("a", "duplicate"), Some("event")));
+        assert!(!state.apply_thread_event_deferred(
+            ThreadEvent::AgentDelta {
+                thread_id: "a".into(),
+                turn_id: "old-turn".into(),
+                item_id: "assistant".into(),
+                text: "stale".into(),
+            },
+            Some("old-event")
+        ));
+        assert!(!state.apply_thread_event_deferred(update_text("a", ""), None));
+        let ThreadUpdate::Delta {
+            base_revision,
+            revision,
+            events,
+            ..
+        } = state.take_thread_update("a").unwrap()
+        else {
+            panic!("rejected events must not affect replay continuity");
+        };
+        assert_eq!((base_revision, revision, events.len()), (1, 2, 1));
+        assert!(matches!(&events[0], ThreadEvent::AgentDelta { text, .. } if text == "accepted"));
+    }
+
+    #[test]
+    fn thread_update_baselines_and_event_dedup_are_session_isolated() {
+        let state = AgentRuntimeState::default();
+        start_update_turn(&state, "a");
+        start_update_turn(&state, "b");
+        state.take_thread_update("a").unwrap();
+        for session in ["a", "b"] {
+            assert!(state
+                .apply_thread_event_deferred(update_text(session, session), Some("same-event-id")));
+        }
+        let ThreadUpdate::Delta { id, events, .. } = state.take_thread_update("a").unwrap() else {
+            panic!("a already has a baseline");
+        };
+        assert_eq!(id, "a");
+        assert!(events.iter().all(|event| event.source_thread_id() == "a"));
+        let ThreadUpdate::Snapshot { snapshot } = state.take_thread_update("b").unwrap() else {
+            panic!("b still needs its own initial baseline");
+        };
+        assert_eq!(snapshot.id, "b");
+        assert!(
+            matches!(&snapshot.items[0], crate::ThreadItem::AgentMessage { content, .. } if content == "b")
+        );
+    }
+
+    #[test]
+    fn reasoning_chunks_keep_a_bounded_item_count_and_preserve_boundaries() {
+        let state = AgentRuntimeState::default();
+        state.apply_thread_event(ThreadEvent::TurnStarted {
+            thread_id: "a".into(),
+            turn_id: "turn".into(),
+        });
+        for index in 0..2000 {
+            assert!(state.apply_thread_event_deferred(
+                ThreadEvent::ItemAdded {
+                    thread_id: "a".into(),
+                    turn_id: "turn".into(),
+                    item: crate::ThreadItem::TimelineEvent {
+                        id: format!("reasoning-{index}"),
+                        data: serde_json::json!({"type":"reasoning_delta","text":"*\n"})
+                    },
+                },
+                None
+            ));
+        }
+        let snapshot = state.read_thread_snapshot("a").unwrap();
+        assert_eq!(snapshot.items.len(), 1);
+        assert!(
+            matches!(&snapshot.items[0], crate::ThreadItem::TimelineEvent { data, .. } if data["text"] == "*\n".repeat(2000))
+        );
+        state.apply_thread_event_deferred(
+            ThreadEvent::AgentDelta {
+                thread_id: "a".into(),
+                turn_id: "turn".into(),
+                item_id: "assistant".into(),
+                text: "answer".into(),
+            },
+            None,
+        );
+        state.apply_thread_event_deferred(
+            ThreadEvent::ItemAdded {
+                thread_id: "a".into(),
+                turn_id: "turn".into(),
+                item: crate::ThreadItem::TimelineEvent {
+                    id: "later-reasoning".into(),
+                    data: serde_json::json!({"type":"reasoning_delta","text":"later"}),
+                },
+            },
+            None,
+        );
+        assert_eq!(state.read_thread_snapshot("a").unwrap().items.len(), 3);
+    }
+
+    #[test]
+    fn repeated_event_id_does_not_duplicate_a_snapshot_delta() {
+        let state = AgentRuntimeState::default();
+        let started = ThreadEvent::TurnStarted {
+            thread_id: "session-a".to_string(),
+            turn_id: "turn-a".to_string(),
+        };
+        assert!(state
+            .apply_thread_event_once(started, Some("event-1"))
+            .is_some());
+        let message = ThreadEvent::ItemAdded {
+            thread_id: "session-a".to_string(),
+            turn_id: "turn-a".to_string(),
+            item: crate::ThreadItem::AgentMessage {
+                id: "assistant:turn-a".to_string(),
+                content: String::new(),
+                pending: true,
+            },
+        };
+        assert!(state
+            .apply_thread_event_once(message, Some("event-2"))
+            .is_some());
+        let delta = || ThreadEvent::AgentDelta {
+            thread_id: "session-a".to_string(),
+            turn_id: "turn-a".to_string(),
+            item_id: "assistant:turn-a".to_string(),
+            text: "hello".to_string(),
+        };
+        assert!(state
+            .apply_thread_event_once(delta(), Some("event-3"))
+            .is_some());
+        assert!(state
+            .apply_thread_event_once(delta(), Some("event-3"))
+            .is_none());
+        let snapshot = state
+            .read_thread_snapshot("session-a")
+            .expect("snapshot should persist");
+        assert_eq!(snapshot.revision, 3);
+        assert!(
+            matches!(&snapshot.items[0], crate::ThreadItem::AgentMessage { content, .. } if content == "hello")
+        );
+    }
+
+    #[test]
+    fn one_context_event_updates_both_projections_and_replays_idempotently() {
+        let state = AgentRuntimeState::default();
+        state
+            .apply_thread_event(ThreadEvent::TurnStarted {
+                thread_id: "a".into(),
+                turn_id: "t".into(),
+            })
+            .unwrap();
+        let context = ThreadEvent::ItemAdded {
+            thread_id: "a".into(),
+            turn_id: "t".into(),
+            item: crate::ThreadItem::Context {
+                id: "context-event".into(),
+                data: serde_json::json!({"context_tokens": 900000}),
+            },
+        };
+        let usage = ThreadEvent::UsageUpdated {
+            thread_id: "a".into(),
+            turn_id: "t".into(),
+            usage: crate::ThreadUsageSnapshot {
+                context_tokens: Some(900000),
+                context_window: Some(1000000),
+                ..Default::default()
+            },
+        };
+        assert!(state
+            .apply_thread_event_once(context.clone(), Some("context-event"))
+            .is_some());
+        assert!(state
+            .apply_thread_event_once(usage.clone(), Some("context-event"))
+            .is_some());
+        assert!(state
+            .apply_thread_event_once(context, Some("context-event"))
+            .is_none());
+        assert!(state
+            .apply_thread_event_once(usage, Some("context-event"))
+            .is_none());
+        let snapshot = state.read_thread_snapshot("a").unwrap();
+        assert_eq!(snapshot.items.len(), 1);
+        assert_eq!(snapshot.runtime.usage.context_tokens, Some(900000));
+        assert_eq!(snapshot.revision, 3);
+        assert!(state.read_thread_snapshot_after("a", Some(3)).is_none());
+        assert!(state.read_thread_snapshot_after("a", Some(4)).is_none());
+        assert_eq!(
+            state.read_thread_snapshot_after("a", Some(2)),
+            Some(snapshot)
+        );
+        assert!(state.read_thread_snapshot_after("missing", None).is_none());
+    }
+
+    #[test]
+    fn queued_requests_remain_available_until_dispatched_or_removed() {
+        let state = AgentRuntimeState::default();
+        let request = || AgentChatRequest {
+            model_id: "provider:model".to_string(),
+            message: "queued".to_string(),
+            jira_context: None,
+            artifacts: vec![],
+            workspace_path: None,
+            session_id: Some("session-a".to_string()),
+            attachments: vec![],
+            turn_id: None,
+            permission_mode: None,
+            analysis_mode: false,
+            context: vec![],
+            tool_policy: Default::default(),
+            skill_ids: vec![],
+            requested_tool: None,
+            reasoning_effort: None,
+            task_plan_mode: None,
+            task_plan_min_steps: None,
+            execution_target: None,
+            execution_targets: Vec::new(),
+            collaboration_depth: None,
+        };
+        let (snapshot, should_dispatch) = state
+            .enqueue_agent_request("session-a", "queue-a".to_string(), request())
+            .expect("enqueue should work");
+        assert!(should_dispatch);
+        assert_eq!(snapshot.queue.len(), 1);
+        let (_, should_dispatch) = state
+            .enqueue_agent_request("session-a", "queue-b".to_string(), request())
+            .expect("enqueue should work");
+        assert!(!should_dispatch);
+        let reordered = state
+            .reorder_queued_agent_requests("session-a", &["queue-b".into(), "queue-a".into()])
+            .expect("queue should reorder");
+        assert_eq!(reordered.queue.iter().map(|item| item.id.as_str()).collect::<Vec<_>>(), vec!["queue-b", "queue-a"]);
+        assert!(state
+            .reorder_queued_agent_requests("session-a", &["queue-b".into(), "queue-b".into()])
+            .is_err());
+        let (request, snapshot) = state
+            .dequeue_agent_request("session-a")
+            .expect("first queued request should remain available");
+        assert_eq!(request.message, "queued");
+        assert_eq!(snapshot.queue.len(), 1);
+        let restored = state.restore_queued_agent_request("session-a", request);
+        assert_eq!(restored.queue.len(), 2);
+        assert!(state.dispatch_queued_request("session-a"));
+        assert!(state.read_thread_snapshot("session-b").is_none());
+    }
+
+    #[test]
+    fn removing_a_queued_request_preserves_other_session_queues() {
+        let state = AgentRuntimeState::default();
+        let request = |session_id: &str| AgentChatRequest {
+            model_id: "provider:model".to_string(),
+            message: format!("queued-{session_id}"),
+            jira_context: None,
+            artifacts: vec![],
+            workspace_path: None,
+            session_id: Some(session_id.to_string()),
+            attachments: vec![],
+            turn_id: None,
+            permission_mode: None,
+            analysis_mode: false,
+            context: vec![],
+            tool_policy: Default::default(),
+            skill_ids: vec![],
+            requested_tool: None,
+            reasoning_effort: None,
+            task_plan_mode: None,
+            task_plan_min_steps: None,
+            execution_target: None,
+            execution_targets: Vec::new(),
+            collaboration_depth: None,
+        };
+        state
+            .enqueue_agent_request("session-a", "queue-a".to_string(), request("session-a"))
+            .expect("first queue should work");
+        state
+            .enqueue_agent_request("session-b", "queue-b".to_string(), request("session-b"))
+            .expect("second queue should work");
+
+        let snapshot = state
+            .remove_queued_agent_request("session-a", "queue-a")
+            .expect("target queue item should be removed");
+        assert!(snapshot.queue.is_empty());
+        assert_eq!(
+            state
+                .read_thread_snapshot("session-b")
+                .expect("other session snapshot should remain")
+                .queue,
+            vec![crate::QueuedThreadItem {
+                id: "queue-b".to_string(),
+                content: "queued-session-b".to_string(),
+                images: Vec::new(),
+                artifacts: Vec::new(),
+            }],
+        );
+    }
+
+    #[test]
+    fn queued_session_ids_only_lists_sessions_with_pending_messages() {
+        let state = AgentRuntimeState::default();
+        let request = AgentChatRequest {
+            model_id: "provider:model".to_string(),
+            message: "queued".to_string(),
+            jira_context: None,
+            artifacts: vec![],
+            workspace_path: None,
+            session_id: Some("session-a".to_string()),
+            attachments: vec![],
+            turn_id: None,
+            permission_mode: None,
+            analysis_mode: false,
+            context: vec![],
+            tool_policy: Default::default(),
+            skill_ids: vec![],
+            requested_tool: None,
+            reasoning_effort: None,
+            task_plan_mode: None,
+            task_plan_min_steps: None,
+            execution_target: None,
+            execution_targets: Vec::new(),
+            collaboration_depth: None,
+        };
+        state
+            .enqueue_agent_request("session-a", "queue-a".to_string(), request)
+            .expect("queue should accept request");
+        assert_eq!(state.queued_session_ids(), vec!["session-a".to_string()]);
+    }
+
+    #[test]
+    fn queue_preview_contains_cached_references_without_image_bytes() {
+        use super::{queue_items, QueuedAgentRequest};
+        use crate::QueuedThreadItem;
+        use std::collections::VecDeque;
+        let request = serde_json::from_value(serde_json::json!({
+            "modelId": "model", "message": "follow up", "workspacePath":"D:/work", "artifacts": [
+                {"name":"notes.txt","kind":"file","path":"D:/docs/notes.txt","size":25,"status":"user_attachment","content":"private file contents"},
+                {"name":"project","kind":"directory","path":"D:/projects/project","status":"user_attachment"},
+                {"name":"work","kind":"directory","path":"D:/work","status":"workspace_context"}
+            ],
+            "attachments": [
+                {"name":"cached.png","mediaType":"image/png","path":"cache/image.png","dataUrl":"large-inline-payload"},
+                {"name":"legacy.png","mediaType":"image/png","dataUrl":"legacy-inline-payload"}
+            ]
+        })).unwrap();
+        let preview = queue_items(&VecDeque::from([QueuedAgentRequest { id: "queued".into(), request }]));
+        let encoded = serde_json::to_string(&preview).unwrap();
+        assert!(encoded.contains("cache/image.png"));
+        assert!(!encoded.contains("inline-payload"));
+        assert_eq!(preview[0].images.len(), 1);
+        assert_eq!(preview[0].images[0].name, "cached.png");
+        assert_eq!(preview[0].artifacts.len(), 2);
+        assert_eq!(preview[0].artifacts[0].name, "notes.txt");
+        assert!(preview[0].artifacts.iter().all(|artifact| artifact.path != "D:/work"));
+        assert!(!encoded.contains("private file contents"));
+        // Existing durable snapshots predate thumbnail metadata.
+        let legacy: QueuedThreadItem = serde_json::from_str(r#"{"id":"old","content":"text"}"#).unwrap();
+        assert!(legacy.images.is_empty());
+        assert!(legacy.artifacts.is_empty());
+    }
+
+    /// 后台任务完成通知会被塞进队列当作 turn 派发，但它不是用户写的消息。
+    /// 一旦漏进快照，追加消息卡就会为「用户没发过的消息」弹出来。
+    #[test]
+    fn queue_preview_hides_host_generated_background_results() {
+        use super::{queue_items, QueuedAgentRequest};
+        use std::collections::VecDeque;
+        let user = serde_json::from_value(serde_json::json!({
+            "modelId": "model", "message": "顺便把 lint 也跑一遍", "artifacts": []
+        })).unwrap();
+        let background = serde_json::from_value(serde_json::json!({
+            "modelId": "model",
+            "message": "这是 Rust 后台任务完成通知，非用户新指令。",
+            "artifacts": [],
+            "turnId": format!("{}shell-1", crate::background::BACKGROUND_RESULT_PREFIX)
+        })).unwrap();
+        let preview = queue_items(&VecDeque::from([
+            QueuedAgentRequest { id: "user".into(), request: user },
+            QueuedAgentRequest { id: "background".into(), request: background },
+        ]));
+        assert_eq!(preview.len(), 1);
+        assert_eq!(preview[0].id, "user");
+        assert_eq!(preview[0].content, "顺便把 lint 也跑一遍");
+    }
+
+    #[test]
+    fn queue_waits_for_an_active_request_in_the_same_session() {
+        let state = AgentRuntimeState::default();
+        let active =
+            AgentRequestGuard::start(&state, "session-a".to_string(), "turn-a".to_string())
+                .expect("request should start");
+        let request = AgentChatRequest {
+            model_id: "provider:model".to_string(),
+            message: "queued".to_string(),
+            jira_context: None,
+            artifacts: vec![],
+            workspace_path: None,
+            session_id: Some("session-a".to_string()),
+            attachments: vec![],
+            turn_id: None,
+            permission_mode: None,
+            analysis_mode: false,
+            context: vec![],
+            tool_policy: Default::default(),
+            skill_ids: vec![],
+            requested_tool: None,
+            reasoning_effort: None,
+            task_plan_mode: None,
+            task_plan_min_steps: None,
+            execution_target: None,
+            execution_targets: Vec::new(),
+            collaboration_depth: None,
+        };
+
+        let (_, should_dispatch) = state
+            .enqueue_agent_request("session-a", "queue-a".to_string(), request)
+            .expect("enqueue should work");
+        assert!(!should_dispatch);
+        assert!(!state.dispatch_queued_request("session-a"));
+
+        drop(active);
+        assert!(state.dispatch_queued_request("session-a"));
+    }
+
+    #[test]
+    fn queued_request_keeps_its_execution_target() {
+        let state = AgentRuntimeState::default();
+        let request = AgentChatRequest {
+            model_id: "provider:model".to_string(),
+            message: "queued".to_string(),
+            jira_context: None,
+            artifacts: vec![],
+            workspace_path: Some("/workspace".to_string()),
+            session_id: Some("session-a".to_string()),
+            attachments: vec![],
+            turn_id: None,
+            permission_mode: None,
+            analysis_mode: false,
+            context: vec![],
+            tool_policy: Default::default(),
+            skill_ids: vec![],
+            requested_tool: None,
+            reasoning_effort: None,
+            task_plan_mode: None,
+            task_plan_min_steps: None,
+            execution_target: Some(AgentExecutionTarget {
+                kind: "ssh".to_string(),
+                connection_id: Some("ssh-a".to_string()),
+                profile_id: None,
+                root: Some("/workspace".to_string()),
+            }),
+            execution_targets: Vec::new(),
+            collaboration_depth: None,
+        };
+        state
+            .enqueue_agent_request("session-a", "queue-a".to_string(), request)
+            .expect("enqueue should work");
+        let (request, _) = state
+            .dequeue_agent_request("session-a")
+            .expect("queue should dequeue");
+        assert!(
+            matches!(request.execution_target, Some(AgentExecutionTarget { kind, connection_id: Some(connection_id), .. }) if kind == "ssh" && connection_id == "ssh-a")
+        );
+    }
+
+    #[test]
+    fn queue_nack_restores_identity_and_original_order() {
+        let state = AgentRuntimeState::default();
+        let request = |message: &str| AgentChatRequest {
+            model_id: "provider:model".to_string(),
+            message: message.to_string(),
+            jira_context: None,
+            artifacts: vec![],
+            workspace_path: None,
+            session_id: Some("session-a".to_string()),
+            attachments: vec![],
+            turn_id: None,
+            permission_mode: None,
+            analysis_mode: false,
+            context: vec![],
+            tool_policy: Default::default(),
+            skill_ids: vec![],
+            requested_tool: None,
+            reasoning_effort: None,
+            task_plan_mode: None,
+            task_plan_min_steps: None,
+            execution_target: None,
+            execution_targets: Vec::new(),
+            collaboration_depth: None,
+        };
+        for (id, message) in [("queue-a", "one"), ("queue-b", "two"), ("queue-c", "three")] {
+            state
+                .enqueue_agent_request("session-a", id.to_string(), request(message))
+                .expect("enqueue should work");
+        }
+
+        let (claim, snapshot) = state
+            .claim_queued_agent_request("session-a", "queue-b", "lease-b".to_string())
+            .expect("claim should not fail")
+            .expect("queue-b should be claimable");
+        assert_eq!(claim.id, "queue-b");
+        assert_eq!(claim.request.message, "two");
+        assert_eq!(
+            snapshot
+                .queue
+                .iter()
+                .map(|item| item.id.as_str())
+                .collect::<Vec<_>>(),
+            vec!["queue-a", "queue-c"]
+        );
+
+        let restored = state
+            .nack_agent_queue_claim("session-a", "queue-b", "lease-b")
+            .expect("nack should restore the claim");
+        assert_eq!(
+            restored
+                .queue
+                .iter()
+                .map(|item| item.id.as_str())
+                .collect::<Vec<_>>(),
+            vec!["queue-a", "queue-b", "queue-c"]
+        );
+    }
+
+    #[test]
+    fn queue_claim_has_single_consumer_and_ack_is_lease_checked() {
+        let state = AgentRuntimeState::default();
+        let request = AgentChatRequest {
+            model_id: "provider:model".to_string(),
+            message: "steer exactly once".to_string(),
+            jira_context: None,
+            artifacts: vec![],
+            workspace_path: None,
+            session_id: Some("session-a".to_string()),
+            attachments: vec![],
+            turn_id: None,
+            permission_mode: None,
+            analysis_mode: false,
+            context: vec![],
+            tool_policy: Default::default(),
+            skill_ids: vec![],
+            requested_tool: None,
+            reasoning_effort: None,
+            task_plan_mode: None,
+            task_plan_min_steps: None,
+            execution_target: None,
+            execution_targets: Vec::new(),
+            collaboration_depth: None,
+        };
+        state
+            .enqueue_agent_request("session-a", "queue-a".to_string(), request)
+            .expect("enqueue should work");
+        let (claim, snapshot) = state
+            .claim_queued_agent_request("session-a", "queue-a", "lease-a".to_string())
+            .expect("first claim should work")
+            .expect("message should be pending");
+        assert!(snapshot.queue.is_empty());
+        assert!(state
+            .claim_queued_agent_request("session-a", "queue-a", "lease-b".to_string())
+            .expect("second claim should not error")
+            .is_none());
+        assert!(state
+            .ack_agent_queue_claim("session-a", &claim.id, "wrong-lease")
+            .is_err());
+        state
+            .ack_agent_queue_claim("session-a", &claim.id, &claim.lease_id)
+            .expect("owner should acknowledge the claim");
+        assert!(state.queued_agent_request("session-a", "queue-a").is_none());
+    }
+
+    #[test]
+    fn interrupting_an_active_turn_does_not_remove_pending_queue_items() {
+        let state = AgentRuntimeState::default();
+        let active =
+            AgentRequestGuard::start(&state, "session-a".to_string(), "turn-a".to_string())
+                .expect("active request should start");
+        let request = AgentChatRequest {
+            model_id: "provider:model".to_string(),
+            message: "keep after interrupt".to_string(),
+            jira_context: None,
+            artifacts: vec![],
+            workspace_path: None,
+            session_id: Some("session-a".to_string()),
+            attachments: vec![],
+            turn_id: None,
+            permission_mode: None,
+            analysis_mode: false,
+            context: vec![],
+            tool_policy: Default::default(),
+            skill_ids: vec![],
+            requested_tool: None,
+            reasoning_effort: None,
+            task_plan_mode: None,
+            task_plan_min_steps: None,
+            execution_target: None,
+            execution_targets: Vec::new(),
+            collaboration_depth: None,
+        };
+        state
+            .enqueue_agent_request("session-a", "queue-a".to_string(), request)
+            .expect("enqueue should work while another turn is active");
+        active
+            .cancellation()
+            .store(true, std::sync::atomic::Ordering::Relaxed);
+        drop(active);
+
+        let queued = state
+            .queued_agent_request("session-a", "queue-a")
+            .expect("interrupt must preserve pending work");
+        assert_eq!(queued.message, "keep after interrupt");
+        assert!(state.dispatch_queued_request("session-a"));
+    }
+}

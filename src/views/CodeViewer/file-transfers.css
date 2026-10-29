@@ -1,0 +1,23 @@
+.code-download-pending progress { appearance: none; border: 0; border-radius: var(--radius-sm); overflow: hidden; background: var(--bg-hover); accent-color: var(--accent-primary); }
+.code-download-pending progress::-webkit-progress-bar { background: var(--bg-hover); }
+.code-download-pending progress::-webkit-progress-value { background: var(--accent-primary); border-radius: var(--radius-sm); }
+.code-download-pending progress:indeterminate { background: linear-gradient(90deg, var(--bg-hover), var(--accent-primary), var(--bg-hover)); background-size: 200% 100%; animation: code-transfer-pulse 1.5s linear infinite; }
+.code-transfer-path { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 3px; }
+.code-transfer-error { color: var(--danger-text); overflow-wrap: anywhere; }
+.code-file-state.is-saved { color: var(--success-text); }
+.code-file-state { display: inline-flex; gap: 4px; align-items: center; flex-shrink: 0; color: var(--text-secondary); font-size: 11px; }
+.code-file-state.is-dirty { color: var(--warning-text); }
+.code-file-state.is-error { color: var(--danger-text); }
+html[data-theme] .code-viewer-container .code-viewer-tree-item.is-upload-target, html[data-theme] .code-viewer-container .archive-aside-tree.is-upload-target { background: var(--bg-selected); }
+html[data-theme] .code-viewer-container .code-viewer-tree-row.is-dragging { opacity: .48; }
+html[data-theme] .code-viewer-container .code-viewer-tree-item.is-move-target { background: var(--bg-selected); box-shadow: inset 0 0 0 1px var(--accent-primary); }
+html[data-theme] .code-viewer-container .archive-aside-tree.is-move-target { background: color-mix(in srgb, var(--bg-selected) 58%, transparent); }
+body.code-tree-dragging, body.code-tree-dragging * { cursor: grabbing !important; user-select: none !important; }
+body.code-tree-dragging .code-viewer-tree-item { cursor: grab; }
+.code-tree-drag-ghost { position: fixed; z-index: 1300; display: flex; flex-direction: column; gap: 1px; max-width: 260px; padding: 6px 10px; border-radius: var(--radius-sm); background: var(--bg-elevated); color: var(--text-primary); box-shadow: var(--shadow-lg); font-size: 12px; line-height: 1.4; pointer-events: none; }
+.code-tree-drag-ghost .code-tree-drag-name { overflow: hidden; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.code-tree-drag-ghost .code-tree-drag-hint { overflow: hidden; color: var(--text-tertiary); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.code-transfer-confirm .confirm-dialog-modal { border: 0; width: min(540px, 94vw); }
+.code-transfer-confirm .confirm-dialog-actions { flex-wrap: wrap; }
+@keyframes code-transfer-pulse { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .code-download-pending progress:indeterminate { animation: none; } }

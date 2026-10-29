@@ -1,0 +1,346 @@
+
+
+/* Keep composer controls at the same compact density as the rest of the toolbar. */
+.conversation-page .composer-icon {
+  width: 30px;
+  height: 30px;
+}
+
+.conversation-page .composer-icon > svg {
+  width: 16px;
+  height: 16px;
+}
+
+.conversation-page .sandbox-badge {
+  min-height: 30px;
+  padding: 0 7px;
+  font-size: 12px;
+}
+
+@media (max-width: 680px) {
+  .conversation-page .chat-footer,
+  .conversation-page .message-list {
+    width: calc(100% - 36px) !important;
+  }
+
+  .conversation-page .composer-toolbar {
+    align-items: stretch;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .conversation-page .composer-left-actions,
+  .conversation-page .composer-actions {
+    width: 100%;
+  }
+
+  .conversation-page .composer-left-actions {
+    gap: 4px;
+  }
+
+  .conversation-page .sandbox-badge,
+  .conversation-page .context-chip {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .conversation-page .context-chip {
+    margin-left: auto;
+  }
+
+  .conversation-page .composer-actions {
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .conversation-page .model-select-wrap {
+    max-width: calc(100% - 76px);
+  }
+
+  .conversation-page .model-trigger {
+    max-width: 100%;
+  }
+
+  .conversation-page .composer-usage-summary {
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+  }
+
+  .conversation-page .composer-usage-summary > span,
+  .conversation-page .composer-usage-summary > button,
+  .conversation-page .composer-usage-summary > .composer-usage-item {
+    padding: 0 5px;
+  }
+}
+
+@media (max-width: 480px) {
+  .conversation-page .composer-usage-summary > .composer-usage-item.composer-cache-stat { display: none; }
+  /* 缓存命中被隐藏后，它后面那个兄弟项不该再顶着一条左分隔线。 */
+  .conversation-page .composer-usage-summary > .composer-usage-item.composer-cache-stat + span::after { display: none; }
+}
+
+html[data-theme] .conversation-page .agent-command-shell.agent-command-live-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+html[data-theme] .conversation-page .agent-command-live-label small {
+  color: var(--text-tertiary);
+  font-size: 10px;
+}
+
+html[data-theme] .conversation-page .agent-command-live-output {
+  max-height: 160px;
+  color: var(--text-secondary);
+}
+
+html[data-theme] .conversation-page .agent-command-live-status {
+  overflow: hidden;
+  color: var(--text-tertiary);
+  font-size: 10px;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-theme] .conversation-page .queued-message-menu button:last-child:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+html[data-theme] .conversation-page .environment-status-grid,
+html[data-theme] .conversation-page .environment-actions,
+html[data-theme] .conversation-page .history-archive-section,
+html[data-theme] .conversation-page .model-menu-divider,
+html[data-theme] .conversation-page .composer-menu-divider,
+html[data-theme] .conversation-page .ssh-status-popover-heading,
+html[data-theme] .conversation-page .analysis-file-changes {
+  border-color: var(--border-subtle);
+}
+
+html[data-theme] .conversation-page .workspace-git-change-link,
+html[data-theme] .conversation-page .slash-menu-icon,
+html[data-theme] .conversation-page .slash-menu-row em {
+  border-color: transparent;
+  color: var(--accent-primary);
+  background: var(--accent-subtle);
+}
+
+html[data-theme] .conversation-page .workspace-git-change-link:hover,
+html[data-theme] .conversation-page .model-trigger:hover,
+html[data-theme] .conversation-page .composer-icon:hover,
+html[data-theme] .conversation-page .sandbox-badge:hover,
+html[data-theme] .conversation-page .ssh-status-trigger:hover,
+html[data-theme] .conversation-page .usage-trigger:hover,
+html[data-theme] .conversation-page .markdown-body a[data-local-path]:hover,
+html[data-theme] .conversation-page .markdown-body a.local-path-link:hover,
+html[data-theme] .conversation-page .message-actions button:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+html[data-theme] .conversation-page .ssh-status-trigger {
+  color: var(--text-secondary);
+}
+
+html[data-theme] .conversation-page .ssh-status-trigger.connected .ssh-status-summary {
+  color: var(--text-secondary);
+}
+
+html[data-theme] .conversation-page .ssh-status-note {
+  color: var(--text-secondary);
+}
+
+html[data-theme] .conversation-page .ssh-status-note.error {
+  color: var(--status-danger-text);
+}
+
+html[data-theme] .conversation-page .ssh-status-note.checking {
+  color: var(--accent-primary);
+}
+
+html[data-theme] .conversation-page .empty-mark,
+html[data-theme] .conversation-page .message-avatar {
+  color: var(--accent-primary);
+  background: var(--accent-subtle);
+  box-shadow: none;
+}
+
+html[data-theme] .conversation-page .message-row.user .message-avatar {
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+}
+
+html[data-theme] .conversation-page .message-content,
+html[data-theme] .conversation-page .attachment-card,
+html[data-theme] .conversation-page .file-attachment-card,
+html[data-theme] .conversation-page .markdown-body a[data-local-path],
+html[data-theme] .conversation-page .markdown-body a.local-path-link {
+  border-color: transparent;
+  color: var(--text-primary);
+  background: var(--bg-card);
+}
+
+html[data-theme] .conversation-page .message-row.user .message-content {
+  border: 0;
+  box-shadow: none;
+  background: color-mix(in srgb, var(--accent-subtle) 68%, transparent);
+}
+
+/* Assistant replies are part of the conversation canvas. The generic card
+   rule above also matches them, so restore the transparent reply treatment
+   after the themed surface rules have been applied. */
+html[data-theme] .conversation-page .message-row.assistant .message-content {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+html[data-theme] .conversation-page .border-glow-card.composer-shell {
+  color: var(--text-primary);
+}
+
+html[data-theme] .conversation-page .composer-shell textarea,
+html[data-theme] .conversation-page .composer-input,
+html[data-theme] .conversation-page .model-search input {
+  color: var(--text-primary);
+}
+
+html[data-theme] .conversation-page .composer-shell textarea::placeholder,
+html[data-theme] .conversation-page .composer-input:empty::before {
+  color: var(--text-tertiary);
+}
+
+html[data-theme] .conversation-page .composer-shell.drop-target-active {
+  border-color: transparent;
+  background: var(--bg-surface);
+  box-shadow: var(--focus-glow);
+}
+
+html[data-theme] .conversation-page .composer-icon,
+html[data-theme] .conversation-page .sandbox-badge,
+html[data-theme] .conversation-page .model-select-wrap {
+  color: var(--text-secondary);
+}
+
+html[data-theme] .conversation-page .model-trigger,
+html[data-theme] .conversation-page .composer-task-steps,
+html[data-theme] .conversation-page .model-search,
+html[data-theme] .conversation-page .ssh-status-metric,
+html[data-theme] .conversation-page .analysis-progress-panel {
+  border-color: transparent;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+html[data-theme] .conversation-page .context-usage-ring::after {
+  background: var(--bg-card);
+}
+
+html[data-theme] .conversation-page .context-usage-ring {
+  --context-ring-color: var(--accent-primary);
+  background: conic-gradient(var(--context-ring-color) var(--context-progress), var(--bg-surface) 0);
+}
+
+/* The full-access option is deliberately a danger state. These rules live
+   after generic selected/hover rules so the semantic warning cannot be reset
+   by theme overrides. */
+html[data-theme] .conversation-page .sandbox-badge.full {
+  /* Permission emphasis belongs to the label and icon; keep the control
+     surface neutral so it does not read like a red filled badge. */
+  color: color-mix(in srgb, var(--danger-text) 76%, #7f1d1d 24%);
+  background: transparent;
+}
+
+html[data-theme] .conversation-page .sandbox-badge.full:hover {
+  color: color-mix(in srgb, var(--danger-text) 76%, #7f1d1d 24%);
+  background: var(--composer-control-hover);
+}
+
+html[data-theme] .conversation-page .sandbox-menu-row.full-option.selected,
+html[data-theme] .conversation-page .sandbox-menu-row.full-option.selected:hover {
+  color: color-mix(in srgb, var(--danger-text) 76%, #7f1d1d 24%);
+  background: var(--bg-hover);
+  box-shadow: none;
+}
+
+html[data-theme] .conversation-page .sandbox-menu-row.full-option b,
+html[data-theme] .conversation-page .sandbox-menu-row.full-option > svg {
+  color: color-mix(in srgb, var(--danger-text) 76%, #7f1d1d 24%);
+}
+
+.agent-turn-phase { align-items: flex-start; min-height: 30px; padding: 5px 0; }
+.conversation-page .agent-turn-summary { gap: 4px; }
+.conversation-page div.agent-turn-summary { cursor: default; }
+.conversation-page .agent-turn-summary > span { min-width: 0; margin-right: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.agent-turn-phase > svg { flex: 0 0 auto; margin-top: 1px; color: var(--accent-primary); }
+.agent-turn-phase > span { display: inline-flex; min-width: 0; flex-wrap: wrap; gap: 4px; }
+.agent-turn-phase b { color: var(--text-primary); font-weight: 600; }
+.agent-turn-phase small { color: var(--text-tertiary); font-size: 10px; }
+.agent-command-input, .agent-command-output { border-radius: 6px; background: var(--bg-surface); }
+.agent-command-input { padding: 7px 8px; }
+.agent-command-output-label { margin-top: 10px; }
+.agent-command-output { padding: 7px 8px; }
+.agent-command-waiting { min-height: 28px; padding: 7px 8px; border-radius: 6px; color: var(--text-secondary); background: var(--bg-surface); font-size: 11px; }
+.agent-command-output-toggle { margin-top: 7px; padding: 0; border: 0; color: var(--accent-primary); background: transparent; font: inherit; font-size: 10.5px; cursor: pointer; }
+.agent-command-output-toggle:hover { color: var(--text-primary); text-decoration: underline; }
+
+.agent-tool-group { width: 100%; margin: 2px 0 6px; color: var(--text-secondary); }
+.agent-tool-group-summary { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 32px; padding: 3px 0; border: 0; border-radius: 6px; color: inherit; background: transparent; font: inherit; font-size: 12.5px; text-align: left; cursor: pointer; }
+.agent-tool-group-summary:hover { color: var(--text-primary); background: var(--bg-hover); }
+.agent-tool-group-summary > span { display: flex; flex: 1; gap: 5px; min-width: 0; overflow: hidden; white-space: nowrap; }
+.agent-tool-group-summary b { overflow: hidden; color: var(--text-primary); font: inherit; font-weight: 550; text-overflow: ellipsis; }
+.agent-tool-group-summary small { overflow: hidden; color: var(--text-tertiary); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.agent-tool-group-summary > svg:first-child, .agent-tool-group-summary > svg:last-child { flex: 0 0 auto; color: var(--text-tertiary); }
+.agent-tool-group-summary > svg:last-child { transition: transform .16s ease; }
+.agent-tool-group.expanded .agent-tool-group-summary > svg:last-child { transform: rotate(180deg); }
+.agent-tool-group-detail { display: flex; flex-direction: column; gap: 2px; margin: 1px 0 4px 23px; padding-left: 9px; border-left: 1px solid var(--border-subtle); }
+
+/* Keep the reading column centered even when the virtual list is used. */
+.conversation-page .chat-scroll > .message-list.is-virtual { width: min(860px, calc(100% - 48px)); margin-inline: auto; }
+
+/* An untouched conversation is a centered starting surface. Once the first
+   message exists, the workspace returns to the normal bottom composer layout. */
+.conversation-page .chat-workspace.is-empty {
+  align-items: center;
+  justify-content: center;
+}
+.conversation-page .chat-workspace.is-empty .chat-conversation-viewport {
+  flex: 0 0 auto;
+  width: 100%;
+}
+.conversation-page .chat-workspace.is-empty .chat-scroll {
+  flex: 0 0 auto;
+  height: auto;
+  overflow: visible;
+  padding: 0;
+}
+.conversation-page .chat-workspace.is-empty .chat-empty {
+  min-height: 0;
+  margin: 0 0 28px;
+  padding: 0 20px;
+}
+.conversation-page .chat-workspace.is-empty .chat-footer {
+  flex: 0 0 auto;
+  width: min(790px, calc(100% - 72px)) !important;
+  margin: 0;
+  padding-bottom: 0;
+}
+.message-row.assistant .message-body, .markdown-body { min-width: 0; }
+.message-row.assistant .markdown-body { max-width: 100%; }
+.message-row.assistant .markdown-body pre, .message-row.assistant .markdown-body table { max-width: 100%; box-sizing: border-box; }
+.conversation-page .markdown-body .markdown-code-block { min-width: 0; max-width: 100%; }
+/* Preserve source newlines/indentation while wrapping long commands and paths.
+   Theme appearance rules must not change this shared layout behavior. */
+.conversation-page .markdown-body pre { white-space: pre-wrap; overflow-wrap: anywhere; word-break: normal; overflow: visible; }
+.conversation-page .markdown-body .markdown-code-block pre code { white-space: inherit; overflow-wrap: inherit; }
+
+/* Contain layout of very long paragraphs so new text doesn't reflow every
+   earlier inline node. Source and paragraph spacing remain unchanged. */
+.conversation-page .markdown-inline-chunk { display: block; contain: layout style; }
+.conversation-page .agent-command-detail pre { max-height: 220px; overflow: auto; scrollbar-gutter: stable; }
+.conversation-page .agent-reasoning-text { max-height: 120px; overflow: auto; scrollbar-gutter: stable; }
+.conversation-page .chat-scroll:focus-visible { outline: 1px solid var(--border-subtle); outline-offset: -1px; }

@@ -1,0 +1,51 @@
+.plugin-download-progress {
+  display: grid;
+  gap: 12px;
+  padding: 18px 22px;
+  box-sizing: border-box;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  background: var(--surface-inset-bg);
+  min-width: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.plugin-download-heading, .plugin-download-details {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  min-width: 0;
+}
+.plugin-download-label { overflow-wrap: anywhere; text-align: center; font-weight: 500; color: var(--text-primary); }
+.plugin-download-speed, .plugin-download-details {
+  font-variant-numeric: tabular-nums;
+}
+.plugin-download-speed { flex-shrink: 0; color: var(--accent-primary); }
+.plugin-download-details { color: var(--text-secondary); }
+.plugin-download-track {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--progress-track-bg);
+}
+.plugin-download-track > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent-primary);
+  transition: width 200ms ease;
+}
+.plugin-download-track > .is-indeterminate {
+  width: 35%;
+  animation: plugin-download-slide 1.5s ease-in-out infinite;
+}
+@keyframes plugin-download-slide {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(290%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .plugin-download-track > .is-indeterminate { animation: none; transform: translateX(90%); }
+  .plugin-download-track > span { transition: none; }
+}

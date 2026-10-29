@@ -1,0 +1,184 @@
+/* ==========================================================================
+   ProgressRing — composer context-usage control.
+   Small ring + percentage label; the panel opens upward and lists segments.
+   ========================================================================== */
+
+.ui-ring-control {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* 命中区 32px 圆形，与产品里 .context-usage-ring-hit 同尺寸。
+   环本身仍是 20px，只有点击区和 hover 底色变大。
+
+   选择器带 .btn 是为了拿到 (0,2,0) 的特异性：本组件用的是
+   `Button variant="bare"`，而 `.btn.btn-bare` 会重置 padding / height /
+   border-radius，单类选择器压不过它，hover 出来就是方角块。 */
+/* 命中区 32px 圆形，与产品里 .context-usage-ring-hit 同尺寸；环本身仍是 20px，
+   只有点击区与 hover 底色变大。
+
+   选择器带 .btn 是为了拿到 (0,2,0) 特异性：本组件用 Button variant="bare"，
+   必须压过 .btn 基础类注入的 padding / border-radius，否则 hover 是方角块。 */
+.ui-ring-trigger.btn {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+/* Hover 与展开都只是圆形命中区里的一层浅底，和产品里同一种处理。 */
+.ui-ring-trigger.btn:hover:not(:disabled) {
+  color: var(--text-secondary);
+  background: var(--button-hover-bg);
+}
+
+.ui-ring-trigger.btn.is-open,
+.ui-ring-trigger.btn.is-open:hover:not(:disabled) {
+  color: var(--accent-primary);
+  background: var(--bg-selected);
+}
+
+.ui-ring-trigger.btn:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 1px;
+}
+.ui-ring {
+  width: 20px;
+  height: 20px;
+  transform: rotate(-90deg);
+}
+
+.ui-ring-track {
+  fill: none;
+  stroke: color-mix(in srgb, var(--text-primary) 14%, transparent);
+  stroke-width: 2.4;
+}
+
+.ui-ring-fill {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  transition: stroke-dasharray var(--transition-base), stroke var(--transition-base);
+}
+
+.ui-ring-control.is-warning .ui-ring-fill,
+.ui-ring-control.is-warning .ui-ring-percent { stroke: var(--warning-text); color: var(--status-warning-text); }
+.ui-ring-control.is-danger .ui-ring-fill,
+.ui-ring-control.is-danger .ui-ring-percent { stroke: var(--danger-text); color: var(--status-danger-text); }
+
+.ui-ring-control.is-busy .ui-ring { animation: ui-ring-pulse 1.4s ease-in-out infinite; }
+
+.ui-ring-percent {
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  min-width: 30px;
+}
+
+/* Opens upward: the control sits at the bottom of the composer. */
+.ui-ring-panel {
+  --context-system: #94a3b8;
+  --context-tools: #5141ed;
+  --context-messages: #6c63f5;
+  position: absolute;
+  z-index: 40;
+  bottom: calc(100% + 8px);
+  left: 0;
+  width: min(320px, calc(100vw - 32px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  background: rgb(from var(--popover-bg) r g b / 1);
+  box-shadow: var(--popover-shadow);
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.ui-ring-panel header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+  line-height: 18px;
+}
+
+.ui-ring-panel header > span { color: var(--text-secondary); }
+.ui-ring-panel header b { margin-left: 8px; color: var(--text-primary); font-weight: 600; }
+
+.ui-ring-panel header strong {
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.ui-ring-meter {
+  display: flex;
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--text-primary) 10%, transparent);
+}
+
+.ui-ring-meter i { display: block; height: 100%; }
+.ui-ring-meter .is-used { background: var(--context-messages); }
+.ui-ring-meter .is-system { background: var(--context-system); }
+.ui-ring-meter .is-tools { background: var(--context-tools); }
+.ui-ring-meter .is-messages { background: var(--context-messages); }
+.ui-ring-meter .is-remaining { background: transparent; }
+
+.ui-ring-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ui-ring-legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--text-secondary);
+}
+
+.ui-ring-legend li i {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  flex: 0 0 auto;
+}
+
+.ui-ring-legend li.is-system i { background: var(--context-system); }
+.ui-ring-legend li.is-tools i { background: var(--context-tools); }
+.ui-ring-legend li.is-messages i { background: var(--context-messages); }
+.ui-ring-legend li.is-used i { background: var(--accent-primary); }
+.ui-ring-legend li.is-remaining i { background: color-mix(in srgb, var(--text-primary) 10%, var(--bg-canvas)); }
+.ui-ring-legend li span { flex: 1; min-width: 0; }
+.ui-ring-legend li strong { font-size: 12px; font-weight: 500; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+
+@keyframes ui-ring-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-ring-control.is-busy .ui-ring { animation: none; }
+  .ui-ring-fill { transition: none; }
+}

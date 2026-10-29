@@ -1,0 +1,690 @@
+/* ==========================================================================
+   Topbar Component - 顶部导航条
+   - 固定单行标签，溢出页面进入更多菜单
+   - 与侧栏共享外层背景，保留原生窗口拖动区域
+   ========================================================================== */
+
+.topbar-tab-select { touch-action: none; }
+.topbar-tab.is-dragging-out { opacity: .3; cursor: grabbing; }
+.topbar-tab.is-dragging-out .topbar-tab-select { cursor: grabbing; }
+.is-detaching-tab, .is-detaching-tab * { cursor: grabbing !important; user-select: none !important; }
+.topbar-tab-drag-preview {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 999999;
+  max-width: min(280px, calc(100vw - 16px));
+  pointer-events: none;
+  will-change: transform;
+}
+.topbar-tab-drag-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--popover-bg);
+  color: var(--text-primary);
+  box-shadow: var(--popover-shadow);
+  opacity: .88;
+  transform: scale(.97);
+  transition: opacity .14s ease, transform .14s ease;
+  animation: tab-drag-lift .14s ease-out;
+}
+.topbar-tab-drag-preview.is-ready .topbar-tab-drag-card { opacity: 1; transform: scale(1); }
+.topbar-tab-drag-title { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.topbar-tab-drag-title > .topbar-tab-title { flex: 1; }
+.topbar-tab-drag-title > svg, .topbar-tab-drag-title .topbar-tab-icon { color: var(--text-secondary); }
+.topbar-tab-drag-hint { color: var(--text-secondary); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topbar-tab-opening { animation: tab-window-opening .8s linear infinite; }
+@keyframes tab-drag-lift { from { opacity: 0; transform: scale(.93); } }
+@keyframes tab-window-opening { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .topbar-tab-drag-card { animation: none; transition: none; transform: none; }
+  .topbar-tab-drag-preview.is-ready .topbar-tab-drag-card { transform: none; }
+  .topbar-tab-opening { animation: none; }
+}
+
+.app-topbar {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 36px;
+  min-height: 36px;
+  padding: 0 8px 0 var(--navigation-rail-width);
+  gap: 10px;
+  background: var(--topbar-bg);
+  border-bottom: 1px solid var(--context-navigation-divider);
+  position: relative;
+  top: 0;
+  z-index: 50;
+  flex-shrink: 0;
+  -webkit-app-region: drag;
+  transition: background-color var(--transition-base), border-color var(--transition-base);
+}
+
+@media (max-width: 680px) {
+  .app-topbar { gap: 6px; padding-right: 6px; padding-left: var(--navigation-rail-width); }
+  .app-topbar .topbar-search { width: 28px; flex: 0 0 28px; }
+  .app-topbar .topbar-search > :not(.topbar-search-compact) { display: none; }
+  .app-topbar .topbar-search-compact { display: inline-flex; }
+}
+
+/* 左上角品牌图标：占住顶栏最左侧「导航栏宽度」那一整格，图标在格内水平居中（正对下方导航栏的中线）。
+   标签条从这一格右边开始，所以图标永远不会被标签压住。
+   -8px 抵消顶栏 8px 左内边距，让这一格与导航栏那一列完全对齐；图标区域指针事件透传，照样能拖动窗口。 */
+.topbar-brand {
+  flex: 0 0 var(--navigation-rail-width);
+  width: var(--navigation-rail-width);
+  margin-left: -8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.topbar-brand img {
+  display: block;
+  width: 26px;
+  height: 26px;
+}
+
+/* Spacious, pill-shaped chrome shared by the desktop and compact window modes. */
+.app-topbar {
+  height: 50px;
+  min-height: 50px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  gap: 12px;
+  border-bottom: 0;
+}
+.topbar-window-controls { height: 40px; gap: 4px; }
+.topbar-tabs { height: 40px; gap: 8px; }
+.topbar-tab-list { height: 40px; gap: 4px; }
+.topbar-tab {
+  height: 38px;
+  padding: 0 9px 0 12px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--chrome-hover) 28%, transparent);
+  border: 1px solid transparent;
+  color: var(--chrome-muted);
+}
+.topbar-tab-select { height: 38px; gap: 9px; }
+.topbar-tab.is-active {
+  background: var(--chrome-selected);
+  color: var(--chrome-ink);
+  border-color: transparent;
+}
+.topbar-tab:hover:not(.is-active) { background: var(--chrome-hover); border-color: transparent; }
+.topbar-tab-icon { width: 19px; height: 19px; }
+.topbar-tab-icon svg { width: 17px; height: 17px; }
+.topbar-tab-close { width: 20px; height: 20px; }
+.topbar-tab.is-active > .topbar-tab-close { opacity: 1; }
+.topbar-tabs-more,
+.topbar-tab-add { width: 36px; height: 36px; }
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.topbar-search,
+.topbar-window-controls,
+.topbar-tab {
+  -webkit-app-region: no-drag;
+}
+
+.topbar-search,
+.topbar-window-controls {
+  align-self: center;
+  display: flex;
+  align-items: center;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.topbar-search {
+  width: 220px;
+  flex: 0 0 220px;
+  min-width: 0;
+  height: 28px;
+}
+
+.topbar-search .input-shell {
+  width: 100%;
+  --control-radius: 8px;
+  /* The search field is the shared Input component, but it is painted on
+     `--topbar-bg` (#edf2f9 light / #0a0c10 dark), not on `--bg-surface`. The
+     global slot is tuned for card surfaces, so on the bar it landed within a
+     couple of colour steps and had no visible edge.
+
+     Here the slot is mixed from the bar with a slate ink so it stays in the
+     same cool family as every other field, and stays one clear step away from
+     the bar in both themes. */
+  --input-bg-sunken: color-mix(in srgb, var(--topbar-bg) 88%, var(--text-tertiary));
+  --input-bg-hover: color-mix(in srgb, var(--topbar-bg) 82%, var(--text-tertiary));
+  --input-bg-focus: color-mix(in srgb, var(--topbar-bg) 93%, var(--text-tertiary));
+  --input-placeholder: var(--chrome-muted);
+  --input-muted: var(--chrome-muted);
+  /* Slightly tighter halo than a full-width form field: this control is 28px
+     tall inside the title bar, so a 3px ring would read as a slab. */
+  --input-focus-ring: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 20%, transparent);
+}
+
+.topbar-search-compact {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  background: transparent;
+  cursor: pointer;
+}
+
+@media (min-width: 681px) and (max-width: 1000px) {
+  .topbar-search { width: 160px; flex-basis: 160px; }
+}
+
+.topbar-window-controls {
+  gap: 3px;
+}
+
+.topbar-tabs {
+  display: flex;
+  align-items: center;
+  position: relative;
+  gap: 8px;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 32px;
+}
+
+.topbar-tab-list {
+  display: flex;
+  gap: 3px;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 32px;
+  align-items: center;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.topbar-tab-list::-webkit-scrollbar { display: none; }
+
+.topbar-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 30px;
+  max-width: min(220px, 100%);
+  min-width: 0;
+  flex: 0 0 auto;
+  padding: 0 7px 0 9px;
+  border-radius: 999px;
+  background: transparent;
+  border: none;
+  color: var(--chrome-muted);
+  font-size: 12px;
+  font-weight: 450;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast), opacity .12s ease;
+}
+
+.topbar-tab:hover:not(.is-active) {
+  background: var(--chrome-hover);
+  color: var(--chrome-ink);
+}
+
+.topbar-tab.is-active {
+  background: var(--chrome-selected);
+  color: var(--chrome-ink);
+  box-shadow: 0 1px 2px #00000012;
+}
+
+.topbar-tab-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.topbar-tabs-measure {
+  position: fixed;
+  top: -100px;
+  left: 0;
+  display: flex;
+  width: max-content;
+  height: 32px;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.topbar-tabs-measure > .topbar-tab {
+  flex: 0 0 auto;
+  max-width: 220px;
+  font-weight: 400;
+}
+
+.topbar-tab-select:focus-visible,
+.topbar-tab-close:focus-visible,
+.topbar-navigation-toggle:focus-visible,
+.topbar-tabs-more:focus-visible,
+.topbar-tabs-menu-select:focus-visible,
+.topbar-search-compact:focus-visible {
+  outline: 2px solid var(--text-secondary);
+  outline-offset: -2px;
+}
+
+.topbar-tab.is-active {
+  background: var(--chrome-selected);
+  color: var(--chrome-ink);
+  font-weight: 400;
+  box-shadow: none;
+}
+
+.topbar-tab-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--chrome-muted);
+  width: 17px;
+  height: 17px;
+  justify-content: center;
+}
+
+.topbar-tab-icon svg { width: 15px; height: 15px; stroke-width: 1.8; }
+.topbar-tab.is-active .topbar-tab-icon { color: var(--chrome-ink); }
+
+.topbar-tab-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar-tab-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 50%;
+  color: var(--text-tertiary);
+  margin-left: 2px;
+  flex-shrink: 0;
+}
+
+.topbar-tab > .topbar-tab-close { opacity: 0; }
+.topbar-tab:hover > .topbar-tab-close,
+.topbar-tab:focus-within > .topbar-tab-close { opacity: 1; }
+@media (hover: none) { .topbar-tab > .topbar-tab-close { opacity: 1; } }
+
+.topbar-tabs-overflow {
+  flex: 0 0 26px;
+}
+
+.topbar-tab-actions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex: 0 0 auto;
+}
+
+.topbar-tab-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: var(--chrome-muted);
+  background: transparent;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+}
+.topbar-tab-add:hover { color: var(--chrome-ink); background: var(--button-hover-bg); transform: scale(1.04); }
+
+.topbar-tabs-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.topbar-tabs-more:hover,
+.topbar-tabs-more[aria-expanded="true"],
+.topbar-search-compact:hover {
+  background: var(--button-hover-bg);
+  color: var(--text-primary);
+}
+
+.topbar-tabs-menu {
+  position: fixed;
+  z-index: 80;
+  max-height: min(420px, calc(100vh - 64px));
+  overflow-y: auto;
+  padding: 5px;
+  border: var(--popover-border);
+  border-radius: 8px;
+  background: var(--context-navigation-bg);
+  box-shadow: 0 8px 28px #00000020;
+  color: var(--text-primary);
+  -webkit-app-region: no-drag;
+}
+
+.topbar-tabs-menu-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 10px;
+}
+
+.topbar-tabs-menu-row:hover,
+.topbar-tabs-menu-row:focus-within {
+  background: var(--chrome-hover);
+}
+.topbar-tabs-menu-row.is-active { background: var(--chrome-selected); }
+
+.topbar-tabs-menu-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  height: 34px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.topbar-tabs-menu-row > .topbar-tab-close {
+  width: 24px;
+  height: 24px;
+  margin: 0 4px 0 0;
+}
+
+@media (max-width: 680px) {
+  .app-topbar .topbar-search { min-width: 28px; }
+  .topbar-tab { padding-left: 6px; padding-right: 4px; }
+  .topbar-tab-select { gap: 4px; }
+}
+
+.topbar-tab-close:hover {
+  background: var(--button-hover-bg);
+  color: var(--text-primary);
+}
+
+.topbar-tab.is-active .topbar-tab-close {
+  color: var(--chrome-muted);
+}
+
+.topbar-tab.is-active .topbar-tab-close:hover {
+  background: var(--button-hover-bg);
+  color: var(--chrome-ink);
+}
+
+.topbar-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0;
+}
+
+.topbar-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
+.topbar-breadcrumb-sep {
+  color: var(--text-quaternary);
+  font-size: 11px;
+}
+
+.topbar-breadcrumb-active {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.topbar-center {
+  display: flex;
+  align-items: center;
+  max-width: 380px;
+  flex: 1;
+  margin: 0 20px;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 设备状态胶囊切换器 */
+.topbar-device-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px 5px 10px;
+  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  border: 1px solid transparent;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+
+.topbar-device-pill:hover {
+  border-color: transparent;
+  background: var(--bg-input);
+}
+
+.topbar-device-name {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.topbar-device-status {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+/* 主题模式切换按钮 */
+.topbar-theme-toggle {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-base);
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+  box-shadow: none;
+}
+
+.topbar-theme-toggle:hover {
+  color: var(--button-hover-text);
+  border: 0;
+  outline: none;
+  background: var(--button-hover-bg);
+  box-shadow: none;
+}
+
+/* Clicking a window control leaves it focused. Keep focus accessible without
+   making the control look permanently selected after the click. */
+.topbar-theme-toggle:focus:not(:hover) {
+  color: var(--text-secondary);
+  border: 0;
+  outline: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.topbar-theme-toggle:focus-visible:not(:hover) {
+  color: var(--text-primary);
+  border: 0;
+  outline: 2px solid var(--accent-primary);
+  outline-offset: -2px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.topbar-theme-toggle svg {
+  width: 15px;
+  height: 15px;
+  stroke-width: 2;
+}
+
+/* Final chrome sizing overrides: keep the tab strip compact and visually continuous
+   with the rail/sidebar below it. The topbar has no horizontal separator. */
+.app-topbar { height: 36px; min-height: 36px; padding: 3px 8px; gap: 6px; border-bottom: 0; }
+.topbar-window-controls { height: 30px; gap: 3px; }
+.topbar-tabs { height: 30px; gap: 5px; }
+.topbar-tab-list { height: 30px; gap: 3px; }
+.topbar-tab {
+  height: 28px;
+  padding: 0 6px 0 9px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--chrome-hover) 28%, transparent);
+  border: 1px solid transparent;
+  color: var(--chrome-muted);
+}
+.topbar-tab-select { height: 28px; gap: 7px; }
+.topbar-tab.is-active {
+  background: var(--chrome-selected);
+  color: var(--chrome-ink);
+  border-color: transparent;
+}
+.topbar-tab:hover:not(.is-active) { background: var(--chrome-hover); border-color: transparent; }
+.topbar-tab-icon { width: 16px; height: 16px; }
+.topbar-tab-icon svg { width: 14px; height: 14px; }
+.topbar-tab-close { width: 16px; height: 16px; }
+.topbar-tab.is-active > .topbar-tab-close { opacity: 1; }
+.topbar-tabs-more, .topbar-tab-add { width: 28px; height: 28px; }
+
+.topbar-navigation-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--chrome-muted);
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+.topbar-navigation-toggle:hover { background: var(--rail-hover-bg); color: var(--chrome-ink); }
+
+/* Opal Frost Light Theme Overrides */
+html[data-theme] .topbar-tab {
+  background: var(--bg-surface);
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  transition: all 0.16s ease;
+}
+html[data-theme] .topbar-tab:hover:not(.is-active) {
+  background: var(--bg-hover);
+  border-color: transparent;
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+html[data-theme] .topbar-tab.is-active {
+  background: var(--bg-selected);
+  color: var(--text-primary);
+  border-color: transparent;
+  box-shadow: var(--shadow-sm);
+}
+html[data-theme] .topbar-tab.is-active .topbar-tab-icon {
+  color: var(--accent-primary);
+}
+html[data-theme] .topbar-theme-toggle:hover,
+html[data-theme] .topbar-window-controls > button:hover {
+  background: var(--btn-secondary-hover);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+/* Hover remains the only persistent surface, even when the pointer is over a
+   button that still owns keyboard focus after a click. */
+html[data-theme] .topbar-window-controls > button.topbar-theme-toggle:hover {
+  background: var(--btn-secondary-hover) !important;
+}
+html[data-theme] .topbar-device-pill {
+  background: var(--bg-surface);
+  border: 1px solid transparent;
+  box-shadow: var(--shadow-sm);
+}
+
+/* The topbar search now takes its fill from the per-theme slot tokens set on
+   `.topbar-search .input-shell`. Restating a third palette here is what made
+   this field drift away from the shared Input component, so the block that
+   used to live here is gone. Only the readable ink is pinned, because the
+   placeholder sits on a darker strip than content fields do. */
+html[data-theme] .topbar-search .input::placeholder,
+html[data-theme] .topbar-search .input-prefix-icon {
+  color: var(--chrome-muted);
+}
+
+/* Window controls share one semantic class instead of borrowing the theme-toggle name. */
+.topbar-window-button-close:hover:not(:disabled) {
+  color: var(--danger-text) !important;
+  border-color: var(--danger-text) !important;
+}

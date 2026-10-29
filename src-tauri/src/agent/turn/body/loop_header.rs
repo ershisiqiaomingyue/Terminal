@@ -1,0 +1,500 @@
+    let current_user_message_id = format!("user:{turn_id}");
+    let attachment_root = app
+        .path()
+        .app_cache_dir()
+        .map_err(|error| error.to_string())?
+        .join("agent-attachments");
+    let mut image_attachments = normalize_request_image_attachments(
+        &attachment_root,
+        &request.attachments,
+        &request.context,
+        selected_model.supports_vision,
+        &current_user_message_id,
+    )?;
+    for turn in &mut request.context {
+        if turn.role.eq_ignore_ascii_case("user") {
+            append_image_source_labels(
+                &mut turn.content,
+                &turn.attachments,
+                "[历史消息中的图片来源]",
+            );
+        }
+    }
+    // A text-only turn may switch to a non-vision model. Keep the durable
+    // image names in its transcript, but only replay image bytes when the
+    // selected model can accept them and the original owner is identifiable.
+    let diagnostic_session = session_id.clone();
+    let diagnostic_turn = turn_id.clone();
+    let client = create_turn_provider_client(provider, protocol)?.with_diagnostic_observer(
+        Arc::new(move |diagnostic| {
+            let level = if diagnostic.failure_code.is_some() {
+                "warn"
+            } else {
+                "info"
+            };
+            crate::diagnostics::record(
+                level,
+                "agent.provider_transport",
+                "native.agent",
+                json!({
+                    "session_id": diagnostic_session, "turn_id": diagnostic_turn,
+                    "transport": diagnostic,
+                }),
+            );
+        }),
+    );
+    let setup::PreparedInput {
+        request,
+        context:
+            TurnSkillContext {
+                skill_catalog,
+                skill_instructions,
+                selinux_enabled,
+                selinux_scope,
+            },
+        permission_mode,
+        workspace_context,
+        global_instructions,
+        evidence,
+        prompt,
+        mut tool_policy,
+        mut windows_paths,
+        excluded_paths,
+        mut plugin_turn,
+        collaboration_tool,
+        explicitly_disabled,
+        mut ssh_paths,
+        wsl_paths,
+        snapshot_paths,
+        mcp_tools,
+        allow_external_paths,
+        output_sink,
+        mut remote_context,
+        wsl_context,
+        mut tool_cancellation,
+        mut registry,
+        mut approved_path_registry,
+    } = setup::prepare_turn_input(
+        &app,
+        &request,
+        ssh_context.as_ref(),
+        &bound_ssh_hosts,
+        wsl_root.as_deref(),
+        wsl_context.as_ref(),
+        default_environment,
+        &mcp_state,
+        &session_id,
+        &turn_id,
+        &cancellation_reason,
+        &cancellation_token,
+        is_ssh_target,
+        is_wsl_target,
+    )
+    .await?;
+    let permission_mode = permission_mode.as_str();
+    let mut ssh_permission_namespace = ssh_connection_id
+        .as_deref()
+        .map(|id| format!("ssh:{id}"))
+        // P7-A：回退 namespace 不再掺 turn_id——掺了它每个 turn 都是新 key，
+        // 「本次会话允许」跨轮永远不命中。无连接期间统一用稳定回退值；
+        // 连接就绪后由 question-card 路径迁往 ssh:{connection_id}（P7-D）。
+        .unwrap_or_else(|| "ssh:unavailable".to_string());
+    let wsl_permission_namespace = request
+        .execution_target
+        .as_ref()
+        .and_then(|target| target.profile_id.as_deref())
+        .map(|id| format!("wsl:{id}"))
+        .unwrap_or_else(|| "wsl:unavailable".to_string());
+    // A workspace snapshot can require hashing thousands of files. Do not put
+    // that cost in front of every turn: capture it lazily just before the
+    // first mutating tool call, where it is actually needed for file changes.
+    let mut before_files = None;
+    let mut last_file_snapshot = Vec::new();
+    let mut file_backup_lease = None;
+    let mut before_snapshot_attempted = false;
+    let tool_definitions = registry
+        .list_public()
+        .into_iter()
+        .cloned()
+        .collect::<Vec<_>>();
+    let context_window = agent_core::resolved_model_context_window(provider, &selected_model);
+    let context_window_resolution = agent_core::resolve_context_window(context_window);
+    let context_window_estimated = !context_window_resolution.is_known();
+    let provider_capabilities = ProviderCapabilities::for_kind(protocol);
+    let model_supports_tools = selected_model
+        .supports_tools
+        .unwrap_or(provider_capabilities.supports_tools);
+    let model_supports_usage = selected_model
+        .supports_usage
+        .unwrap_or(provider_capabilities.supports_usage);
+    let (native_reasoning_effort, reasoning_effort) =
+        turn_reasoning_settings(&app, &request, &selected_model, protocol);
+    // 恢复轮要用的「别再想」档位（多数模型上就是最低档）：只有真的走到
+    // `reasoning_only` 那一轮才会被用掉一次，见 `take_recovery_reasoning_effort`。
+    let recovery_reasoning_effort =
+        reasoning_recovery_effort(&app, &selected_model, protocol, native_reasoning_effort);
+    let mut request_tools = if tool_policy == AgentToolPolicy::Disabled || !model_supports_tools {
+        Vec::new()
+    } else {
+        tool_definitions.clone()
+    };
+    let image_token_reserve =
+        AtomicUsize::new(estimate_image_attachment_tokens(&image_attachments));
+    let estimate_context_tokens =
+        |messages: &[AgentMessage], system: &str, tools: &[ToolDefinition]| {
+            estimate_agent_request_tokens(messages, system, tools)
+                .saturating_add(image_token_reserve.load(Ordering::Relaxed))
+        };
+    let mut text = String::new();
+    let mut usage = None;
+    let model_request_count = std::cell::Cell::new(0u64);
+    let mut compatible_usage_fallback = false;
+    let mut responses_reasoning_include_fallback = false;
+    // 一次性开关：`reasoning_only` 恢复轮把下一轮的推理档位降到最低（用完即复位）。
+    let mut reasoning_off_once = false;
+    let compose_turn_prompt = |tool_policy,
+                               request_tools: &[ToolDefinition],
+                               plugin_instruction: &str,
+                               ssh_root: Option<&str>| {
+        let mut composed = prompt_composer::compose(prompt_composer::AgentPromptContext {
+            request: &request,
+            provider_name: &provider.name,
+            model_id: &selected_model.id,
+            protocol,
+            tool_policy,
+            model_supports_tools,
+            request_tools,
+            selinux_enabled,
+            selinux_has_roots: !selinux_scope.roots.is_empty(),
+            skill_instructions: &skill_instructions,
+            skill_catalog: skill_catalog.as_deref(),
+            is_ssh_target,
+            is_wsl_target,
+            default_environment,
+            ssh_root,
+            wsl_root: wsl_root.as_deref(),
+            bound_ssh_hosts: &bound_ssh_hosts,
+            default_ssh_host: default_ssh_host.as_ref(),
+            workspace_context: workspace_context.as_ref(),
+            global_instructions: &global_instructions,
+        });
+        composed.runtime.push_str(plugin_instruction);
+        composed
+    };
+    let plugin_instruction = if request_tools.is_empty() {
+        String::new()
+    } else {
+        plugin_turn.prompt(default_environment == AgentToolEnvironment::Windows)
+    };
+    let composed_prompt = compose_turn_prompt(
+        tool_policy,
+        &request_tools,
+        &plugin_instruction,
+        remote_context.as_ref().map(|context| context.root()),
+    );
+    let base_system_prompt = composed_prompt.system;
+    let mut runtime_context = composed_prompt.runtime;
+    let mut transcript_scope = cache_context::scope(
+        provider,
+        &selected_model.id,
+        protocol,
+        &request,
+        ssh_context
+            .as_ref()
+            .map(|c| c.root())
+            .or(wsl_root.as_deref())
+            .or(request.workspace_path.as_deref())
+            .unwrap_or(""),
+        ssh_connection_id.as_deref(),
+    );
+    let prompt_cache_key =
+        crate::history::get_conversation_thread(app.clone(), session_id.clone())?
+            .map(|thread| thread.root_thread_id)
+            .unwrap_or_else(|| session_id.clone());
+    let native_transcript =
+        crate::history::restore_model_transcript(&app, &session_id, &transcript_scope, &turn_id)?;
+    let runtime_changed = native_transcript.as_ref().is_none_or(|t| {
+        t.runtime_context != runtime_context
+            || !t
+                .messages
+                .iter()
+                .any(|m| m.role == MessageRole::System && m.content == runtime_context)
+    });
+    let mut cache_fingerprint = native_transcript
+        .as_ref()
+        .and_then(|t| t.last_request.clone());
+    if selected_model.supports_vision != Some(false) {
+        cache_context::restore_images(&mut image_attachments, native_transcript.as_ref());
+    }
+    update_image_token_reserve(&image_attachments, &image_token_reserve);
+    let mut runtime_context_tokens =
+        agent_core::estimate_messages_tokens(&[AgentMessage::system(runtime_context.clone())]);
+    let context_budget =
+        agent_context_budget(context_window, &base_system_prompt, &request_tools, false)
+            .saturating_sub(image_token_reserve.load(Ordering::Relaxed))
+            .saturating_sub(runtime_context_tokens)
+            .max(1);
+    let telemetry_output_reserve = agent_output_reserve(context_window, false);
+    let context_is_history_hydrated = request.context.iter().all(|turn| turn.role == "system")
+        || request
+            .context
+            .iter()
+            .any(|turn| turn.source.as_deref() == Some("history"));
+    let native_history_restored = native_transcript.is_some();
+    let restored_checkpoint_messages = if let Some(transcript) = native_transcript {
+        Some(transcript.messages)
+    } else if context_is_history_hydrated {
+        crate::history::restored_agent_messages_for_session(
+            &app,
+            &session_id,
+            &selected_model.id,
+            CONTEXT_CHECKPOINT_EVIDENCE_POLICY_VERSION,
+            Some(&turn_id),
+        )?
+    } else {
+        None
+    };
+    let restored_checkpoint_context = restored_checkpoint_messages.is_some();
+    let mut current_user_message = AgentMessage::user(prompt.clone());
+    current_user_message.source_message_id = Some(current_user_message_id.clone());
+    // Token cost of everything in the request that is not a message: it rides
+    // along on every call and never shrinks when messages are summarized, so the
+    // compaction ceiling has to be reduced by it to bound the billed input.
+    let request_overhead_tokens =
+        estimate_agent_request_tokens(&[], &base_system_prompt, &request_tools)
+            .saturating_add(runtime_context_tokens)
+            .saturating_add(image_token_reserve.load(Ordering::Relaxed));
+    let (mut initial_context_messages, mut initial_compaction) = cache_context::initial_messages(
+        restored_checkpoint_messages,
+        &request,
+        &prompt,
+        &turn_id,
+        current_user_message,
+        context_budget,
+        request_overhead_tokens,
+    );
+    crate::diagnostics::record(
+        "info",
+        "agent.history_restored",
+        "native.agent",
+        json!({
+            "session_id": session_id, "turn_id": turn_id,
+            "source": if native_history_restored { "native_transcript" }
+                else if restored_checkpoint_context { "durable_checkpoint_or_tools" }
+                else { "conversation_text" },
+            "history_context_turns": request.context.iter().filter(|turn| turn.source.as_deref() == Some("history")).count(),
+            "messages_before_compaction": initial_context_messages.len(),
+            "tool_results_before_compaction": initial_context_messages.iter().filter(|message| message.role == MessageRole::Tool).count(),
+            "messages_after_compaction": initial_compaction.messages.len(),
+            "tool_results_after_compaction": initial_compaction.messages.iter().filter(|message| message.role == MessageRole::Tool).count(),
+            "compaction_budget_tokens": initial_compaction.stats.budget_tokens,
+            "compaction_original_estimated_tokens": initial_compaction.stats.original_estimated_tokens,
+            "compaction_result_estimated_tokens": initial_compaction.stats.compacted_estimated_tokens,
+            "compaction_budget_satisfied": initial_compaction.stats.budget_satisfied,
+            "compressed": initial_compaction.compressed,
+        }),
+    );
+    if runtime_changed || initial_compaction.compressed {
+        let control = AgentMessage::system(runtime_context.clone());
+        initial_context_messages.push(control.clone());
+        initial_compaction.messages.push(control);
+    }
+    let initial_context_tokens = estimate_context_tokens(
+        &initial_context_messages,
+        &base_system_prompt,
+        &request_tools,
+    );
+    let initial_compaction_id = format!("compaction-{}", uuid_suffix());
+    let mut model_summary_attempted = false;
+    // P9-G：上一轮压缩时预置的确定性检查点摘要，下一轮压缩直接复用同一份，
+    // 避免「每轮现生成一份新的」把前缀打散。
+    let mut planned_compaction_summary: Option<(
+        String,
+        Option<agent_core::AgentContextCheckpointPayload>,
+    )> = None;
+    if initial_compaction.compressed {
+        emit_agent_context_for_turn(
+            &app,
+            json!({
+                "session_id": session_id, "compaction_id": initial_compaction_id,
+                "compaction_status": "running", "compaction_reason": "history_budget",
+                "before_context_tokens": initial_context_tokens,
+                "reserved_output_tokens": telemetry_output_reserve, "context_compressed": true,
+            }),
+            Some(&turn_id),
+        );
+        emit_agent_status_for_turn(
+            &app,
+            &session_id,
+            "compacting_context",
+            "正在整理较早上下文，模型摘要不可用时将保留确定性检查点",
+            Some(&turn_id),
+        );
+        let processed_messages = initial_compaction.stats.covered_message_count;
+        // Character budget for the model summary ≈ the token budget available
+        // for it (enrich_context_checkpoint_with_model caps `available` at
+        // 1024 tokens); used only to estimate the running percentage.
+        let initial_summary_budget_chars = initial_compaction
+            .stats
+            .budget_tokens
+            .saturating_sub(initial_compaction.stats.compacted_estimated_tokens)
+            .saturating_sub(96)
+            .min(1_024)
+            .saturating_mul(3);
+        super::events::emit_compaction_progress(
+            &app,
+            &session_id,
+            &turn_id,
+            &initial_compaction_id,
+            0,
+            processed_messages,
+            initial_context_tokens,
+            initial_summary_budget_chars,
+        );
+        let (requested, summary_usage) = enrich_context_checkpoint_with_model(
+            &client,
+            ProviderRequest::new(
+                &session_id,
+                &selected_model.id,
+                Vec::new(),
+                request_tools.clone(),
+            )
+            .with_system_prompt(base_system_prompt.clone())
+            .with_reasoning_effort(reasoning_effort.clone())
+            .with_native_reasoning_effort(native_reasoning_effort)
+            .with_reasoning_encrypted_content(!responses_reasoning_include_fallback)
+            .with_usage_reporting(model_supports_usage && !compatible_usage_fallback),
+            &initial_context_messages,
+            &mut initial_compaction,
+            &mut model_summary_attempted,
+            &state,
+            &cancellation,
+            |characters| {
+                super::events::emit_compaction_progress(
+                    &app,
+                    &session_id,
+                    &turn_id,
+                    &initial_compaction_id,
+                    characters,
+                    processed_messages,
+                    initial_context_tokens,
+                    initial_summary_budget_chars,
+                )
+            },
+        )
+        .await;
+        if requested {
+            model_request_count.set(model_request_count.get().saturating_add(1));
+        }
+        if let Some(summary_usage) = summary_usage {
+            merge_agent_usage(&mut usage, summary_usage);
+        }
+        if is_cancelled(&state, &session_id, &cancellation) {
+            return Err(cancellation_message(&cancellation_reason));
+        }
+    }
+    let initial_context_compressed = initial_compaction.compressed;
+    let initial_context_summary = initial_compaction.summary;
+    let initial_context_checkpoint_payload = initial_compaction.checkpoint_payload;
+    let initial_covered_message_count = initial_compaction.covered_message_count;
+    let initial_covered_message_id = initial_compaction.covered_message_id;
+    let initial_compaction_status = initial_compaction.status;
+    let initial_compaction_stats = initial_compaction.stats;
+    let mut messages = initial_compaction.messages;
+    cache_context::retain_runtime(&mut messages, &runtime_context);
+    let active_image_attachments = image_attachments_for_messages(&image_attachments, &messages);
+    update_image_token_reserve(&active_image_attachments, &image_token_reserve);
+    let mut checkpoint = CheckpointState {
+        summary: initial_context_summary,
+        payload: initial_context_checkpoint_payload,
+        covered_through_message_id: initial_covered_message_id.or_else(|| {
+            (!restored_checkpoint_context)
+                .then(|| {
+                    context_message_id_at_boundary(&request.context, initial_covered_message_count)
+                })
+                .flatten()
+        }),
+    };
+    let profile = ModelProfile::new(&request.model_id, &provider.id, &selected_model.id)
+        .with_protocol(protocol)
+        .with_capabilities(
+            context_window,
+            model_supports_tools,
+            selected_model.supports_vision.unwrap_or(false),
+            provider_capabilities.supports_structured_output,
+            model_supports_usage,
+        );
+    let estimated_input_tokens = u32::try_from(estimate_context_tokens(
+        &messages,
+        &base_system_prompt,
+        &request_tools,
+    ))
+    .ok();
+    let last_context_tokens =
+        AtomicU64::new(
+            estimate_context_tokens(&messages, &base_system_prompt, &request_tools) as u64,
+        );
+    profile
+        // The report JSON is enforced by the agent prompt and parsed locally. We do not
+        // send a provider-specific response_format/structured-output field, so this
+        // request must not claim that capability is required at the wire level.
+        .check_compatibility(!request_tools.is_empty(), false, estimated_input_tokens)
+        .map_err(|error| format!("[protocol_mismatch] {error}"))?;
+    // G5-B：压缩把历史整体替换掉之后，上一轮记下的「上次触发位置」已经没有
+    // 参照意义（前缀不同了），必须复位，否则滞回线会一直压在低位、连续触发。
+    if initial_context_compressed {
+        if let Ok(mut hysteresis) = state.compaction_hysteresis.lock() {
+            hysteresis
+                .entry(format!("{session_id}:{}", selected_model.id))
+                .or_default()
+                .reset();
+        }
+    }
+    if initial_context_compressed {
+        emit_agent_context_for_turn(
+            &app,
+            json!({
+                "session_id": session_id,
+                "compaction_id": initial_compaction_id,
+                "compaction_status": "completed",
+                "compaction_reason": "history_budget",
+                "before_context_tokens": initial_context_tokens,
+                "after_context_tokens": estimate_context_tokens(&messages, &base_system_prompt, &request_tools),
+                "reserved_output_tokens": telemetry_output_reserve,
+                "compaction_result": initial_compaction_status,
+                "compaction_stats": initial_compaction_stats,
+                "contextCheckpoint": context_checkpoint_event_value(
+                    &initial_compaction_id,
+                    checkpoint.summary.as_deref(),
+                    checkpoint.payload.as_ref(),
+                    checkpoint.covered_through_message_id.as_deref(),
+                    &selected_model.id,
+                ),
+                "available_tokens": available_agent_context_tokens(
+                    context_window,
+                    estimate_context_tokens(&messages, &base_system_prompt, &request_tools),
+                    telemetry_output_reserve,
+                ),
+                "context_compressed": true,
+            }),
+            Some(&turn_id),
+        );
+        emit_agent_status_for_turn(
+            &app,
+            &session_id,
+            "context_compacted",
+            "上下文压缩完成，准备继续",
+            Some(&turn_id),
+        );
+    }
+    let mut tool_rounds = 0usize;
+    let mut model_round_index = 0usize;
+    let mut generation_metrics = agent_core::GenerationMetrics::default();
+    let mut final_response_requested = false;
+    // 最终整理通知已经在 messages 里追加过（避免重复追问式的要求堆积）。
+    let mut final_phase_notice_pushed = false;
+    let mut output_continuations = 0usize;
+    let mut response_recovery = agent_core::turn_recovery::ModelResponseRecovery::default();
+    let mut tool_loop_progress = agent_core::tool_ledger::ToolLoopProgress::default();
+    let mut termination_reason = "model_finished";
+    let mut provider_context_retry_count = 0usize;

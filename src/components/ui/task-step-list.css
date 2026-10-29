@@ -1,0 +1,140 @@
+/* ==========================================================================
+   TaskStepList: vertical task checklist extracted from card-showcase.html.
+   Strict 20x20px circle; done = solid ring + check, running = spinning dash
+   arc, pending = a single hollow ring with no inner circle.
+   ========================================================================== */
+
+.task-step-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.task-step-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  color: var(--text-primary);
+  transition: background-color var(--transition-base);
+  user-select: none;
+  min-width: 0;
+}
+
+/* 只有真的可点（传了 onStepClick）的行才给悬停底色。
+   对话页里的步骤清单是一张纯展示清单，鼠标划过一行就亮起一块底色，看着像
+   「这里可以点」，用户点下去却什么也没有发生（用户反馈：hover 为什么变色）。 */
+html[data-theme] .task-step-row.is-clickable:hover {
+  background: var(--chrome-hover);
+}
+
+html[data-theme] .task-step-row.is-clickable {
+  cursor: pointer;
+}
+
+/* Compact rows: the vertical squeeze used by the chat task timeline. */
+.task-step-list.is-compact {
+  gap: 2px;
+}
+
+.task-step-list.is-compact .task-step-row {
+  padding: 3px 8px;
+  font-size: 12.5px;
+}
+
+/* Status circle: strict single 20x20 geometry. */
+.task-step-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-base);
+}
+
+.task-step-icon svg {
+  display: block;
+  fill: none;
+  stroke: currentColor;
+}
+
+/* done: filled ring with a check. */
+.task-step-icon.done {
+  background: var(--accent-primary);
+  color: var(--accent-text);
+  box-shadow: var(--accent-glow);
+}
+
+.task-step-icon.done svg {
+  width: 12px;
+  height: 12px;
+  stroke-width: 2.6;
+}
+
+/* running: spinning dash arc on a subtle accent fill. */
+.task-step-icon.running {
+  background: var(--accent-subtle);
+  color: var(--accent-primary);
+}
+
+.task-step-icon.running svg {
+  width: 13px;
+  height: 13px;
+  animation: task-step-spin 1s linear infinite;
+}
+
+@keyframes task-step-spin {
+  100% { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .task-step-icon.running svg { animation: none; }
+}
+
+/* pending: a single hollow ring, no inner circle. */
+.task-step-icon.pending {
+  background: transparent;
+  border: var(--status-pending-border);
+}
+
+/* pending 的空心环比常态是中性灰；只有可点的行才在悬停时染成强调色。
+   展示用的清单（对话页任务编排）不做这个变化 —— 用户原本看到的就是
+   「鼠标移上去，待处理的灰圆圈突然变成一圈紫色」。（用户反馈原话：「我 hover 为什么有蓝色？」） */
+html[data-theme] .task-step-row.is-clickable:hover .task-step-icon.pending {
+  border-color: var(--accent-primary);
+  background: var(--accent-subtle);
+}
+
+/* Pending rows dim their text until work reaches them. */
+.task-step-row.status-pending .task-step-content {
+  opacity: 0.65;
+}
+
+.task-step-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-step-chip {
+  flex: 0 0 auto;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--chrome-hover);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.task-step-icon.error { color: var(--status-danger-text); background: var(--status-danger-bg); }
+.task-step-icon.cancelled { color: var(--text-tertiary); background: var(--bg-hover); }
+.task-step-icon.error svg, .task-step-icon.cancelled svg { width: 13px; height: 13px; stroke-width: 2; }
