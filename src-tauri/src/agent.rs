@@ -3,7 +3,6 @@ use crate::agent_events::{
     begin_tool_group, end_tool_group, stamp_payload, stamp_payload_with_turn,
 };
 use crate::agent_executor::CommandOutputSink;
-use crate::android_tasks::AndroidTaskManager;
 use crate::file_changes::{capture_file_snapshot_with_cancellation, diff_file_snapshots};
 use crate::logs::{
     index_log_paths, read_log_range, read_log_range_with_cancellation, rebuild_timeline,
@@ -14,10 +13,7 @@ use crate::mcp_runtime::{connected_mcp_tools, ConnectedMcpTool, McpRuntimeState}
 use crate::model_capability_cache::{
     known_context_window, read_cached_capabilities, refresh_remote_capabilities,
 };
-use crate::skill_runtime::{
-    load_selinux_source_scope, load_skill_catalog, load_skill_instructions,
-};
-use crate::trace_parser::{parse_trace_archive, parse_trace_bytes, TraceDocument, TraceNode};
+use crate::skill_runtime::{load_skill_catalog, load_skill_instructions};
 use agent_core::{
     available_tokens as available_agent_context_tokens, bind_workspace_artifact,
     collect_model_round_with_observer, compact_messages_with_overhead, compose_agent_prompt,
@@ -31,7 +27,7 @@ use agent_core::{
     messages_endpoint, model_protocol, models_endpoint, normalize_image_attachments,
     output_limit_reached, output_reserve as agent_output_reserve, parse_analysis_report,
     parse_tool_call_input, protocol_from_registry_name, protocol_label, provider_protocol,
-    register_pending_permission, request_snapshot_paths, selected_working_directory,
+    register_pending_permission, request_snapshot_paths,
     steer_message_content, take_tool_group_fallback, tool_call_signature,
     update_image_token_reserve, usage_percent as context_usage_percent,
     wait_for_agent_cancellation, wait_for_permission, workspace_context_prompt, AgentCacheStats,
@@ -56,12 +52,10 @@ use futures_util::StreamExt;
 use jira::jira_description_to_text;
 use keyring::{Entry, Error as KeyringError};
 use reqwest::{Client, StatusCode};
-use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::{HashMap, HashSet};
 use std::fs;
-use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
@@ -175,20 +169,6 @@ use tool_ledger::{
     file_read_path_key, finish_pending_agent_tool_calls, normalize_tool_execution_result,
     tool_call_can_run, tool_call_skip_reason, tool_execution_failure_output,
     tool_execution_failure_retryable, ToolCallLedgerEntry,
-};
-mod android_ops;
-mod android_tools;
-use android_ops::{
-    AndroidAdbActionTool, AndroidAdbReadTool, AndroidArchiveReadTool, AndroidArchiveWriteTool,
-};
-#[cfg(test)]
-use android_tools::{query_saved_logcat, read_bounded_logcat_evidence};
-use android_tools::{
-    CaptureAndroidLogcatTool, InspectWinScopeTraceTool, QueryAndroidArchiveHistoryTool,
-    QueryAndroidBenchmarkTool, QueryAndroidBugreportTool, QueryAndroidDeviceTool,
-    QueryAndroidDiagnosticsTool, QueryAndroidHeapDumpTool, QueryAndroidLogcatTool,
-    QueryAndroidMethodProfileTool, QueryAndroidNativeSymbolizerTool, QueryAndroidSimpleperfTool,
-    QueryAndroidTaskTool, QueryAospBuildTool, QueryPerfettoTraceTool, StartAndroidArchiveTaskTool,
 };
 mod tool_registry;
 pub use tool_registry::*;

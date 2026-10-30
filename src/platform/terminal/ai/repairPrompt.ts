@@ -13,7 +13,6 @@
  */
 import type { CommandBlock } from "../blocks/types.ts";
 import { snippetFromBlock } from "./prompts.ts";
-import { formatDeviceContext, type DeviceContext } from "./deviceContext.ts";
 import { utf8ByteLength } from "../blocks/ansiText.ts";
 
 /** 修复命令的请求预算：比解释更紧，因为只产一条命令。 */
@@ -31,7 +30,6 @@ export interface RepairPromptInput {
   attempt: number;
   /** 已尝试过的命令 + 结果，避免模型重复同一条。 */
   previous?: { command: string; outcome: "failed" | "cancelled" }[];
-  device?: DeviceContext;
   limits?: Partial<typeof REPAIR_LIMITS>;
 }
 
@@ -43,15 +41,15 @@ export interface BuiltRepairPrompt {
 }
 
 const SYSTEM = [
-  "你是 Android/ADB 终端里的命令修复助手。",
+  "你是本机（Windows）、WSL 与 SSH 远程终端里的命令修复助手。",
   "用户的一条命令执行失败了，你已给出诊断，现在要给出一条**可以直接执行**的修复命令。",
   "",
   "输出要求（必须严格遵守）：",
   "1. 只输出一个 JSON 对象：{\"commands\": [\"一条完整命令\"], \"explanation\": \"一句话说明这条命令做什么\"}。",
   "2. commands 数组里**只能有一条**命令；需要串联时用 `&&`，不要拆成多个元素。",
   "3. 不要输出 JSON 之外的任何文字、Markdown 围栏或注释。",
-  "4. 优先给只读的确认命令（如 `adb devices`、`ls -l`）；确实要改状态时，在 explanation 里写明会改什么。",
-  "5. 绝对不要给 `rm -rf /`、`mkfs`、`fastboot erase`、`pm clear` 这类不可恢复的命令，除非用户明确要求清空数据。",
+  "4. 优先给只读的确认命令（如 `ls -l`、`git status`）；确实要改状态时，在 explanation 里写明会改什么。",
+  "5. 绝对不要给 `rm -rf /`、`mkfs` 这类不可恢复的命令，除非用户明确要求清空数据。",
   "6. 不要重复用户已经尝试过且失败的命令。",
 ].join("\n");
 
@@ -98,13 +96,6 @@ export function buildRepairPrompt(input: RepairPromptInput): BuiltRepairPrompt {
     for (const item of input.previous) {
       parts.push(`- \`${item.command}\` → ${item.outcome === "failed" ? "执行失败" : "用户未执行"}`);
     }
-  }
-
-  const deviceText = formatDeviceContext(input.device);
-  if (deviceText) {
-    parts.push("");
-    parts.push("## 设备上下文");
-    parts.push(deviceText);
   }
 
   parts.push("");

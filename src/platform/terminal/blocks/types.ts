@@ -12,8 +12,8 @@
  * 3. `rawRange` 只在创建时记录，行号会随 scrollback 裁剪失效，用前必须校验。
  */
 
-/** 会话目标类型，与后端 `TerminalTarget` 的四类一一对应。 */
-export type BlockTargetKind = "local" | "wsl" | "ssh" | "adb";
+/** 会话目标类型，与后端 `TerminalTarget` 的三类一一对应。 */
+export type BlockTargetKind = "local" | "wsl" | "ssh";
 
 export type BlockStatus =
   /** 已创建但用户还没提交（OSC 133 的 prompt-start 之后）。 */
@@ -43,8 +43,6 @@ export interface CommandBlock {
   id: string;
   sessionId: string;
   targetKind: BlockTargetKind;
-  /** `targetKind === "adb"` 时存在。 */
-  deviceSerial?: string;
   /** 命令原文（不含提交用的回车）。 */
   command: string;
   /** 当前工作目录，来自 OSC 7 或会话初始目录。 */

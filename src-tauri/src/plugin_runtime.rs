@@ -156,7 +156,7 @@ impl Pipeline {
         let mut command = self.command()?;
         match self.language {
             Language::Node => {
-                let npm = crate::android_tools::node_npm_cli(self.executable()?)
+                let npm = crate::runtime_env::node_npm_cli(self.executable()?)
                     .ok_or("找不到插件安装所需的 npm")?;
                 let observer = if options.observe {
                     let observer = directory.join("download-progress.cjs");

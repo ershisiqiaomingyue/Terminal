@@ -12,7 +12,7 @@
  *   3. 百分号转义过的路径（`/home/a%20b`）
  */
 
-export type TerminalPwdKind = "local" | "ssh" | "adb" | "wsl";
+export type TerminalPwdKind = "local" | "ssh" | "wsl";
 
 /** 取出 `file://host/path` 里的 path 部分；没有 scheme 就返回 null。 */
 function uriPath(raw: string): string | null {

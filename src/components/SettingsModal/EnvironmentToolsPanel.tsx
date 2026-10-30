@@ -21,14 +21,6 @@ import { formatInvokeError, isTauri, listen, openFile, type DialogFilter } from 
 import { useSettingsNotification } from "./SettingsNotification";
 
 const FILE_FILTERS: Record<string, DialogFilter[]> = {
-  adb: [{ name: "ADB", extensions: ["exe"] }],
-  aapt2: [{ name: "aapt2", extensions: ["exe"] }],
-  java: [{ name: "Java", extensions: ["exe"] }],
-  apktool: [{ name: "Java Archive", extensions: ["jar"] }],
-  jadx: [{ name: "JADX", extensions: ["bat", "cmd"] }],
-  bundletool: [{ name: "Java Archive", extensions: ["jar"] }],
-  scrcpy: [{ name: "Scrcpy", extensions: ["exe"] }],
-  gradle: [{ name: "Gradle", extensions: ["bat", "cmd", "exe"] }],
   python: [{ name: "Python", extensions: ["exe"] }],
   node: [{ name: "Node.js", extensions: ["exe"] }],
 };
@@ -209,7 +201,7 @@ export const EnvironmentToolsPanel: React.FC = () => {
     <section className="settings-pane">
       <header className="pane-header settings-environment-header">
         <div>
-          <h2 className="pane-title">环境与工具</h2>
+          <h2 className="pane-title">环境</h2>
           <p className="settings-environment-intro">检测应用会实际调用的本地工具，并从官方发布源检查可用版本。</p>
         </div>
         <Button
@@ -246,7 +238,6 @@ export const EnvironmentToolsPanel: React.FC = () => {
                   <div className="settings-environment-tool-title">
                     <strong>{tool.name}</strong>
                     {localBadge(tool)}
-                    {tool.id === "gradle" && <Badge variant="neutral">项目优先</Badge>}
                   </div>
                   <span>{tool.description}</span>
                   {(tool.localVersion || tool.remoteVersion || tool.remoteMessage) && <div className="settings-environment-tool-meta">
@@ -311,7 +302,7 @@ export const EnvironmentToolsPanel: React.FC = () => {
         </div>
       </div>
 
-      <p className="settings-environment-footnote">下载会保存到 %LOCALAPPDATA%\Android Toolkit\tools；Gradle 项目优先使用项目目录中的 gradlew / gradlew.bat，也可在此选择系统 Gradle。</p>
+      <p className="settings-environment-footnote">下载会保存到 %LOCALAPPDATA%\Terminal\tools；插件宿主与 Skills 运行时会优先使用这里配置的 Node.js / Python。</p>
     </section>
   );
 };

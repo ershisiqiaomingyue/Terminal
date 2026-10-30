@@ -18,9 +18,7 @@
     "active": true,
     "resources": {
       "resources/development/": "resources/development/",
-      "resources/agent-instructions/": "resources/agent-instructions/",
-      "resources/shark/": "resources/shark/",
-      "resources/android-skills/": "resources/android-skills/"
+      "resources/agent-instructions/": "resources/agent-instructions/"
     },
     "targets": ["nsis"],
     "icon": [

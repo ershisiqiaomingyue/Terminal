@@ -11,10 +11,9 @@
  * 3. **本地兜底风险分级** —— 这是 S1/S2 的关键，见 `classifyCommandsRisk`。
  */
 import { utf8ByteLength } from "../blocks/ansiText.ts";
-import { formatDeviceContext, type DeviceContext } from "./deviceContext.ts";
 
 /** 命令目标。故意用字面量而不是 import 视图里的类型，避免逻辑层依赖 UI 层。 */
-export type ComposerTarget = "adb" | "local" | "wsl" | "ssh";
+export type ComposerTarget = "local" | "wsl" | "ssh";
 
 /** 风险等级（9.3.2 的输出协议，顺序即严重度）。 */
 export type CommandRisk = "read-only" | "mutating" | "destructive";
@@ -55,10 +54,9 @@ export interface ComposeInput {
   target: ComposerTarget;
   /** 当前工作目录，本地/WSL/SSH 才有意义。 */
   cwd?: string;
-  device?: DeviceContext;
   /** 最近执行过的命令，最新的在前。 */
   history?: string[];
-  /** 目标 shell，用于提示语法（`adb shell` 里是 Android 的 toybox）。 */
+  /** 目标 shell，用于提示语法。 */
   shell?: string;
   /** 单测用。 */
   limits?: { maxHistory?: number; maxNlChars?: number };
@@ -70,7 +68,6 @@ const DEFAULT_COMPOSE_LIMITS = { maxHistory: 10, maxNlChars: 2000 };
 export const MAX_COMPOSER_REQUEST_BYTES = 16 * 1024;
 
 const TARGET_LABEL: Record<ComposerTarget, string> = {
-  adb: "Android 设备（通过 adb）",
   local: "本机（Windows）",
   wsl: "WSL",
   ssh: "远程 SSH 主机",
@@ -93,9 +90,6 @@ function composerSystemPrompt(input: ComposeInput): string {
     "",
     `执行环境：${TARGET_LABEL[input.target]}`,
   ];
-  if (input.target === "adb") {
-    lines.push("说明：命令会直接写进 `adb shell` 的已经存在的会话，**不要**再带 `adb shell` 前缀。");
-  }
   if (input.shell) lines.push(`Shell：${input.shell}`);
   return lines.join("\n");
 }
@@ -103,8 +97,6 @@ function composerSystemPrompt(input: ComposeInput): string {
 function composerUserMessage(input: ComposeInput): string {
   const limits = { ...DEFAULT_COMPOSE_LIMITS, ...input.limits };
   const parts: string[] = [];
-  const device = formatDeviceContext(input.device);
-  if (device) parts.push(device);
   if (input.cwd) parts.push(`当前目录：${input.cwd}`);
   const history = (input.history ?? []).filter((line) => line.trim()).slice(0, limits.maxHistory);
   if (history.length) {
@@ -155,8 +147,6 @@ const PREFIX_PATTERNS: RegExp[] = [
   /^su\s+-c\s+/,
   // `bash -c "…"` / `sh -c '…'`：等同直接执行引号里的命令。
   /^(?:bash|sh|zsh|dash)\s+-c\s+/,
-  /^adb\s+-s\s+\S+\s+shell\s+/,
-  /^adb\s+shell\s+/,
   /^env\s+/,
   /^(?:[A-Za-z_][A-Za-z0-9_]*=\S*\s+)+/, // FOO=1 cmd
 ];
@@ -189,7 +179,7 @@ const MUTATING_PROGRAMS = new Set([
   "pm", "am", "settings", "setprop", "svc", "wm", "input",
   "kill", "killall", "pkill", "reboot", "shutdown", "poweroff",
   "install", "uninstall", "push", "pull", "sync", "mount", "umount", "remount",
-  "git", "npm", "pnpm", "yarn", "pip", "cargo", "make", "gradle", "adb",
+  "git", "npm", "pnpm", "yarn", "pip", "cargo", "make", "gradle",
   "docker", "kubectl", "systemctl", "service", "tar", "unzip",
   // `curl` / `wget` 刻意**不**放进来：单纯下载/请求是只读的，只有带 `-o`/`-O`
   // 落盘才算改状态，交给下面那条专门的判断（放这里会把所有 curl 都判成 mutating）。
@@ -254,14 +244,6 @@ function classifySegment(segment: string): CommandRisk {
   if (DESTRUCTIVE_PROGRAMS.has(program)) return "destructive";
   // `pm clear` 抹掉应用全部数据且不可恢复——按 10.1 的口径（不可恢复即破坏性）处理。
   if (program === "pm" && tokens[1] === "clear") return "destructive";
-  // `adb shell pm clear` 之类已经被 PREFIX 剥过；这里兜住直接写全路径的情况。
-  if (program === "adb") {
-    const sub = tokens[1] ?? "";
-    if (["install", "uninstall", "push", "root", "unroot", "remount", "reboot", "sideload"].includes(sub)) {
-      return "mutating";
-    }
-    return "read-only";
-  }
   if (MUTATING_PROGRAMS.has(program)) {
     // `sed` / `awk` 只有带 `-i` 才真的改文件。
     if (program === "sed" && !tokens.some((token) => token === "-i" || /^-[a-zA-Z]*i/.test(token))) return "read-only";
@@ -285,8 +267,6 @@ export function detectNeedsRoot(commands: string[]): boolean {
   return commands.some((command) => {
     const text = command.toLowerCase();
     return (
-      /\badb\s+root\b/.test(text) ||
-      /\badb\s+remount\b/.test(text) ||
       /\bsu\s+-c\b/.test(text) ||
       /^\s*su\b/.test(text) ||
       /\bmount\s+-o\s+rw\b/.test(text)

@@ -1,14 +1,14 @@
 export interface TerminalTab {
   id: string;
   title: string;
-  type: "adb" | "local" | "wsl" | "ssh";
+  type: "local" | "wsl" | "ssh";
   isRoot?: boolean;
   sessionId?: string;
   /** 本地终端用：powershell / pwsh / cmd */
   shell?: string;
   /** ssh / wsl 配置 id */
   profileId?: string;
-  /** 会话的工作目录（本地为绝对路径，adb 为设备路径，ssh 为远程 root） */
+  /** 会话的工作目录（本地为绝对路径，ssh 为远程 root） */
   root?: string;
   /**
    * 终端打开时的工作目录（首次 cd 前捕获）。右栏「跟随终端目录」关闭时，

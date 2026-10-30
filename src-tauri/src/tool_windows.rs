@@ -10,25 +10,7 @@ use std::{
 use tauri::{AppHandle, Emitter, Manager, State, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 
 static SEQUENCE: AtomicU64 = AtomicU64::new(0);
-const TOOLS: &[&str] = &[
-    "code-viewer",
-    "adb",
-    "apps",
-    "shell",
-    "logcat",
-    "archive",
-    "aosp",
-    "files",
-    "capture",
-    "control",
-    "simpleperf",
-    "method-profiler",
-    "heap-dump",
-    "benchmark",
-    "native-symbolizer",
-    "scrcpy",
-    "perf",
-];
+const TOOLS: &[&str] = &["code-viewer", "shell"];
 
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -158,7 +140,6 @@ pub async fn create_tool_window(
             if let Ok(mut entries) = close_app.state::<ToolWindowState>().entries.lock() {
                 entries.remove(&close_label);
             }
-            crate::android_tools::stop_window_logcat(&close_app, &close_label);
             crate::terminal::close_window_terminals(&close_app, &close_label);
         }
     });
@@ -205,29 +186,13 @@ pub fn ready_tool_window(
     if entry.ready {
         return Ok(());
     }
-    crate::android_tools::transfer_window_logcat(
-        &app,
-        &entry.source,
-        window.label(),
-        &entry.info.state,
-    )?;
-    if let Err(error) =
-        crate::terminal::transfer_window_terminals(&app, &source, window.label(), &snapshot)
-    {
-        let _ =
-            crate::android_tools::transfer_window_logcat(&app, window.label(), &source, &snapshot);
-        let _ = crate::terminal::transfer_window_terminals(&app, window.label(), &source, &snapshot);
-        return Err(error);
-    }
+    crate::terminal::transfer_window_terminals(&app, &source, window.label(), &snapshot)?;
     if let Err(error) = app.emit_to(
         &source,
         "tool-window:ready",
         serde_json::json!({"label":window.label()}),
     ) {
-        let _ =
-            crate::android_tools::transfer_window_logcat(&app, window.label(), &source, &snapshot);
-        let _ =
-            crate::terminal::transfer_window_terminals(&app, window.label(), &source, &snapshot);
+        let _ = crate::terminal::transfer_window_terminals(&app, window.label(), &source, &snapshot);
         return Err(error.to_string());
     }
     entry.ready = true;
@@ -294,13 +259,13 @@ pub fn focus_main_window(app: AppHandle, settings_section: Option<String>) -> Re
 mod tests {
     #[test]
     fn independent_windows_accept_tools_only_and_bound_transfer_state() {
-        assert!(super::validate("logcat", &serde_json::json!({})).is_ok());
+        assert!(super::validate("code-viewer", &serde_json::json!({})).is_ok());
         for key in ["home", "chat", "../chat", "unknown"] {
             assert!(super::validate(key, &serde_json::json!({})).is_err());
         }
-        assert!(super::validate("aosp", &serde_json::json!([])).is_err());
+        assert!(super::validate("shell", &serde_json::json!([])).is_err());
         assert!(super::validate(
-            "logcat",
+            "code-viewer",
             &serde_json::json!({"data":"x".repeat(4*1024*1024)})
         )
         .is_err());

@@ -101,26 +101,6 @@ export async function listLocalDirectory(path: string): Promise<DirectoryEntry[]
   }));
 }
 
-/** 通过 ADB 读取设备目录（用于 adb 会话的文件面板） */
-export async function listAdbDirectory(serial: string, path: string): Promise<DirectoryEntry[]> {
-  if (!isTauri() || !serial) return [];
-  interface AdbFileRow {
-    name: string;
-    path: string;
-    /** 同上：后端是 camelCase 的 `isDirectory`，兼容 snake_case。 */
-    isDirectory?: boolean;
-    is_directory?: boolean;
-    size?: number | null;
-  }
-  const rows = await invoke<AdbFileRow[]>("list_adb_remote_files", { serial, path });
-  return rows.map((row) => ({
-    name: row.name,
-    path: row.path,
-    isDirectory: Boolean(row.isDirectory ?? row.is_directory),
-    size: row.size ?? null,
-  }));
-}
-
 /** 工作区 Git 概况 */
 export interface WorkspaceGitSummary {
   available: boolean;
@@ -314,25 +294,16 @@ export async function listSshDirectory(connectionId: string, path: string): Prom
 }
 
 /**
- * 读取远端文本文件（需求 6：点文件能预览）。
- * ADB 与 SSH 各走自己的命令，视图只调这一个入口。
+ * 通过 SSH 读取远端文本文件（需求 6：点文件能预览）。
+ * 视图只调这一个入口。
  */
 export async function readRemoteTextFile(input: {
-  kind: "adb" | "ssh";
-  serial?: string;
+  kind: "ssh";
   connectionId?: string;
   root?: string;
   path: string;
 }): Promise<string> {
   if (!isTauri()) return "";
-  if (input.kind === "adb") {
-    if (!input.serial) return "";
-    const result = await invoke<{ content: string }>("read_adb_remote_text", {
-      serial: input.serial,
-      path: input.path,
-    });
-    return result?.content ?? "";
-  }
   // 与 listSshDirectory 同理：空 connectionId 兜成明确错误，不把空串传给后端。
   const connectionId = (input.connectionId ?? "").trim();
   if (!connectionId) throw new Error("当前会话没有可用的 SSH 连接 ID，无法读取远端文件。");

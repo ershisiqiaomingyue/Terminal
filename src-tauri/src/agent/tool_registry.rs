@@ -217,7 +217,7 @@ pub(super) fn local_tool_registry(
     output_sink: Option<CommandOutputSink>,
     ssh_context: Option<&agent_core::SshToolContext>,
     wsl_context: Option<&agent_core::LocalToolContext>,
-    android_app: Option<&AppHandle>,
+    app_handle: Option<&AppHandle>,
     session_id: Option<&str>,
     turn_id: Option<&str>,
 ) -> Result<ToolRegistry, String> {
@@ -234,131 +234,10 @@ pub(super) fn local_tool_registry(
                 .with_cancellation(cancellation.clone()),
         )?;
     } else {
-        // WinScope and the local log/LSP tools are desktop-only. A WSL turn
-        // still uses this branch for the shared file/process tools, but must
-        // not be able to accidentally inspect the Windows workspace.
+        // The local log/LSP tools are desktop-only. A WSL turn still uses
+        // this branch for the shared file/process tools, but must not be
+        // able to accidentally inspect the Windows workspace.
         if wsl_context.is_none() {
-            registry
-                .register_handler(InspectWinScopeTraceTool {
-                    roots: paths.to_vec(),
-                    allow_external_paths,
-                    cancellation: cancellation.clone(),
-                })
-                .map_err(|error| error.to_string())?;
-            registry
-                .register_handler(CaptureAndroidLogcatTool {
-                    cancellation: cancellation.clone(),
-                })
-                .map_err(|error| error.to_string())?;
-            registry
-                .register_handler(QueryAndroidLogcatTool {
-                    app: android_app.cloned(),
-                    cancellation: cancellation.clone(),
-                })
-                .map_err(|error| error.to_string())?;
-            registry
-                .register_handler(QueryAndroidTaskTool {
-                    cancellation: cancellation.clone(),
-                })
-                .map_err(|error| error.to_string())?;
-            registry
-                .register_handler(QueryAndroidArchiveHistoryTool {
-                    cancellation: cancellation.clone(),
-                })
-                .map_err(|error| error.to_string())?;
-            if let Some(app) = android_app {
-                registry
-                    .register_handler(StartAndroidArchiveTaskTool {
-                        app: app.clone(),
-                        roots: paths.to_vec(),
-                        allow_external_paths,
-                        cancellation: cancellation.clone(),
-                    })
-                    .map_err(|error| error.to_string())?;
-                registry
-                    .register_handler(AndroidArchiveReadTool {
-                        app: app.clone(),
-                        roots: paths.to_vec(),
-                        allow_external_paths,
-                        cancellation: cancellation.clone(),
-                    })
-                    .map_err(|error| error.to_string())?;
-                registry
-                    .register_handler(AndroidArchiveWriteTool {
-                        app: app.clone(),
-                        roots: paths.to_vec(),
-                        allow_external_paths,
-                        cancellation: cancellation.clone(),
-                    })
-                    .map_err(|error| error.to_string())?;
-                registry
-                    .register_handler(AndroidAdbReadTool {
-                        app: app.clone(),
-                        cancellation: cancellation.clone(),
-                    })
-                    .map_err(|error| error.to_string())?;
-                registry
-                    .register_handler(AndroidAdbActionTool {
-                        app: app.clone(),
-                        roots: paths.to_vec(),
-                        allow_external_paths,
-                        cancellation: cancellation.clone(),
-                    })
-                    .map_err(|error| error.to_string())?;
-            }
-            registry
-                .register_handler(QueryPerfettoTraceTool {
-                    app: android_app.cloned(),
-                    roots: paths.to_vec(),
-                    allow_external_paths,
-                    cancellation: cancellation.clone(),
-                })
-                .map_err(|error| error.to_string())?;
-            registry
-                .register_handler(QueryAndroidDiagnosticsTool {
-                    cancellation: cancellation.clone(),
-                })
-                .map_err(|error| error.to_string())?;
-            registry
-                .register_handler(QueryAndroidBugreportTool {
-                    cancellation: cancellation.clone(),
-                })
-                .map_err(|error| error.to_string())?;
-            registry
-                .register_handler(QueryAospBuildTool {
-                    cancellation: cancellation.clone(),
-                })
-                .map_err(|error| error.to_string())?;
-            registry
-                .register_handler(QueryAndroidSimpleperfTool {
-                    cancellation: cancellation.clone(),
-                })
-                .map_err(|error| error.to_string())?;
-            registry
-                .register_handler(QueryAndroidNativeSymbolizerTool {
-                    cancellation: cancellation.clone(),
-                })
-                .map_err(|error| error.to_string())?;
-            registry
-                .register_handler(QueryAndroidMethodProfileTool {
-                    cancellation: cancellation.clone(),
-                })
-                .map_err(|error| error.to_string())?;
-            registry
-                .register_handler(QueryAndroidHeapDumpTool {
-                    cancellation: cancellation.clone(),
-                })
-                .map_err(|error| error.to_string())?;
-            registry
-                .register_handler(QueryAndroidBenchmarkTool {
-                    cancellation: cancellation.clone(),
-                })
-                .map_err(|error| error.to_string())?;
-            registry
-                .register_handler(QueryAndroidDeviceTool {
-                    cancellation: cancellation.clone(),
-                })
-                .map_err(|error| error.to_string())?;
             registry
                 .register_handler(ReadLogRangeTool {
                     paths: paths.to_vec(),
@@ -395,7 +274,7 @@ pub(super) fn local_tool_registry(
         agent_core::register_local_tools(&mut registry, local_context.clone())?;
         registry
             .register_handler(UpdateTaskPlanTool {
-                app: android_app.cloned(),
+                app: app_handle.cloned(),
                 session_id: session_id.map(str::to_string),
                 turn_id: turn_id.map(str::to_string),
             })
@@ -403,13 +282,13 @@ pub(super) fn local_tool_registry(
         // G1：goal 一等公民工具——跨 turn 的目标生命周期（创建/查询/推进）。
         registry
             .register_handler(GoalTools {
-                app: android_app.cloned(),
+                app: app_handle.cloned(),
                 session_id: session_id.map(str::to_string),
                 remaining_depth: super::application_tools::MAX_SUBAGENT_DEPTH,
             })
             .map_err(|error| error.to_string())?;
     }
-    if let (Some(app), Some(session), Some(turn)) = (android_app, session_id, turn_id) {
+    if let (Some(app), Some(session), Some(turn)) = (app_handle, session_id, turn_id) {
         let context = if let Some(ssh) = ssh_context {
             agent_core::background::BackgroundShellContext::Ssh(
                 ssh.with_allow_external_paths(allow_external_paths),
@@ -509,7 +388,7 @@ fn bound_ssh_registries(
     cancellation: &Arc<AtomicBool>,
     allow_external_paths: bool,
     output_sink: &Option<CommandOutputSink>,
-    android_app: Option<&AppHandle>,
+    app_handle: Option<&AppHandle>,
     session_id: Option<&str>,
     turn_id: Option<&str>,
 ) -> Result<Vec<(String, String, ToolRegistry)>, String> {
@@ -527,7 +406,7 @@ fn bound_ssh_registries(
             output_sink.clone(),
             Some(context),
             None,
-            android_app,
+            app_handle,
             session_id,
             turn_id,
         )?;
@@ -601,7 +480,7 @@ pub(super) fn environment_tool_registry(
     ssh_context: Option<&agent_core::SshToolContext>,
     wsl_context: Option<&agent_core::LocalToolContext>,
     bound_ssh_hosts: &[BoundSshHost],
-    android_app: Option<&AppHandle>,
+    app_handle: Option<&AppHandle>,
     session_id: Option<&str>,
     turn_id: Option<&str>,
 ) -> Result<ToolRegistry, String> {
@@ -615,7 +494,7 @@ pub(super) fn environment_tool_registry(
         output_sink.clone(),
         None,
         None,
-        android_app,
+        app_handle,
         session_id,
         turn_id,
     )?;
@@ -624,7 +503,7 @@ pub(super) fn environment_tool_registry(
         &cancellation,
         allow_external_paths,
         &output_sink,
-        android_app,
+        app_handle,
         session_id,
         turn_id,
     )?;
@@ -639,7 +518,7 @@ pub(super) fn environment_tool_registry(
                 output_sink.clone(),
                 Some(context),
                 None,
-                android_app,
+                app_handle,
                 session_id,
                 turn_id,
             )
@@ -663,7 +542,7 @@ pub(super) fn environment_tool_registry(
                 output_sink,
                 None,
                 Some(context),
-                android_app,
+                app_handle,
                 session_id,
                 turn_id,
             )
@@ -698,7 +577,7 @@ pub(super) fn environment_tool_registry(
             "[Windows WSL]",
         )?;
     }
-    if let Some(app) = android_app {
+    if let Some(app) = app_handle {
         if let Some(session) = session_id {
             if let Some(turn) = turn_id {
                 // 询问工具自己解析当前请求的取消令牌，不能接收工具级令牌。
@@ -783,7 +662,7 @@ pub(super) fn build_environment_tool_registries(
     ssh_context: Option<&agent_core::SshToolContext>,
     wsl_context: Option<&agent_core::LocalToolContext>,
     bound_ssh_hosts: &[BoundSshHost],
-    android_app: &AppHandle,
+    app_handle: &AppHandle,
     session_id: &str,
     turn_id: &str,
     collaboration_tool: Option<&CreateCollaborationJobTool>,
@@ -802,7 +681,7 @@ pub(super) fn build_environment_tool_registries(
         ssh_context,
         wsl_context,
         bound_ssh_hosts,
-        Some(android_app),
+        Some(app_handle),
         Some(session_id),
         Some(turn_id),
     )?;
@@ -822,7 +701,7 @@ pub(super) fn build_environment_tool_registries(
             ssh_context,
             wsl_context,
             bound_ssh_hosts,
-            Some(android_app),
+            Some(app_handle),
             Some(session_id),
             Some(turn_id),
         )?)

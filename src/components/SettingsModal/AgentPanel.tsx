@@ -857,7 +857,7 @@ export const AgentPanel: React.FC = () => {
 
   return (
     <section className="settings-pane">
-      <header className="pane-header"><h2 className="pane-title">Agent 接入</h2></header>
+      <header className="pane-header"><h2 className="pane-title">引擎</h2></header>
       <div ref={providerFormRef}>{editingProviderId ? <div style={{ height: providerFormHeight }} aria-hidden="true" /> : providerForm}</div>
       {editingProviderId && <ProviderEditDialog busy={providerEditorBusy} onClose={closeProviderEditor}>{providerForm}</ProviderEditDialog>}
       {discoveredModels && <ModelDiscoveryDialog models={discoveredModels} savedIds={selectableModels.map((model) => model.id)} onClose={() => setDiscoveredModels(null)} onAdd={(selected) => {

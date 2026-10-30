@@ -161,7 +161,7 @@ pub(super) async fn ensure_connected(
         crate::ssh::start_ssh_connection(
             app.clone(),
             runtime.clone(),
-            app.state::<AndroidTaskManager>(),
+            app.state::<crate::tasks::TaskManager>(),
             connection.id.clone(),
             None,
         )?;

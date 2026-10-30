@@ -13,7 +13,6 @@
  */
 import type { CommandBlock } from "../blocks/types.ts";
 import { blockOutputText, truncateText, utf8ByteLength, type RedactOptions } from "../blocks/ansiText.ts";
-import { formatDeviceContext, type DeviceContext } from "./deviceContext.ts";
 
 export type TerminalAiMode = "explain" | "diagnose";
 
@@ -52,7 +51,6 @@ export interface BlockOutputSnippet {
 export interface BuildPromptInput {
   block: CommandBlock;
   mode: TerminalAiMode;
-  device?: DeviceContext;
   /** 脱敏开关；默认全开（S4）。 */
   redact?: RedactOptions;
   /** 用户额外补充的问题（可选）。 */
@@ -115,19 +113,18 @@ const TARGET_LABEL: Record<CommandBlock["targetKind"], string> = {
   local: "本机（Windows）",
   wsl: "WSL 发行版",
   ssh: "远程 SSH 主机",
-  adb: "Android 设备（adb shell）",
 };
 
 /** 两种模式共享的系统提示词骨架：强调"只读、不调工具、不给编造的命令"。 */
 function systemPrompt(mode: TerminalAiMode): string {
   const common = [
-    "你是一名资深终端排障助手，内嵌在一个 Android 开发工具的终端面板里。",
+    "你是一名资深终端排障助手，内嵌在一个终端面板里。",
     "给你的是用户刚刚在终端里执行过的一条命令、它的退出状态和输出片段。",
     "",
     "硬性约束：",
     "1. 你没有工具、不能执行命令、不能读取文件。只能基于下面给你的内容作答。",
     "2. 你看不到完整输出时不代表没有输出；不确定就说不确定，不要编造报错文本。",
-    "3. 涉及破坏性操作（`rm -rf`、`fastboot flash`、`adb root`、`mkfs`、`format`）时必须提醒风险。",
+    "3. 涉及破坏性操作（`rm -rf`、`mkfs`、`format`）时必须提醒风险。",
     "4. 用中文回答，命令、路径、参数、报错原文保持原样不翻译。",
     "5. 不要输出思考过程，直接给结论。",
   ];
@@ -172,12 +169,6 @@ export function buildBlockUserMessage(input: BuildPromptInput): string {
   parts.push("```");
   parts.push(block.command.trim());
   parts.push("```");
-
-  const deviceSection = formatDeviceContext(input.device);
-  if (deviceSection) {
-    parts.push("");
-    parts.push(deviceSection);
-  }
 
   parts.push("");
   parts.push("## 输出");

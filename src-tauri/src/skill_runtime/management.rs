@@ -195,9 +195,9 @@ mod tests {
 
     #[test]
     fn imports_cannot_replace_builtin_definitions_or_their_parent() {
-        let builtin = Path::new("/app/resources/android-skills");
+        let builtin = Path::new("/app/resources/agent-instructions/skills");
         assert!(validate_import_destination(builtin, builtin).is_err());
-        assert!(validate_import_destination(&builtin.join("android-cli"), builtin).is_err());
+        assert!(validate_import_destination(&builtin.join("android-task-guidance"), builtin).is_err());
         assert!(validate_import_destination(Path::new("/app/resources"), builtin).is_err());
         assert!(validate_import_destination(Path::new("/data/skills/downloaded"), builtin).is_ok());
     }
@@ -213,8 +213,9 @@ mod tests {
     fn disabled_skills_do_not_remain_ready_in_the_catalog() {
         let mut skills = scan_catalog_with_python(
             vec![SkillRepositorySource {
-                path: PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("resources/android-skills"),
-                display_path: "内置 Android Skills".into(),
+                path: PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                    .join("resources/agent-instructions/skills"),
+                display_path: "内置技能".into(),
                 builtin: true,
             }],
             PythonRuntimeView {
@@ -226,7 +227,7 @@ mod tests {
             },
         )
         .skills;
-        assert_eq!(skills.len(), 6);
+        assert_eq!(skills.len(), 2);
         assert!(skills
             .iter()
             .all(|skill| skill.runtime == SkillRuntime::Instruction

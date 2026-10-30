@@ -48,7 +48,6 @@ export interface BlockAiCardState {
     modelId: string;
     requestBytes: number;
     durationMs: number;
-    usedDeviceContext: boolean;
     tightened: boolean;
   };
   /** 追问历史，最新在后；最多 `MAX_FOLLOW_UP_ROUNDS` 条。 */
@@ -119,7 +118,6 @@ export function blockAiReducer(state: BlockAiCardState, action: BlockAiAction): 
           modelId: action.outcome.modelId,
           requestBytes: action.outcome.requestBytes,
           durationMs: action.outcome.durationMs,
-          usedDeviceContext: action.outcome.usedDeviceContext,
           tightened: action.outcome.tightened,
         },
       };
@@ -284,7 +282,6 @@ export function formatBlockAiMeta(meta: BlockAiCardState["meta"]): string {
     : `${meta.requestBytes} B`;
   const seconds = Math.max(0.1, meta.durationMs / 1000);
   const parts = [size, `${seconds.toFixed(1)} s`, meta.modelId];
-  if (meta.usedDeviceContext) parts.push("含设备上下文");
   if (meta.tightened) parts.push("输出已压缩");
   return parts.join(" · ");
 }

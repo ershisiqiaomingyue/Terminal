@@ -224,7 +224,7 @@ async fn connect_bound_ssh_host(
     name: &str,
 ) -> Result<(), String> {
     let runtime = app.state::<crate::ssh::SshRuntimeState>();
-    let tasks = app.state::<AndroidTaskManager>();
+    let tasks = app.state::<crate::tasks::TaskManager>();
     let status =
         crate::ssh::connection_progress(&runtime, connection_id)?.map(|progress| progress.status);
     if status.as_deref() != Some("connected") {

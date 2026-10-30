@@ -179,15 +179,15 @@ import { PaneResizeHandle } from "@/components/ResizablePane/PaneResizeHandle";
 import { usePaneWidth } from "@/components/ResizablePane/usePaneWidth";
 import { WORKSPACE_PANE } from "@/components/ResizablePane/paneWidth";
 import {
-  cancelAndroidTask,
+  cancelTask,
   formatInvokeError,
   invoke,
   isTauri,
-  listAndroidTasks,
+  listTasks,
   listen,
   openFile,
   saveFile,
-  type AndroidTask,
+  type Task,
 } from "@/platform/runtime";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import "@/components/BorderGlow/border-glow.css";
@@ -464,7 +464,7 @@ export const ChatView: React.FC<ChatViewProps> = React.memo(({ active = true, na
   const [workspaceEnvironment, setWorkspaceEnvironment] = useState<WorkspaceEnvironment | null>(null);
   const [workspaceEnvironmentLoading, setWorkspaceEnvironmentLoading] = useState(false);
   const [workspaceGitChanges, setWorkspaceGitChanges] = useState<WorkspaceGitChange[]>([]);
-  const [androidTasks, setAndroidTasks] = useState<AndroidTask[]>([]);
+  const [liveTasks, setLiveTasks] = useState<Task[]>([]);
   const [copiedId, setCopiedId] = useState("");
   const [attachmentPreview, setAttachmentPreview] = useState<{ name: string; dataUrl: string } | null>(null);
   const [activity, setActivity] = useState("");
@@ -1101,13 +1101,13 @@ export const ChatView: React.FC<ChatViewProps> = React.memo(({ active = true, na
   // 后端下发的 task.turnId（create_task 在受理点盖章，权威）——旧任务缺失时
   // 回退本地事件流推断（managedTaskIds）。双源取交集以覆盖两类任务。
   const activeTurnIdForTasks = useMemo(() => activeThreadTurnId(threadSnapshot, messages), [threadSnapshot, messages]);
-  const backendOwnedTaskIds = useMemo(() => new Set(androidTasks
+  const backendOwnedTaskIds = useMemo(() => new Set(liveTasks
     .filter((task) => task.turnId && (!activeTurnIdForTasks || task.turnId === activeTurnIdForTasks))
-    .map((task) => task.id)), [androidTasks, activeTurnIdForTasks]);
+    .map((task) => task.id)), [liveTasks, activeTurnIdForTasks]);
   const managedTaskIds = useMemo(() => submittedTaskIds(latestTurnMessages
     .filter((message) => !activeTurnIdForTasks || message.turnId === activeTurnIdForTasks)
     .flatMap((message) => message.events || [])), [latestTurnMessages, activeTurnIdForTasks]);
-  const managedTasks = androidTasks.filter((task) => task.kind !== "agent" && task.status === "running"
+  const managedTasks = liveTasks.filter((task) => task.kind !== "agent" && task.status === "running"
     && (managedTaskIds.has(task.id) || backendOwnedTaskIds.has(task.id)));
   const taskSteps: ComposerTaskStep[] = taskPlan?.steps.length ? taskPlan.steps : managedTasks.map((task) => ({
     id: task.id,
@@ -1184,13 +1184,13 @@ export const ChatView: React.FC<ChatViewProps> = React.memo(({ active = true, na
     const tick = () => {
       if (stopped || refreshing || document.visibilityState === "hidden") return;
       refreshing = true;
-      void listAndroidTasks().then((tasks) => {
+      void listTasks().then((tasks) => {
         if (stopped) return;
         const activeTasks = tasks.filter((task) => task.status === "running" || task.status === "queued");
         const signature = JSON.stringify(activeTasks);
         if (signature === previousTasks) return;
         previousTasks = signature;
-        setAndroidTasks(activeTasks);
+        setLiveTasks(activeTasks);
       }).catch(() => undefined).finally(() => { refreshing = false; });
     };
     tick();
@@ -2460,7 +2460,7 @@ export const ChatView: React.FC<ChatViewProps> = React.memo(({ active = true, na
     // stop result; task failures are reported separately below.
     const [agentResult, ...taskResults] = await Promise.allSettled([
       cancelAgentRequest(stoppingSessionId, activeTurnId, "stop_button"),
-      ...managedTasks.map((task) => cancelAndroidTask(task.id)),
+      ...managedTasks.map((task) => cancelTask(task.id)),
     ]);
     const taskFailures = taskResults
       .filter((result): result is PromiseRejectedResult => result.status === "rejected")

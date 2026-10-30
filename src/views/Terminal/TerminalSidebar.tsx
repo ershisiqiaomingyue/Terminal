@@ -13,14 +13,11 @@ interface TerminalSidebarProps {
   activeTabId: string;
   savedServers: SavedServerEntry[];
   savedServersLoading: boolean;
-  /** 是否有在线 ADB 设备（决定「新建 ADB 会话」是否可点） */
-  hasAdbDevice: boolean;
   onSelectTab: (id: string) => void;
   onCloseTab: (event: React.MouseEvent, id: string) => void;
   onAddLocal: (shell: "pwsh" | "cmd") => void;
   onAddWsl: () => void;
   onAddSsh: () => void;
-  onAddAdb: () => void;
   onUseSavedServer: (server: SavedServerEntry) => void;
   onRefreshServers: () => void;
   /** 终端卡片右键菜单（需求：左侧终端项可右键）。 */
@@ -49,7 +46,6 @@ interface TerminalSidebarProps {
 
 const TYPE_LABEL: Record<TerminalTab["type"], string> = {
   local: "本机",
-  adb: "ADB",
   wsl: "WSL",
   ssh: "SSH",
 };
@@ -97,13 +93,11 @@ export const TerminalSidebar: React.FC<TerminalSidebarProps> = ({
   activeTabId,
   savedServers,
   savedServersLoading,
-  hasAdbDevice,
   onSelectTab,
   onCloseTab,
   onAddLocal,
   onAddWsl,
   onAddSsh,
-  onAddAdb,
   onUseSavedServer,
   onRefreshServers,
   onTabContextMenu,
@@ -258,16 +252,6 @@ export const TerminalSidebar: React.FC<TerminalSidebarProps> = ({
                 <TerminalGlyph kind="ssh" size={16} />
                 <span>SSH 远程服务器</span>
               </button>
-              <button
-                type="button"
-                role="menuitem"
-                disabled={!hasAdbDevice}
-                title={hasAdbDevice ? "在当前设备上开一个 shell" : "未检测到在线设备"}
-                onClick={() => pick(onAddAdb)}
-              >
-                <TerminalGlyph kind="adb" size={16} />
-                <span>新建 ADB 会话</span>
-              </button>
             </div>
           )}
         </div>
@@ -309,9 +293,9 @@ export const TerminalSidebar: React.FC<TerminalSidebarProps> = ({
                     <span className="terminal-session-actions">
                       {/* 类型徽标紧挨关闭按钮左侧（用户要求：徽标放到 × 左边，整行只占一行）。 */}
                       {/* 类型徽标用组件库 Badge：状态点配色由变体提供（本机=中性、
-                          ADB=绿、SSH=主色、WSL=橙），激活页签的圆点呼吸闪烁。 */}
+                          SSH=主色、WSL=橙），激活页签的圆点呼吸闪烁。 */}
                       <Badge
-                        variant={tab.type === "adb" ? "success" : tab.type === "ssh" ? "primary" : tab.type === "wsl" ? "warning" : "neutral"}
+                        variant={tab.type === "ssh" ? "primary" : tab.type === "wsl" ? "warning" : "neutral"}
                         pulse={active}
                         className="terminal-session-badge"
                       >

@@ -180,7 +180,7 @@ export const TerminalPanel: React.FC = () => {
   return (
     <section className="settings-pane">
       <header className="pane-header">
-        <h2 className="pane-title">终端</h2>
+        <h2 className="pane-title">外观</h2>
       </header>
       <p className="setting-desc terminal-pane-desc">
         终端主体、文字与样式设置。所有终端共用这套配置，修改后立即作用于已打开的终端窗口。
@@ -306,7 +306,7 @@ export const TerminalPanel: React.FC = () => {
           <div className="setting-row-item">
             <div className="setting-label-block">
               <span className="setting-title">等宽字体</span>
-              <span className="setting-desc">终端、Logcat 与代码共用同一套等宽字体。</span>
+              <span className="setting-desc">终端与代码共用同一套等宽字体。</span>
             </div>
             <div className="setting-control-block">
               <Select
@@ -432,11 +432,11 @@ export const TerminalPanel: React.FC = () => {
                 文字显示效果——提示符、命令、输出、状态色各来一行。 */}
             <div className="terminal-theme-preview" style={previewStyle}>
               <div>
-                <span style={{ color: previewTheme.green }}>❯</span> adb devices
+                <span style={{ color: previewTheme.green }}>❯</span> cargo check
               </div>
-              <div style={{ color: previewTheme.brightBlack }}>List of devices attached</div>
+              <div style={{ color: previewTheme.brightBlack }}>Finished `dev` profile in 2.3s</div>
               <div>
-                R58M12ABCDE{"\u00a0\u00a0\u00a0\u00a0"}<span style={{ color: previewTheme.green }}>device</span>
+                <span style={{ color: previewTheme.green }}>✓</span>{"\u00a0\u00a0\u00a0\u00a0"}<span style={{ color: previewTheme.green }}>0 warnings</span>
               </div>
               <div>
                 <span style={{ color: previewTheme.red }}>✗ build failed</span>{" "}
@@ -542,10 +542,10 @@ export const TerminalPanel: React.FC = () => {
             </div>
             <div className="setting-control-block">
               <div className="terminal-settings-preview" style={previewStyle}>
-                <div>~/workspace $ adb devices</div>
-                <div style={{ color: previewTheme.brightBlack }}>List of devices attached</div>
+                <div>~/workspace $ cargo check</div>
+                <div style={{ color: previewTheme.brightBlack }}>Finished `dev` profile in 2.3s</div>
                 <div>
-                  R58M12ABCDE{"\t"}<span style={{ color: previewTheme.green }}>device</span>
+                  <span style={{ color: previewTheme.green }}>✓</span>{"\t"}<span style={{ color: previewTheme.green }}>0 warnings</span>
                   <span className="terminal-settings-cursor" style={{ background: previewTheme.cursor }} />
                 </div>
                 <div className="terminal-settings-swatches">

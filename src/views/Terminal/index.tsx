@@ -6,17 +6,13 @@ import {
 } from "@/platform/useTerminalWindowState";
 import type { TerminalOutputEvent } from "@/platform/terminalHandoff";
 import { isTerminalQueryResponse } from "@/platform/terminalReplay";
-import { ToolBackButton } from "@/components/ui/ToolBackButton";
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useConfirmAction } from "@/components/ConfirmDialog/useConfirmAction";
 import { ContextMenu } from "@/components/ui/ContextMenu";
 import "@xterm/xterm/css/xterm.css";
 import {
-  Smartphone,
   AlertTriangle,
   X,
-  KeyRound,
-  Wrench,
   Terminal as TerminalIcon,
   Square,
   Columns2,
@@ -24,12 +20,11 @@ import {
   Rows2,
   AlertCircle,
   Info,
-  RefreshCw,
   PanelLeft,
 } from "lucide-react";
-import { Button, Select } from "@/components/ui";
+import { Button } from "@/components/ui";
 import type { TerminalEngine } from "@/platform/terminalAdapter";
-import { MAX_ADB_TERMINALS } from "@/platform/scrollbackBudget";
+import { MAX_TERMINALS } from "@/platform/scrollbackBudget";
 import { BlockTracker } from "@/platform/terminal/blocks/blockTracker";
 import {
   isTerminalStatus,
@@ -53,18 +48,13 @@ import {
 } from "./repairSession";
 import { proposeRepair } from "@/platform/terminal/ai/repairService";
 import { terminalAiDeps } from "@/platform/terminal/ai/terminalAiDeps";
-import { collectDeviceContext } from "@/platform/terminal/ai/deviceContext";
 import { composerBlockedReason } from "@/platform/terminal/ai/commandComposer";
 import { readTerminalSettings, subscribeTerminalSettings } from "@/platform/terminalSettings";
 import {
-  deviceLabel,
   formatInvokeError,
   invoke,
   isTauri,
   listen,
-  listAdbDevices,
-  listAdbDevicesPassive,
-  type AdbDevice,
 } from "@/platform/runtime";
 import {
   readSshWorkingDirectory,
@@ -133,9 +123,8 @@ import "./terminal-workspace.css";
 interface TerminalViewProps {
   onBack?: () => void;
 }
-/** 页面级 UI 状态快照：窗口重开/切页回来后恢复布局与设备选择。 */
+/** 页面级 UI 状态快照：窗口重开/切页回来后恢复布局。 */
 interface ShellUiSnapshot {
-  selectedSerial: string;
   layout: TerminalLayout;
   /** 兼容旧快照：早期版本只有单面板的输入框状态。 */
   paneBindings: PaneBindings;
@@ -211,20 +200,10 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
   );
   /**
    * 当前活跃页签。
-   * 默认是空串而不是 `tab-adb-1`：用户明确要求「进入界面默认是空闲面板，不要自动
-   * 开 adb 终端」。空串表示没有任何页签活跃，中栏四个槽位全是空闲面板。
+   * 默认是空串：用户明确要求「进入界面默认是空闲面板」。空串表示没有任何页签
+   * 活跃，中栏四个槽位全是空闲面板。
    */
   const activeTabIdRef = useRef(restored?.activeId || "");
-  // 设备列表与选择状态
-  const [devices, setDevices] = useState<AdbDevice[]>([]);
-  const [selectedSerial, setSelectedSerial] = useState(restoredUi?.selectedSerial || "");
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [buildType, setBuildType] = useState("");
-  // Root 与挂载权限状态
-  const [isRoot, setIsRoot] = useState(false);
-  const [privilegeLoading, setPrivilegeLoading] = useState(false);
-  const selectedSerialRef = useRef(selectedSerial);
-  selectedSerialRef.current = selectedSerial;
   const [terminalEngine, setTerminalEngine] = useState<TerminalEngine | null>(null);
   // 换内核必须换实例（池按内核寄存），所以用纪元值触发构造 effect 重建。
   const [engineEpoch, setEngineEpoch] =
@@ -334,7 +313,7 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
   // 多终端标签会话管理 (满足多终端需求)
   /**
  * 页签列表。
- * 首次进入**不再预置 ADB 页签**：用户要求进终端默认是一屏空闲面板，点空闲面板
+ * 首次进入不预置任何页签：用户要求进终端默认是一屏空闲面板，点空闲面板
  * 才通过悬浮选择器（或左栏）开终端。恢复会话时照旧沿用上次的页签。
  */ const [
     tabs,
@@ -847,7 +826,6 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
   // 快照里带上焦点/分栏比例/空槽模式：悬浮窗拆离与切页缓存共用这份捕获，
   // 两条恢复路径就都能原样还原工作区（含覆盖态）。
   useToolWindowState("shell-ui", () => ({
-    selectedSerial,
     layout,
     paneBindings,
     focusedPane,
@@ -859,8 +837,8 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
   // 回来时在组件顶部 restoreToolWindowState 灌回——与悬浮窗拆离同一套恢复链路。
   // 手动构建而不走 captureToolWindowState：卸载时各 effect 清理顺序不保证注册表
   // 里的捕获函数还活着（useToolWindowState 的清理可能先跑），这里直接读镜像 ref。
-  const uiStateRef = useRef({ selectedSerial, layout, paneBindings, focusedPane, colRatios, rowRatios, sidebarCollapsed });
-  uiStateRef.current = { selectedSerial, layout, paneBindings, focusedPane, colRatios, rowRatios, sidebarCollapsed };
+  const uiStateRef = useRef({ layout, paneBindings, focusedPane, colRatios, rowRatios, sidebarCollapsed });
+  uiStateRef.current = { layout, paneBindings, focusedPane, colRatios, rowRatios, sidebarCollapsed };
   useEffect(
     () => () => {
       const leavingTabs = tabsRef.current;
@@ -905,9 +883,6 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
       case "new-ssh":
         setSshDialog({});
         break;
-      case "new-adb":
-        void handleAddTab("adb", "终端");
-        break;
       case "close-current":
         if (activeTabIdRef.current) void closeTabById(activeTabIdRef.current);
         break;
@@ -932,7 +907,6 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
       notifyDesktopRequired(action.actionId);
       return;
     }
-    if (action.parameters.serial !== undefined) setSelectedSerial(action.parameters.serial);
     const command = action.parameters.command;
     if (command) {
       // 命令预填到焦点面板的会话里，但只写进命令行（不自动回车），等用户确认。
@@ -959,15 +933,9 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
   });
   // 常用命令
   const quickCommands = [
-    { label: "设备信息", command: "getprop ro.build.fingerprint" },
     { label: "进程", command: "ps -A" },
-    { label: "包列表", command: "pm list packages -3" },
     { label: "存储", command: "df -h" },
-    { label: "内存", command: "dumpsys meminfo" },
-    { label: "日志", command: "logcat -d -v threadtime" },
     { label: "网络", command: "ip addr show" },
-    { label: "屏幕尺寸", command: "wm size" },
-    { label: "电池信息", command: "dumpsys battery" },
     { label: "CPU", command: "top -b -n 1" },
   ];
   const showToast = (text: string, kind: "success" | "error" | "info" = "info") => {
@@ -1075,8 +1043,7 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
     const tab = tabs.find((item) => item.id === tabId);
     blockTracker.registerSession(sessionId, {
       targetKind: tab?.type ?? "local",
-      deviceSerial: tab?.type === "adb" ? selectedSerialRef.current || undefined : undefined,
-      cwd: tab?.root, // 只有明确支持的 shell 才吃 OSC 133；adb shell（mksh）走前端主导切块。
+      cwd: tab?.root, // 只有明确支持的 shell 才吃 OSC 133，走前端主导切块。
       osc133: tab?.type === "wsl" || tab?.type === "ssh",
     });
   };
@@ -1220,7 +1187,7 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
     else delete paneHandlesRef.current[tabId];
   };
   /**
-   * 交互式程序（vim / top / logcat 实时流）进入直通模式（开发方案 8.5 / F54）：
+   * 交互式程序（vim / top 实时流）进入直通模式（开发方案 8.5 / F54）：
    * 不切块、不记录按键，避免把全屏程序里的按键当成命令文本。
    */
   const handlePaneInteractiveChange = (tabId: string, interactive: boolean) => {
@@ -1239,8 +1206,7 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
    * 自研内核解析成 `onPwdChange`。它跟着真实 shell 状态走，比"截取命令里的 cd"
    * 可靠（多行脚本、`cd` 到不存在的目录都不会误报）。
    *
-   * 只认 SSH 与本地 shell：ADB 设备侧没有对应的 shell 集成，且设备路径要走
-   * adb shell，不能把远端路径直接当 root。目录没变就返回原数组，避免每次提示符
+   * 只认 SSH、WSL 与本地 shell：目录没变就返回原数组，避免每次提示符
    * 刷新都触发一轮右栏目录列举。
    */
   const handlePanePwdChange = (tabId: string, path: string) => {
@@ -1248,7 +1214,6 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
       const index = prev.findIndex((item) => item.id === tabId);
       if (index < 0) return prev;
       const target = prev[index];
-      if (target.type === "adb") return prev;
       // OSC 7 报上来的是 `file://host/path` 这种 URI，不是路径；不归一化就会把
       // URI 当成 root 塞进右栏，目录列举必然失败（表现为「不跟随 cd」）。
       const next = normalizeTerminalPwd(path, target.type);
@@ -1326,16 +1291,14 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
       await new Promise((resolve) => window.setTimeout(resolve, 25));
     }
   };
-  const openPty = async (tab: TerminalTab, serial = selectedSerialRef.current) => {
+  const openPty = async (tab: TerminalTab) => {
     if (!desktop) return;
     const target =
-      tab.type === "adb"
-        ? { kind: "adb", serial }
-        : tab.type === "local"
-          ? { kind: "local", shell: tab.shell || "powershell" }
-          : tab.type === "wsl"
-            ? { kind: "wsl", profileId: tab.profileId }
-            : { kind: "ssh", connectionId: tab.profileId };
+      tab.type === "local"
+        ? { kind: "local", shell: tab.shell || "powershell" }
+        : tab.type === "wsl"
+          ? { kind: "wsl", profileId: tab.profileId }
+          : { kind: "ssh", connectionId: tab.profileId };
             // 用承载该页签的面板尺寸开 PTY；等不到面板（页签不在任何面板上 /
             // 挂载超时）才按终端默认 120x32。
     const size = await waitForPaneFit(tab.id);
@@ -1387,7 +1350,7 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
     }
   };
   const handleAddTab = async (
-    type: "adb" | "local" | "wsl" | "ssh",
+    type: "local" | "wsl" | "ssh",
     title: string,
     shell?: string,
     forcedProfileId?: string,
@@ -1396,8 +1359,8 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
   ) => {
     setShowNewMenu(false);
     // 每个终端实例常驻一份 WASM 内存（只增不减），页签数必须设上限（开发方案 6.7.2）。
-    if (tabs.length >= MAX_ADB_TERMINALS) {
-      showToast(`最多同时打开 ${MAX_ADB_TERMINALS} 个终端，请先关闭不用的页签。`, "error");
+    if (tabs.length >= MAX_TERMINALS) {
+      showToast(`最多同时打开 ${MAX_TERMINALS} 个终端，请先关闭不用的页签。`, "error");
       return;
     }
     const newId = `tab-${type}-${Date.now()}`;
@@ -1461,15 +1424,10 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
       }
       sshConnectOutcome = connectOutcome;
     }
-    if (desktop && type === "adb" && !selectedSerial) {
-      showToast("请选择一个已连接设备。", "error");
-      return;
-    }
     const newTab: TerminalTab = {
       id: newId,
       title: resolvedTitle,
       type,
-      isRoot: type === "adb" && isRoot,
       shell,
       profileId,
       root,
@@ -1528,97 +1486,6 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
         }
       },
     });
-  };
-  // 刷新设备
-  const handleRefreshDevices = async (announce: boolean, passive = false) => {
-    if (!desktop) {
-      notifyDesktopRequired();
-      return;
-    }
-    setIsRefreshing(true);
-    try {
-      // passive：进页面 / 自动轮询用被动接口，ADB 服务没开就直接空列表，
-      // 不会为了「看一眼设备」把 adb server 拉起来。用户手动点刷新才主动探测。
-      const next = await (passive ? listAdbDevicesPassive() : listAdbDevices());
-      setDevices(next);
-      const online = next.filter((item) => item.state === "device");
-      setSelectedSerial((current) => current || online[0]?.serial || "");
-      const activeSerial = selectedSerialRef.current || online[0]?.serial || "";
-      const currentDevice = online.find((item) => item.serial === activeSerial);
-      if (currentDevice?.model) {
-        setTabs((prev) =>
-          prev.map((tab) =>
-            tab.id === "tab-adb-1" && tab.title === "ADB"
-              ? { ...tab, title: `ADB · ${currentDevice.model}` }
-              : tab,
-          ),
-        );
-      } // 用户要求进终端默认是空闲面板，所以这里**不再**在没设备时自动开本地 Shell。
-      // 想开本地终端从左栏「新建」或点空闲面板的悬浮选择器。
-      if (announce)
-        showToast(
-          online.length ? `已检测到 ${online.length} 台在线设备。` : "未检测到在线设备。",
-          online.length ? "success" : "info",
-        );
-    } catch (reason) {
-      showToast(formatInvokeError(reason), "error");
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
-  // 请求 Root
-  const handleRequestRoot = async () => {
-    if (isRoot || privilegeLoading) return;
-    if (!desktop) {
-      notifyDesktopRequired();
-      return;
-    }
-    if (!selectedSerial) return;
-    setPrivilegeLoading(true);
-    try {
-      const privilege = await invoke<{
-        isRoot: boolean;
-      }>("request_adb_root", { serial: selectedSerial });
-      setIsRoot(privilege.isRoot);
-      showToast(
-        privilege.isRoot
-          ? "adbd 已切换为 Root，正在重新连接 Shell。"
-          : "已请求 Root，但设备未返回 Root 身份。",
-        privilege.isRoot ? "success" : "info",
-      );
-      if (privilege.isRoot) {
-        const tab = tabs.find((item) => item.id === activeTabId && item.type === "adb");
-        if (tab) {
-          const previous = forgetTerminalSession(tab.id);
-          if (previous) {
-            await invoke("close_terminal_session", { sessionId: previous }).catch(() => undefined);
-          }
-          await openPty(tab, selectedSerial);
-        }
-      }
-    } catch (reason) {
-      showToast(formatInvokeError(reason), "error");
-    } finally {
-      setPrivilegeLoading(false);
-    }
-  };
-  // 重新挂载
-  const handleRemount = async () => {
-    if (privilegeLoading) return;
-    if (!desktop) {
-      notifyDesktopRequired();
-      return;
-    }
-    if (!selectedSerial) return;
-    setPrivilegeLoading(true);
-    try {
-      const output = await invoke<string>("remount_adb_system", { serial: selectedSerial });
-      showToast(output.trim() || "系统分区重新挂载命令已完成。", "success");
-    } catch (reason) {
-      showToast(formatInvokeError(reason), "error");
-    } finally {
-      setPrivilegeLoading(false);
-    }
   };
   /**
    * 把一条命令写到焦点面板的会话里（快捷命令、页面动作预填共用）。
@@ -1816,9 +1683,6 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
-    // 进页面不弹「已检测到 / 未检测到设备」：设备条本身就是结果，重复提示
-    // 只会让用户以为每次进入都在跑 adb。ADB 没开时这里安静地什么都不做。
-    void handleRefreshDevices(false, true);
     if (!desktop) return;
     let disposed = false;
     const stops: Array<() => void> = [];
@@ -1903,27 +1767,6 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
     };
   }, []);
   /**
-   * 选中设备后只查一次权限状态，**不再自动开一个 ADB 终端**。
-   * 原来这里会 `openPty(tab-adb-1)`：用户一进终端就被塞一个 adb shell，中栏永远
-   * 不可能是空闲面板。现在开终端只有两个入口——左栏点会话、点中栏空闲面板的
-   * 悬浮选择器，都由用户显式触发。
-   */
-  useEffect(() => {
-    if (!desktop || !selectedSerial) return;
-    void invoke<{
-      isRoot: boolean;
-      buildType: string;
-    }>("get_adb_privilege_status", { serial: selectedSerial })
-      .then((status) => {
-        setIsRoot(status.isRoot);
-        setBuildType(status.buildType);
-      })
-      .catch(() => undefined);
-  }, [
-    desktop,
-    selectedSerial,
-  ]);
-  /**
    * 命令块空闲判定驱动（开发方案 8.3.2 静默兜底）。
    * `tick` 是纯判定、不碰 DOM，所以这里用一个低频定时器扫所有会话就够了：
    * 只有"输出停了且尾部像提示符"的块会被收尾，其余原样返回。
@@ -1935,21 +1778,16 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
     return () => window.clearInterval(timer);
   }, [blockTracker]);
   const currentTab = tabs.find((t) => t.id === activeTabId) || null;
-  const activeDevice = devices.find((item) => item.serial === selectedSerial);
-  const isAdbTab = currentTab?.type === "adb";
-  const hasAdbDevice = devices.some((item) => item.state === "device");
   const shellTag =
-    currentTab?.type === "adb"
-      ? `adb shell · ${activeDevice?.model || selectedSerial || "未连接"}`
-      : currentTab?.type === "local"
-        ? currentTab.shell === "cmd"
-          ? "cmd"
-          : "pwsh"
-        : currentTab?.type === "wsl"
-          ? "wsl"
-          : currentTab?.type === "ssh"
-            ? "ssh"
-            : "未建立会话";
+    currentTab?.type === "local"
+      ? currentTab.shell === "cmd"
+        ? "cmd"
+        : "pwsh"
+      : currentTab?.type === "wsl"
+        ? "wsl"
+        : currentTab?.type === "ssh"
+          ? "ssh"
+          : "未建立会话";
   const handleToggleDrawer = (pane: DrawerPane) => {
     setDrawerPane((current) => (current === pane ? null : pane));
   };
@@ -2072,11 +1910,6 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
     const tabId = panes[index] ?? null;
     return tabId ? (tabs.find((tab) => tab.id === tabId) ?? null) : null;
   };
-  const focusedTabId = panes[focusedPane] ?? null;
-  const focusedTab = focusedTabId ? (tabs.find((tab) => tab.id === focusedTabId) ?? null) : null;
-  const focusedIsAdb =
-    focusedTab?.type ===
-    "adb";
   /**
    * AI 面板要展示的块：优先用户显式打开的那个，其次是"最近一个可解释的块"。
    * `latestBlockTick` 只作为失效信号，用于在块进入终态后重新计算一次。
@@ -2203,7 +2036,6 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
     const controller = new AbortController();
     repairAbortRef.current = controller;
     void (async () => {
-      const device = await collectDeviceContext(block.deviceSerial, { invoke });
       const previous = carried.map((round) => ({
         command: round.command,
         outcome: (round.outcome === "failed" ? "failed" : "cancelled") as "failed" | "cancelled",
@@ -2212,7 +2044,6 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
         diagnosis,
         attempt: carried.length + 1,
         previous,
-        device,
         signal: controller.signal,
       });
       if (controller.signal.aborted) return;
@@ -2341,97 +2172,26 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
     paneHandlesRef.current[activeTabIdRef.current]?.focus();
     showToast("剩余命令已插入输入框，请逐条确认后执行", "info");
   };
-  /** 只在焦点面板渲染的附加条：ADB 设备切换 + 常用命令（设计文档 §3.6）。 */
-  const paneOverlay = focusedIsAdb ? (
-    <>
+  /** 只在焦点面板渲染的附加条：常用命令（设计文档 §3.6）。 */
+  const paneOverlay = (
+    <div className="terminal-quick-commands" aria-label="常用命令">
       {" "}
-      <div className="terminal-device-bar">
-        {" "}
-        <div className="terminal-device-switch">
+      <span>常用命令</span>{" "}
+      {quickCommands.map((item) => (
+        <button
+          key={item.command}
+          type="button"
+          onClick={() => handleQuickCmdClick(item.command)}
+          title={item.command}
+        >
           {" "}
-          <Smartphone size={13} />{" "}
-          <Select
-            size="sm"
-            value={selectedSerial}
-            onChange={(val) => {
-              setSelectedSerial(val);
-              const device = devices.find((item) => item.serial === val);
-              showToast(`已切换到 ${device ? deviceLabel(device) : val}`, "info");
-              const tab = tabs.find((item) => item.id === activeTabIdRef.current);
-              if (desktop && tab?.type === "adb") {
-                const previous = forgetTerminalSession(tab.id);
-                if (previous) {
-                  void invoke("close_terminal_session", { sessionId: previous }).catch(
-                    () => undefined,
-                  );
-                }
-                clearTerminalTextBuffer(outputBuffers.current[tab.id]);
-                paneHandlesRef.current[tab.id]?.replay();
-                void openPty(tab, val).catch((reason) =>
-                  showToast(formatInvokeError(reason), "error"),
-                );
-              }
-            }}
-            options={devices.map((d) => ({ label: d.model || d.serial, value: d.serial }))}
-          />{" "}
-          <Button
-            size="sm"
-            variant="secondary"
-            loading={isRefreshing}
-            onClick={() => void handleRefreshDevices(false)}
-            title="检测设备（ADB 服务没运行时会启动它）"
-            style={{ gap: 5 }}
-          >
-            {" "}
-            <RefreshCw size={13} /> <span>检测</span>{" "}
-          </Button>{" "}
-          <span className={`adb-root-badge ${isRoot ? "is-root" : ""}`}>
-            {" "}
-            {isRoot ? "Root 已启用" : `Root：${buildType || "未连接"}`}{" "}
-          </span>{" "}
-          <Button
-            size="sm"
-            variant="secondary"
-            disabled={privilegeLoading || isRoot}
-            onClick={handleRequestRoot}
-            title={isRoot ? "当前已是 Root 权限" : "请求 adbd root 权限"}
-            style={{ gap: 5 }}
-          >
-            {" "}
-            <KeyRound size={13} /> <span>Root</span>{" "}
-          </Button>{" "}
-          <Button
-            size="sm"
-            variant="secondary"
-            disabled={privilegeLoading}
-            onClick={handleRemount}
-            title="重新挂载系统分区为可读写 (remount rw)"
-            style={{ gap: 5 }}
-          >
-            {" "}
-            <Wrench size={13} /> <span>重新挂载</span>{" "}
-          </Button>{" "}
-        </div>{" "}
-      </div>{" "}
-      <div className="terminal-quick-commands" aria-label="常用命令">
-        {" "}
-        <span>常用命令</span>{" "}
-        {quickCommands.map((item) => (
-          <button
-            key={item.command}
-            type="button"
-            onClick={() => handleQuickCmdClick(item.command)}
-            title={item.command}
-          >
-            {" "}
-            {item.label}{" "}
-          </button>
-        ))}{" "}
-      </div>{" "}
-    </>
-  ) : null;
+          {item.label}{" "}
+        </button>
+      ))}{" "}
+    </div>
+  );
   /**
-   * 每块面板自己的浮层：ADB 设备条（只有焦点面板）、以及**该面板自己的**提示条
+   * 每块面板自己的浮层：焦点面板的常用命令条、以及**该面板自己的**提示条
    * 与断线重试条。提示按 tabId 归属，所以哪块断了就只有哪块显示——
    * 这正是用户要的「第一个面板是 ssh，就只在这个 ssh 终端里提示」。
    */
@@ -2443,7 +2203,7 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
       retry && retry.nextAt ? Math.max(0, Math.ceil((retry.nextAt - Date.now()) / 1000)) : undefined;
     return (
       <>
-        {focusedPane === index ? paneOverlay : null}
+        {focusedPane === index && tabId ? paneOverlay : null}
         {tabId ? (
           <PaneBanner
             notice={notice}
@@ -2588,14 +2348,8 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
           ]}
         />
       )}{" "}
-      {/* 顶栏：会话胶囊（当前终端 / 路径 / 分支 / 内核）+ 全局动作 */}{" "}
-      <header className="terminal-topbar">
-        {" "}
-        <div className="terminal-topbar-left">
-          {" "}
-          <ToolBackButton onBack={onBack} />{" "}
-        </div>{" "}
-      </header>{" "}
+      {/* 顶部头（terminal-topbar）已按需求删除：菜单栏与终端之间不再有独立头部，
+          返回 Home 由左侧导航栏承担；终端自身的标题/布局条保留在 panel-header。 */}
       <div
         className="terminal-workspace-body"
         ref={workspaceBodyRef}
@@ -2609,7 +2363,6 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
           activeTabId={activeTabId}
           savedServers={savedServers}
           savedServersLoading={savedServersLoading}
-          hasAdbDevice={hasAdbDevice}
           onSelectTab={handleSelectTab}
           onCloseTab={handleCloseTab}
           onAddLocal={(shell) =>
@@ -2623,7 +2376,6 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
           }
           onAddWsl={() => void handleAddTab("wsl", "WSL", undefined, undefined, undefined)}
           onAddSsh={() => setSshDialog({})}
-          onAddAdb={() => void handleAddTab("adb", "终端")}
           onUseSavedServer={handleUseSavedServer}
           onDropTabAt={handleDropTab}
           onDropSavedServerAt={handleDropSavedServer}
@@ -2749,14 +2501,9 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
                     emptyHint="点左栏里已打开的终端占用这个面板"
                     emptyContent={
                       <EmptyPanePicker
-                        hasAdbDevice={Boolean(selectedSerial)}
                         onCreate={(type) => {
                           if (type === "ssh") {
                             setSshDialog({});
-                            return;
-                          }
-                          if (type === "adb") {
-                            void handleAddTab("adb", "终端");
                             return;
                           }
                           if (type === "wsl") {
@@ -2839,16 +2586,13 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
               <CommandComposer
                 key={composerTabId}
                 target={
-                  currentTab?.type === "adb"
-                    ? "adb"
-                    : currentTab?.type === "ssh"
-                      ? "ssh"
-                      : currentTab?.type === "wsl"
-                        ? "wsl"
-                        : "local"
+                  currentTab?.type === "ssh"
+                    ? "ssh"
+                    : currentTab?.type === "wsl"
+                      ? "wsl"
+                      : "local"
                 }
                 cwd={currentTab?.root}
-                deviceSerial={currentTab?.type === "adb" ? selectedSerial : undefined}
                 history={composerHistory}
                 passthroughHint={
                   passthroughTabs[composerTabId]
@@ -2899,13 +2643,11 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
             {/* 底部指令发送栏（设计稿 `.terminal-card-footer`）：常驻，不随面板开合消失。                AI 行只转交自然语言给输入侧面板，不直接执行——草稿确认与风险闸门必须照常生效。                CLI 行沿用 `executeCommand`，会话未就绪时由它统一 toast 提示。 */}{" "}
             <TerminalCommandBar
               target={
-                currentTab?.type === "adb"
-                  ? "adb"
-                  : currentTab?.type === "ssh"
-                    ? "ssh"
-                    : currentTab?.type === "wsl"
-                      ? "wsl"
-                      : "local"
+                currentTab?.type === "ssh"
+                  ? "ssh"
+                  : currentTab?.type === "wsl"
+                    ? "wsl"
+                    : "local"
               }
               aiBlockedReason={
                 activeTabId && passthroughTabs[activeTabId]
@@ -2938,7 +2680,6 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
             <TerminalDrawer
               pane={drawerPane}
               activeTab={currentTab}
-              selectedSerial={selectedSerial}
               fallbackRoot={workspaceRoot}
               sshConnectionId={currentTab?.type === "ssh" ? currentTab.profileId : undefined}
               onClose={() => setDrawerPane(null)}

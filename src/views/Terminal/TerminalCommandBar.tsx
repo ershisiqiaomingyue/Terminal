@@ -14,7 +14,7 @@ import { CornerDownLeft, Sparkles } from "lucide-react";
 
 export interface TerminalCommandBarProps {
   /** 当前页签目标类型，决定 CLI 行的占位提示。 */
-  target: "adb" | "ssh" | "wsl" | "local";
+  target: "ssh" | "wsl" | "local";
   /** 直通模式（全屏程序运行中）下 AI 行必须禁用（9.3.4）。 */
   aiBlockedReason?: string | null;
   /** 会话尚未建立时禁用整个底栏。 */
@@ -28,7 +28,6 @@ export interface TerminalCommandBarProps {
 const CLI_PLACEHOLDER: Record<TerminalCommandBarProps["target"], string> = {
   local: "输入命令并按回车执行…",
   wsl: "输入 WSL 命令并按回车…",
-  adb: "输入 adb shell 命令并按回车…",
   ssh: "输入 SSH 远程命令并按回车…",
 };
 

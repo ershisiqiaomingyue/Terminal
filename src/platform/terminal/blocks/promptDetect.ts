@@ -1,23 +1,15 @@
 /**
  * 提示符识别与"命令是否还在跑"的判定（开发方案 8.3.2 / 8.5）。
  *
- * adb shell 起的是 Android 上的 sh（mksh / toybox），没有 OSC 133，
- * 因此只能从前端视角判断"输出回到提示符了"= 命令结束。这里把判定全部做成
- * 纯函数，Node 单测可直接跑（内核与 DOM 在测试进程里都装不起来，见 7.2.6 R-47 的教训）。
+ * 没有 OSC 133 集成的 shell 只能从前端视角判断"输出回到提示符了"= 命令结束。
+ * 这里把判定全部做成纯函数，Node 单测可直接跑（内核与 DOM 在测试进程里都装不起来，
+ * 见 7.2.6 R-47 的教训）。
  */
 import type { BlockTargetKind } from "./types.ts";
 import { applyCarriageReturns } from "./ansiText.ts";
 
 /** 提示符正则表；顺序即优先级，命中任一即认为到了新提示符。 */
 const PROMPT_PATTERNS: Record<BlockTargetKind, RegExp[]> = {
-  adb: [
-    // 常见 mksh/toybox：`(none):/ $ `、`xxx:/data/local/tmp # `、`xxx:/ $ `
-    /(?:^|\n)[\w.\-()]+:\/[^\n]*?\s[$#]\s*$/,
-    // shell 尚未拿到路径时：`/ $ `、`/ # `
-    /(?:^|\n)\/\s*[$#]\s*$/,
-    // 自定义 PS1 兜底：以 `$` / `#` / `>` 结尾且前面有非空内容
-    /(?:^|\n)[^\n]{1,120}\s[$#%>]\s*$/,
-  ],
   local: [
     // pwsh：`PS C:\Users\name>`，带可选尾部空格
     /(?:^|\n)PS [A-Za-z]:\\[^\n]*>\s*$/i,

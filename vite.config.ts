@@ -8,6 +8,8 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // rain-ui 源码组件库（workspace 外只读引用，构建期直接转译源码）。
+      "rain-ui": path.resolve(__dirname, "../rain-ui/components/ui/index.ts"),
     },
   },
   // Tauri 桌面端专用配置
@@ -16,6 +18,10 @@ export default defineConfig({
     port: 1420,
     strictPort: true,
     host: "127.0.0.1",
+    fs: {
+      // 允许 dev server 读取上级目录的 rain-ui 源码。
+      allow: [".", ".."],
+    },
   },
   build: {
     target: "esnext",

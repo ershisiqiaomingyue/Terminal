@@ -1,8 +1,8 @@
 /**
  * 命令块 AI 服务层（开发方案 9.2 / 任务 T3-1）。
  *
- * 职责：把一条 `CommandBlock` 变成一次只读的模型问答——组装提示词、可选地
- * 采集设备上下文、调用一次性模型通道 `agent_one_shot`（原 send_agent_message 更名，语义为同步 RPC 而非对话消息）、把结果交回 UI。
+ * 职责：把一条 `CommandBlock` 变成一次只读的模型问答——组装提示词、
+ * 调用一次性模型通道 `agent_one_shot`（原 send_agent_message 更名，语义为同步 RPC 而非对话消息）、把结果交回 UI。
  *
  * 三条设计约束：
  * 1. **不新增后端命令**。复用 `/chat` 那条 `agent_one_shot`（`toolPolicy:
@@ -17,8 +17,13 @@
 import type { CommandBlock } from "../blocks/types.ts";
 import { isTerminalStatus } from "../blocks/types.ts";
 import { recordAiCall } from "../metrics.ts";
-import { collectDeviceContext, type DeviceContext, type DeviceInvoke } from "./deviceContext.ts";
 import { buildBlockPrompt, MAX_REQUEST_BYTES, TERMINAL_AI_LIMITS, type TerminalAiMode } from "./prompts.ts";
+
+/**
+ * 注入的 IPC 通道。签名与 `src/platform/runtime.ts` 的 `invoke` 一致，
+ * 只是为了本模块可单测而不直接依赖它。
+ */
+export type DeviceInvoke = <T>(command: string, args?: Record<string, unknown>) => Promise<T>;
 
 /** 模型选择：与 `AgentModelPicker` 的 `AgentModelSelection` 同构。 */
 export interface TerminalModelSelection {
@@ -53,10 +58,6 @@ export interface BlockAiDeps {
 export interface TerminalAiOptions {
   /** 目标模型；未给时自动挑第一个可用供应商的第一个模型。 */
   selection?: TerminalModelSelection;
-  /** 是否采集设备上下文；默认 true 且只在 `targetKind === "adb"` 时真正采集。 */
-  deviceContext?: boolean;
-  /** 发送完整设备序列号；默认 false（9.2.2 脱敏）。 */
-  includeFullSerial?: boolean;
   /** 关闭脱敏；默认 false，即默认开启（S4）。 */
   disableRedaction?: boolean;
   /** 用户补充问题。 */
@@ -87,8 +88,6 @@ export interface BlockAiResult {
   requestBytes: number;
   /** 是否因超限又压缩过一轮输出。 */
   tightened: boolean;
-  /** 是否采集了设备上下文。 */
-  usedDeviceContext: boolean;
   durationMs: number;
 }
 
@@ -168,7 +167,7 @@ export function buildBlockAiRequest(input: {
     reasoningEffort: input.supportsReasoning ? "low" : null,
     taskPlanMode: "off",
     taskPlanMinSteps: 2,
-    // 命令块可能来自 adb 会话，但解释任务本身不落盘任何东西，固定 local。
+    // 解释任务本身不落盘任何东西，固定 local。
     executionTarget: { kind: "local", connectionId: null, profileId: null, root: null },
   };
 }
@@ -178,22 +177,6 @@ export function isBlockAiEligible(block: Pick<CommandBlock, "status" | "passthro
   if (block.passthrough) return false;
   if (!isTerminalStatus(block.status)) return false;
   return Boolean(block.outputText?.trim());
-}
-
-/** 采集设备上下文；非 adb 会话或未开启时返回 undefined，不浪费一次 IPC。 */
-async function maybeDeviceContext(
-  block: CommandBlock,
-  deps: BlockAiDeps,
-  options: TerminalAiOptions,
-): Promise<DeviceContext | undefined> {
-  if (options.deviceContext === false) return undefined;
-  if (block.targetKind !== "adb") return undefined;
-  if (!block.deviceSerial) return undefined;
-  return collectDeviceContext(block.deviceSerial, {
-    invoke: deps.invoke,
-    includeFullSerial: options.includeFullSerial === true,
-    now: deps.now,
-  });
 }
 
 /**
@@ -309,11 +292,9 @@ async function runBlockAiAttempt(
     return { ok: false, mode, code: "no_model", message: "请先在设置中配置模型供应商，再使用 AI 解释。" };
   }
 
-  const device = await maybeDeviceContext(block, deps, options);
   const prompt = buildBlockPrompt({
     block,
     mode,
-    device,
     question: options.question,
     redact: options.disableRedaction ? { serial: false, ip: false, homePath: false, token: false } : undefined,
     limits: options.limits,
@@ -357,7 +338,6 @@ async function runBlockAiAttempt(
       modelId: choice.modelId,
       requestBytes: prompt.bytes,
       tightened: prompt.tightened,
-      usedDeviceContext: Boolean(device),
       durationMs: Math.max(0, now() - startedAt),
     };
   } catch (error) {

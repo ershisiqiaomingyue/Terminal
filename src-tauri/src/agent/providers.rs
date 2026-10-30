@@ -277,7 +277,7 @@ pub(super) async fn probe_agent_provider(
         return Ok(ConnectionStatus::NotConfigured);
     }
     let endpoint = provider_health_endpoint(&provider)?;
-    let builder = crate::android_tools::configured_http_client_builder()?;
+    let builder = crate::runtime_env::configured_http_client_builder()?;
     let client = (if crate::model_plugins::is_plugin_provider(&provider.id) {
         builder.no_proxy()
     } else {
@@ -579,7 +579,7 @@ pub async fn get_provider_quota(
         .or_else(|| base_url.strip_suffix("/anthropic"))
         .unwrap_or(&base_url);
     let endpoint = format!("{root}/user/balance");
-    let client = crate::android_tools::configured_http_client_builder()?
+    let client = crate::runtime_env::configured_http_client_builder()?
         .timeout(std::time::Duration::from_secs(10))
         .build()
         .map_err(|error| format!("无法创建额度请求: {error}"))?;
@@ -789,7 +789,7 @@ pub async fn discover_agent_models(
     }
     let endpoint = provider_health_endpoint(&provider)
         .map_err(|error| AgentCommandError::new("configuration", error, false))?;
-    let builder = crate::android_tools::configured_http_client_builder()
+    let builder = crate::runtime_env::configured_http_client_builder()
         .map_err(|error| AgentCommandError::new("configuration", error, false))?;
     let client = (if crate::model_plugins::is_plugin_provider(&request.id) {
         builder.no_proxy()

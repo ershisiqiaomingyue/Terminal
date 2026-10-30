@@ -4,8 +4,8 @@
  * 两条路径：
  * 1. **OSC 133 路径**：shell 上报语义提示符时，直接用 `prompt-start` /
  *    `input-start` / `output-start` / `command-end` 切块，退出码由内核给。
- * 2. **前端主导路径**：`adb shell`（mksh / toybox sh）没有 OSC 133，
- *    只能在把输入写进 PTY 之前记账，再从输出里找"回到提示符"。
+ * 2. **前端主导路径**：不支持 OSC 133 的 shell，只能在把输入写进 PTY 之前
+ *    记账，再从输出里找"回到提示符"。
  *
  * 两路共用的部分：命令文本一律来自**输入流自己记录**的行编辑器，不取
  * `SemanticPromptEvent.command`——附录 B V6 实测该字段为空串。
@@ -32,7 +32,6 @@ export interface SemanticPromptLike {
 
 export interface TrackerSessionConfig {
   targetKind: BlockTargetKind;
-  deviceSerial?: string;
   cwd?: string;
   /** 该会话是否支持 OSC 133；false 时只走前端主导切块。 */
   osc133?: boolean;
@@ -429,12 +428,11 @@ export class BlockTracker {
 
   private beginBlock(sessionId: string, command: string, source: CommandBlock["source"]): CommandBlock {
     const runtime = this.sessions.get(sessionId);
-    // 兜底配置必须是完整类型，否则下面访问 deviceSerial / cwd 会在 strict 下报错。
+    // 兜底配置必须是完整类型，否则下面访问 cwd 会在 strict 下报错。
     const config: TrackerSessionConfig = runtime?.config ?? { targetKind: "local" };
     const block = this.store.create({
       sessionId,
       targetKind: config.targetKind,
-      deviceSerial: config.deviceSerial,
       command,
       cwd: config.cwd,
       source,

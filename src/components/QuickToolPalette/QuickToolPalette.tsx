@@ -11,7 +11,7 @@ import {
   type ApplicationActionInvocation,
 } from "@/application/pageActions";
 import { listAgentProviders, listSshConnections, listWslProfiles, type AgentProvider } from "@/platform/api";
-import { formatInvokeError, invoke, isTauri, listAdbDevices } from "@/platform/runtime";
+import { formatInvokeError, invoke, isTauri } from "@/platform/runtime";
 import { homeToolStatus, homeToolStatusLabel, homeToolStatusVariant, type HomeTool } from "@/views/Home";
 import type { SupportedToolKey } from "@/views/ToolWindows";
 import { AI_TASK_ACTIVITY_EVENT, notify, publishAiTaskActivity, type AiTaskActivity } from "@/platform/notifications";
@@ -88,14 +88,6 @@ type PlanValidationResult = PlanValidation & {
   resolvedParameters?: Record<string, string>;
 };
 
-type AospWorkspaceProbe = {
-  linux: boolean;
-  bashAvailable: boolean;
-  envsetupPath?: string;
-  soongPath?: string;
-  manifestPath?: string;
-};
-
 type TaskHistoryEntry = {
   id: string;
   task: string;
@@ -120,18 +112,6 @@ const PIPELINE_STAGES = [
 const USAGE_STORAGE_KEY = "android-tool.quick-tool-usage.v1";
 const CHAT_SELECTION_STORAGE_KEY = "android-tool.chat.selection.v1";
 const TASK_HISTORY_STORAGE_KEY = "android-tool.ai-task-history.v1";
-const AOSP_WORKSPACE_SELECTION_STORAGE_KEY = "android-tool.aosp-workspace-selection.v1";
-
-type SavedAospWorkspace = {
-  targetKind: "ssh" | "wsl";
-  targetId: string;
-  workspaceRoot: string;
-};
-
-type AospTargetCandidate = SavedAospWorkspace & {
-  name: string;
-  defaultRoot?: string | null;
-};
 
 function matchesText(value: string, query: string) {
   return value.toLocaleLowerCase("zh-CN").includes(query.toLocaleLowerCase("zh-CN").trim());
@@ -221,28 +201,6 @@ function saveSelectedAgent(providerId: string, modelId: string) {
   }
 }
 
-function loadSavedAospWorkspace(): SavedAospWorkspace | null {
-  try {
-    const value = JSON.parse(window.localStorage.getItem(AOSP_WORKSPACE_SELECTION_STORAGE_KEY) || "null") as Partial<SavedAospWorkspace> | null;
-    if (!value || (value.targetKind !== "ssh" && value.targetKind !== "wsl") || typeof value.targetId !== "string" || typeof value.workspaceRoot !== "string") {
-      return null;
-    }
-    const targetId = value.targetId.trim();
-    const workspaceRoot = value.workspaceRoot.trim();
-    return targetId && workspaceRoot.startsWith("/") ? { targetKind: value.targetKind, targetId, workspaceRoot } : null;
-  } catch {
-    return null;
-  }
-}
-
-function saveAospWorkspace(workspace: SavedAospWorkspace) {
-  try {
-    window.localStorage.setItem(AOSP_WORKSPACE_SELECTION_STORAGE_KEY, JSON.stringify(workspace));
-  } catch {
-    // Workspace recall is a convenience; a storage failure must not block a build.
-  }
-}
-
 function requireText(value: unknown, field: string): string {
   if (typeof value !== "string" || !value.trim()) throw new Error(`AI 返回的任务计划缺少${field}。`);
   return value.trim().slice(0, 2000);
@@ -307,133 +265,10 @@ function parseTaskPlan(text: string): TaskPlan {
 
 async function validateTaskPlan(plan: TaskPlan): Promise<PlanValidationResult> {
   if (!plan.execution) return plan.validation;
-  if (!isTauri()) return { status: "not-applicable", message: "浏览器预览不读取桌面端设备和连接配置。" };
+  if (!isTauri()) return { status: "not-applicable", message: "浏览器预览不读取桌面端连接配置。" };
 
   const action = resolveApplicationAction(plan.execution.actionId);
   if (!action) return { status: "needs-input", message: "执行动作已失效，请重新分析。" };
-  const parameters = plan.execution.parameters;
-  const deviceActions = new Set([
-    "open.tool.scrcpy", "open.tool.logcat", "open.tool.shell", "open.tool.files", "open.tool.apps",
-    "open.tool.perf", "open.tool.adb", "open.tool.capture", "open.tool.control", "open.tool.simpleperf",
-    "open.tool.method-profiler", "open.tool.heap-dump", "open.tool.benchmark",
-  ]);
-
-  if (deviceActions.has(action.id)) {
-    const devices = await listAdbDevices();
-    const online = devices.filter((device) => device.state === "device");
-    if (!online.length) return { status: "needs-input", message: "未检测到在线 ADB 设备；已保留任务参数，进入页面后可刷新或连接设备。" };
-    if (parameters.serial && !online.some((device) => device.serial === parameters.serial)) {
-      return { status: "needs-input", message: `未找到指定设备 ${parameters.serial}；进入页面后请选择在线设备。` };
-    }
-    if (action.id === "open.tool.benchmark" && parameters.operation === "import" && !parameters.path) {
-      return { status: "needs-input", message: "导入 Benchmark 结果需要已知的本地 JSON 或 TXT 路径。" };
-    }
-    if (new Set(["open.tool.perf", "open.tool.simpleperf", "open.tool.method-profiler", "open.tool.heap-dump"]).has(action.id) && !parameters.destination) {
-      return { status: "needs-input", message: "缺少本地输出目录；执行时会要求选择目录，然后才能启动采集任务。" };
-    }
-    return { status: "ready", message: `已检测到 ${online.length} 台在线 ADB 设备，页面可继续准备任务。` };
-  }
-
-  if (action.id === "open.tool.aosp") {
-    const [wslProfiles, sshConnections] = await Promise.all([listWslProfiles(), listSshConnections()]);
-    const requestedKind = parameters.targetKind === "ssh" || parameters.targetKind === "wsl" ? parameters.targetKind : null;
-    const requestedId = parameters.targetId?.trim() || "";
-    const configuredTargets: AospTargetCandidate[] = [
-      ...wslProfiles.map((target) => ({ targetKind: "wsl" as const, targetId: target.id, name: target.name, defaultRoot: target.defaultRoot, workspaceRoot: "" })),
-      ...sshConnections.map((target) => ({ targetKind: "ssh" as const, targetId: target.id, name: target.name, defaultRoot: target.defaultRoot, workspaceRoot: "" })),
-    ];
-    if (!configuredTargets.length) {
-      return { status: "needs-input", message: "尚未保存 WSL 或 SSH Linux 连接；请先在设置中添加一个可用目标。" };
-    }
-
-    let candidates = configuredTargets.filter((target) => (!requestedKind || target.targetKind === requestedKind) && (!requestedId || target.targetId === requestedId));
-    if (!candidates.length) {
-      return { status: "needs-input", message: requestedId ? "未找到计划中指定的 Linux 连接，请重新分析或在设置中检查连接。" : "未找到所选类型的 Linux 连接，请在设置中检查 WSL 或 SSH 配置。" };
-    }
-
-    const savedWorkspace = loadSavedAospWorkspace();
-    candidates = candidates.sort((left, right) => {
-      const leftSaved = savedWorkspace?.targetKind === left.targetKind && savedWorkspace.targetId === left.targetId ? 0 : 1;
-      const rightSaved = savedWorkspace?.targetKind === right.targetKind && savedWorkspace.targetId === right.targetId ? 0 : 1;
-      return leftSaved - rightSaved;
-    });
-
-    const failures: string[] = [];
-    const ambiguous: string[] = [];
-    for (const target of candidates) {
-      const roots = new Set<string>();
-      const explicitRoot = parameters.workspaceRoot?.trim();
-      if (explicitRoot) {
-        roots.add(explicitRoot);
-      } else {
-        if (savedWorkspace?.targetKind === target.targetKind && savedWorkspace.targetId === target.targetId) roots.add(savedWorkspace.workspaceRoot);
-        if (target.defaultRoot?.trim()) roots.add(target.defaultRoot.trim());
-      }
-
-      const attemptedRoots = new Set<string>();
-      const validateRoot = async (root: string, discovered: boolean): Promise<PlanValidationResult | null> => {
-        if (attemptedRoots.has(root)) return null;
-        attemptedRoots.add(root);
-        try {
-          const probe = await invoke<AospWorkspaceProbe>("probe_aosp_linux_workspace", {
-            request: { targetKind: target.targetKind, targetId: target.targetId, root },
-          });
-          if (!probe.linux || !probe.bashAvailable || !probe.envsetupPath || !probe.soongPath || !probe.manifestPath) {
-            failures.push(`${target.name} 的 ${root} 不是完整 AOSP 源码树`);
-            return null;
-          }
-          const resolved = { targetKind: target.targetKind, targetId: target.targetId, workspaceRoot: root };
-          saveAospWorkspace(resolved);
-          return {
-            status: "ready",
-            message: `${discovered ? "已自动检索并" : "已"}确认 ${target.targetKind.toUpperCase()} 目标“${target.name}”中的 AOSP 源码树：${root}。`,
-            resolvedParameters: resolved,
-          };
-        } catch (reason) {
-          failures.push(`${target.name} 的 ${root} 无法验证：${formatInvokeError(reason)}`);
-          return null;
-        }
-      };
-
-      for (const root of roots) {
-        const resolved = await validateRoot(root, false);
-        if (resolved) return resolved;
-      }
-
-      if (explicitRoot) continue;
-      try {
-        const discovered = await invoke<string[]>("discover_aosp_linux_workspaces", {
-          request: { targetKind: target.targetKind, targetId: target.targetId },
-        });
-        const remaining = discovered.filter((root) => !attemptedRoots.has(root));
-        if (remaining.length === 1) {
-          const resolved = await validateRoot(remaining[0], true);
-          if (resolved) return resolved;
-        }
-        if (remaining.length > 1) {
-          ambiguous.push(`${target.name}：${remaining.join("、")}`);
-          continue;
-        }
-      } catch (reason) {
-        failures.push(`${target.name} 的目录检索失败：${formatInvokeError(reason)}`);
-        continue;
-      }
-
-    }
-
-    if (ambiguous.length) {
-      return { status: "needs-input", message: `检测到多个有效 AOSP 源码树，无法安全地自动选择：${ambiguous.join("；")}。请在 AOSP 页面选择一次，之后会记住该目录。` };
-    }
-    return { status: "needs-input", message: failures.length ? `没有找到可用 AOSP 源码树：${failures[0]}。` : "未在已保存的 WSL 或 SSH 目标中找到 AOSP 源码树。" };
-  }
-
-  if (action.id === "open.tool.archive" && !parameters.path) {
-    return { status: "needs-input", message: "缺少 APK 或 JAR 的本地路径；执行后会在包查看器中等待选择文件。" };
-  }
-
-  if (action.id === "open.tool.native-symbolizer" && (!parameters.tombstonePath || !parameters.symbolsPath)) {
-    return { status: "needs-input", message: "需要 tombstone 文件和未剥离符号目录；执行后会在 Native 符号化页面等待选择。" };
-  }
 
   if (action.id === "open.settings.agent") {
     const providers = await listAgentProviders();
@@ -904,7 +739,7 @@ export const QuickToolPalette: React.FC<QuickToolPaletteProps> = ({ open, tools,
       const response = await invoke<AgentResponse>("agent_one_shot", {
         request: {
           modelId: `${provider.id}:${model.id}`,
-          message: `你是 Android Toolkit 的任务调度规划器。先理解用户全部自然语言目标，再从应用实际公开的页面动作中选择执行位置。只分析和规划：不调用任何工具、不读取文件、不修改系统、不执行命令，也不要按关键词猜测文件名、页面或命令。\n\n用户目标：\n${task}\n\n应用当前公开的动作目录（每一行是一个 JSON 对象；只能选择其中 actionId，parameters 只能使用该动作列出的名称）：\n${applicationActionCatalogForPrompt()}\n\nAOSP 规则：用户表达“编译、构建、build、lunch、模块编译”等目标时，必须选择 open.tool.aosp，并在 parameters 中填写 operation="build"。在用户给出了 lunch 目标或模块名时，分别填入 lunchTarget、moduleName；没有明确值时省略，绝不编造。仅用户要求检查源码树或构建环境时才填写 operation="inspect"。\n\n请只返回一个合法 JSON 对象，禁止 Markdown、代码围栏、标题或对象外的任何文字。结构必须完全符合：\n{"summary":"一句话说明任务理解","steps":[{"title":"步骤名称","detail":"该步骤的说明或需要确认的信息"}],"execution":{"actionId":"目录中的动作 ID","summary":"为什么应在此处执行","parameters":{"仅填写该动作允许的参数名":"值"}}}\n\nsteps 写 2 至 5 步。需要用户先补充信息时也要选择最合适的页面动作；确实没有可用页面动作时 execution 写 null。不要虚构连接 ID、设备序列号、文件路径或未公开的动作。`,
+          message: `你是 Terminal 的任务调度规划器。先理解用户全部自然语言目标，再从应用实际公开的页面动作中选择执行位置。只分析和规划：不调用任何工具、不读取文件、不修改系统、不执行命令，也不要按关键词猜测文件名、页面或命令。\n\n用户目标：\n${task}\n\n应用当前公开的动作目录（每一行是一个 JSON 对象；只能选择其中 actionId，parameters 只能使用该动作列出的名称）：\n${applicationActionCatalogForPrompt()}\n\n请只返回一个合法 JSON 对象，禁止 Markdown、代码围栏、标题或对象外的任何文字。结构必须完全符合：\n{"summary":"一句话说明任务理解","steps":[{"title":"步骤名称","detail":"该步骤的说明或需要确认的信息"}],"execution":{"actionId":"目录中的动作 ID","summary":"为什么应在此处执行","parameters":{"仅填写该动作允许的参数名":"值"}}}\n\nsteps 写 2 至 5 步。需要用户先补充信息时也要选择最合适的页面动作；确实没有可用页面动作时 execution 写 null。不要虚构连接 ID、文件路径或未公开的动作。`,
           jiraContext: null,
           artifacts: [],
           attachments: [],

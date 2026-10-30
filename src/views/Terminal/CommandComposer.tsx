@@ -13,7 +13,6 @@
 import React, { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import { AlertCircle, CornerDownLeft, ShieldAlert, Sparkles, Wand2, X } from "lucide-react";
 import { Button, Spinner } from "@/components/ui";
-import { collectDeviceContext } from "@/platform/terminal/ai/deviceContext.ts";
 import { terminalAiDeps } from "@/platform/terminal/ai/terminalAiDeps.ts";
 import { confirmationToken, draftAsMultiline } from "@/platform/terminal/ai/commandComposer.ts";
 import type { ComposerTarget } from "@/platform/terminal/ai/commandComposer.ts";
@@ -33,8 +32,6 @@ export interface CommandComposerProps {
   target: ComposerTarget;
   /** 当前工作目录（未知时省略）。 */
   cwd?: string;
-  /** adb 页签的设备序列号，用于注入设备上下文。 */
-  deviceSerial?: string;
   /** 最近的命令历史（最新在前），用于提示词与「全部插入」。 */
   history?: string[];
   /** 直通模式提示；非空表示面板必须禁用（9.3.4）。 */
@@ -65,7 +62,6 @@ const RISK_LABEL = {
 export const CommandComposer: React.FC<CommandComposerProps> = ({
   target,
   cwd,
-  deviceSerial,
   history,
   passthroughHint,
   initialNl,
@@ -120,14 +116,9 @@ export const CommandComposer: React.FC<CommandComposerProps> = ({
     dispatch({ type: "start" });
 
     const deps = terminalAiDeps();
-    // 设备上下文只有 adb 才采；采集失败由 collectDeviceContext 内部降级，不阻断。
-    const device =
-      target === "adb" && deviceSerial
-        ? await collectDeviceContext(deviceSerial, { invoke: deps.invoke, cwd })
-        : undefined;
 
     const outcome = await draftCommands(
-      { nl, target, cwd, device, history },
+      { nl, target, cwd, history },
       deps,
       { selection, signal: controller.signal },
     );
@@ -142,7 +133,7 @@ export const CommandComposer: React.FC<CommandComposerProps> = ({
     } else {
       dispatch({ type: "failure", message: outcome.message });
     }
-  }, [blocked, cwd, deviceSerial, history, selection, state.nl, target]);
+  }, [blocked, cwd, history, selection, state.nl, target]);
 
   // 从底部指令栏带自然语言进来时，挂载后直接跑一次，省掉"再点一次生成"。
   // 只在挂载时触发：`run` 的依赖会随用户编辑变化，放进依赖数组会重复请求。

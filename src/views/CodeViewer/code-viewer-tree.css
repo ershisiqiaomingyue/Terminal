@@ -1,0 +1,274 @@
+/* 从原 ArchiveInspector 样式表提取：CodeViewer 页面骨架与文件树（视图删除后仍被 CodeViewer 与终端抽屉使用）。 */
+
+/* 树皮肤 token：原本仅作用于 .archive-container，这里提到 :root，
+   让终端抽屉等不在 .archive-container 内的共用树也能取到值。 */
+:root {
+  --archive-item-bg: var(--bg-card);
+  --archive-item-hover: var(--bg-hover);
+  --archive-item-active: var(--bg-selected);
+  --archive-item-active-text: var(--text-primary);
+}
+
+/* ==========================================================================
+   APK / AAR / JAR / AAB 包查看器 (Archive Inspector) - 现代原生桌面工作台
+   - 彻底告别粗糙、生硬的框线与凌乱堆叠
+   - 继承系统级统一规范：左侧层级文件导航树，右侧多功能主工作台
+   - 采用标准胶囊分段导航 (Segmented Pill Group)
+   - 沉浸式代码与资源预览视图，纯粹背景与精致层级
+   - 默认态加柔和微灰底座，激活态纯背景切换，彻底杜绝外框线
+   ========================================================================== */
+
+.archive-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  background: var(--bg-canvas);
+  overflow: hidden;
+  font-family: var(--font-sans);
+
+  /* 基础底色 Tokens */
+  --archive-item-bg: var(--bg-card);
+  --archive-item-hover: var(--bg-hover);
+  --archive-item-active: var(--bg-selected);
+  --archive-item-active-text: var(--text-primary);
+  --archive-slot-bg: var(--bg-surface);
+}
+
+/* 深色模式 Tokens */
+
+[data-theme="dark"] .archive-container {
+  --archive-item-bg: var(--bg-card);
+  --archive-item-hover: var(--bg-hover);
+  --archive-item-active: var(--bg-selected);
+  --archive-item-active-text: var(--text-primary);
+  --archive-slot-bg: var(--bg-surface);
+}
+
+/* ─── 空状态界面 (未载入任何包文件时) ─────────────────────── */
+
+.archive-empty-workbench {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  gap: 16px;
+  background: var(--bg-canvas);
+}
+
+.archive-container.is-importing .archive-empty-workbench {
+  pointer-events: none;
+}
+
+.archive-import-spinner {
+  animation: archive-import-spin 0.9s linear infinite;
+}
+
+@keyframes archive-import-spin {
+  to { transform: rotate(360deg); }
+}
+
+.archive-tree-empty {
+  padding: 16px 14px;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.archive-empty-workbench h3 {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.archive-empty-workbench p {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  max-width: 440px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ─── 左侧：包结构资源树 (Tree Aside) ─────────────────────── */
+
+.archive-aside-tree {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border-subtle);
+  background: var(--page-pane-bg);
+  overflow: hidden;
+  min-height: 0;
+}
+
+.archive-tree-scroll-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  overflow-x: hidden;
+  flex: 1;
+  min-height: 0;
+}
+
+/* 单个树节点项：纯背景切换，彻底杜绝外框线 */
+
+.archive-tree-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.archive-tree-item:hover:not(.selected) {
+  background: var(--archive-item-hover);
+  color: var(--text-primary);
+}
+
+.archive-tree-item.selected {
+  background: var(--archive-item-active) !important;
+  color: var(--archive-item-active-text) !important;
+  font-weight: 600;
+}
+
+.archive-tree-item .tree-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.archive-tree-item .tree-size {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono, monospace);
+  margin-left: auto;
+}
+
+/* ─── 右侧：主工作台 Article ───────────────────────────────── */
+
+.archive-main-article {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 20px;
+  overflow: hidden;
+  min-width: 0;
+  min-height: 0;
+  background: var(--bg-canvas);
+}
+
+.archive-preview-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 12px;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.archive-preview-actions {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.archive-preview-titlebar strong {
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   ArchiveInspector Opal Frost Light Theme (晶透冰川轻奢浅色)
+   - 主体区域统一为圆角白卡设计 (Card Envelope)
+   - 彻底修复白色背景下白色按钮的对比度问题
+   ========================================================================== */
+
+html[data-theme] .archive-container:not(.code-viewer-container) {
+  background: var(--bg-canvas);
+}
+
+html[data-theme] .archive-container:not(.code-viewer-container) .archive-top-header {
+  background: var(--page-header-bg);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+html[data-theme] .archive-container:not(.code-viewer-container) .archive-actions-bar {
+  background: var(--bg-canvas);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+html[data-theme] .archive-container:not(.code-viewer-container) .archive-body-split {
+  padding: 12px 16px 16px;
+  gap: 12px;
+}
+
+html[data-theme] .archive-container:not(.code-viewer-container) .archive-aside-tree {
+  background: var(--bg-card);
+  border: var(--card-border);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow), var(--card-rim);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+html[data-theme] .archive-container:not(.code-viewer-container) .archive-aside-header {
+  background: var(--page-header-bg);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+html[data-theme] .archive-container:not(.code-viewer-container) .archive-main-article {
+  background: var(--bg-card);
+  border: var(--card-border);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow), var(--card-rim);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  overflow: hidden;
+}
+
+html[data-theme] .archive-container:not(.code-viewer-container) .archive-main-article.is-empty {
+  padding: 0;
+}
+
+html[data-theme] .archive-container:not(.code-viewer-container) .archive-empty-workbench {
+  background: transparent;
+}
+
+html[data-theme] .archive-container:not(.code-viewer-container) .archive-card-header {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+html[data-theme] .archive-container:not(.code-viewer-container) .archive-preview-viewport {
+  border: 1px solid transparent;
+  border-radius: 10px;
+}
+
+html[data-theme] .archive-container:not(.code-viewer-container) .archive-preview-titlebar {
+  background: var(--page-header-bg);
+  border-bottom: 1px solid var(--border-subtle);
+}

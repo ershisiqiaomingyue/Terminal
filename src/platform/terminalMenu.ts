@@ -5,7 +5,6 @@ export type TerminalMenuDetail =
   | { action: "new"; value: "pwsh" | "powershell" | "cmd" }
   | { action: "new-wsl" }
   | { action: "new-ssh" }
-  | { action: "new-adb" }
   | { action: "close-current" }
   | { action: "layout"; value: "1x1" | "1x2" | "2v" | "2x2" }
   | { action: "pane"; value: "host" | "git" | "files" };

@@ -1,4 +1,5 @@
 use super::super::*;
+use crate::tasks::TaskManager;
 
 use super::serialization::emit_agent_event_for_turn;
 
@@ -21,8 +22,8 @@ pub(crate) fn agent_task_label(message: &str) -> (&'static str, String) {
 
 pub(crate) fn begin_agent_task(app: &AppHandle, session_id: &str, turn_id: &str, message: &str) {
     let (kind, summary) = agent_task_label(message);
-    let manager = app.state::<AndroidTaskManager>().inner().clone();
-    let Ok((id, _)) = crate::android_tasks::create_task(app, &manager, kind, session_id, &summary)
+    let manager = app.state::<TaskManager>().inner().clone();
+    let Ok((id, _)) = crate::tasks::create_task(app, &manager, kind, session_id, &summary)
     else {
         return;
     };
@@ -53,7 +54,7 @@ pub(crate) fn touch_agent_task(
     }) else {
         return;
     };
-    let _ = crate::android_tasks::update_task(app, &id, 45, message);
+    let _ = crate::tasks::update_task(app, &id, 45, message);
 }
 
 pub(crate) fn end_agent_task(
@@ -69,8 +70,8 @@ pub(crate) fn end_agent_task(
     else {
         return;
     };
-    let manager = app.state::<AndroidTaskManager>().inner().clone();
-    let _ = crate::android_tasks::finish_task(app, &manager, &id, None, error);
+    let manager = app.state::<TaskManager>().inner().clone();
+    let _ = crate::tasks::finish_task(app, &manager, &id, None, error);
 }
 
 pub(crate) fn emit_agent_status_for_turn(

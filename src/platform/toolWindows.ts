@@ -10,10 +10,6 @@ export async function initializeToolWindow(): Promise<ToolWindowInfo | null> {
   const info = await invoke<ToolWindowInfo>("get_tool_window");
   restoreToolWindowState(info.state);
   restoreGlobalEnvironment(info.state.environment);
-  if (info.toolKey === "aosp" && info.state["aosp-run"]) {
-    const { patchAospRun } = await import("@/views/AospBuild/session");
-    patchAospRun(info.state["aosp-run"] as Parameters<typeof patchAospRun>[0]);
-  }
   return info;
 }
 

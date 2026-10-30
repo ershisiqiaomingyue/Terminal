@@ -550,7 +550,7 @@ use super::{
     is_known_official_provider_base_url, is_selected_path, is_skill_catalog_question,
     jira_description_to_text, mcp_tool_name, output_limit_reached, parse_analysis_report,
     parse_jira_url_value, parse_relay_quota, provider_error_code, provider_model_is_listed,
-    read_bounded_logcat_evidence, relay_auth_failure_message, relay_quota_endpoints,
+    relay_auth_failure_message, relay_quota_endpoints,
     relay_response_declares_failure, tool_execution_scope, AgentModelSettings,
     AgentProviderSettings, AgentToolEnvironment, AgentToolPolicy, BoundSshHost,
     InterruptibleToolExecution, ToolExecutionLanes,
@@ -565,7 +565,6 @@ use agent_core::{
 use futures_util::StreamExt;
 use serde_json::json;
 use std::{
-    io::{BufReader, Cursor},
     sync::{
         atomic::{AtomicBool, AtomicUsize, Ordering},
         Arc,
@@ -1142,7 +1141,7 @@ fn wsl_registry_excludes_desktop_only_tools() {
 }
 
 #[test]
-fn desktop_registry_exposes_bounded_android_audit_tools() {
+fn desktop_registry_drops_android_tools_but_keeps_bounded_log_tools() {
     let registry = super::local_tool_registry(
         &["C:/workspace".to_string()],
         &[],
@@ -1158,24 +1157,30 @@ fn desktop_registry_exposes_bounded_android_audit_tools() {
     )
     .expect("desktop tool registry should be created");
 
-    assert!(registry.get("query_android_logcat").is_some());
-    assert!(registry.get("capture_android_logcat").is_some());
+    assert!(registry.get("search_local_logs").is_some());
+    assert!(registry.get("read_local_log_range").is_some());
+    assert!(registry.get("rebuild_timeline").is_some());
     assert!(registry.get("open_application_tool").is_none());
-    assert!(registry.get("query_android_tasks").is_some());
-    assert!(registry.get("query_android_archive_history").is_some());
-    // A registry without a desktop AppHandle may inspect existing audit
-    // records, but cannot submit a task into a detached manager.
-    assert!(registry.get("start_android_archive_task").is_none());
-    assert!(registry.get("query_android_perfetto").is_some());
-    assert!(registry.get("query_android_diagnostics").is_some());
-    assert!(registry.get("query_android_bugreport").is_some());
-    assert!(registry.get("query_android_aosp_build").is_some());
-    assert!(registry.get("query_android_simpleperf").is_some());
-    assert!(registry.get("query_android_native_symbolizer").is_some());
-    assert!(registry.get("query_android_method_profile").is_some());
-    assert!(registry.get("query_android_heap_dump").is_some());
-    assert!(registry.get("query_android_benchmark").is_some());
-    assert!(registry.get("query_android_device").is_some());
+    for removed in [
+        "query_android_logcat",
+        "capture_android_logcat",
+        "query_android_tasks",
+        "query_android_archive_history",
+        "start_android_archive_task",
+        "inspect_winscope_trace",
+        "query_android_perfetto",
+        "query_android_diagnostics",
+        "query_android_bugreport",
+        "query_android_aosp_build",
+        "query_android_simpleperf",
+        "query_android_native_symbolizer",
+        "query_android_method_profile",
+        "query_android_heap_dump",
+        "query_android_benchmark",
+        "query_android_device",
+    ] {
+        assert!(registry.get(removed).is_none(), "{removed} should be removed");
+    }
 }
 
 #[test]
@@ -1217,7 +1222,7 @@ fn environment_registry_keeps_windows_and_wsl_tools_available_together() {
     assert!(registry.get("list_local_files").is_some());
     assert!(registry.get("wsl__list_local_files").is_some());
     assert!(registry.get("windows__list_local_files").is_some());
-    assert!(registry.get("windows__inspect_winscope_trace").is_some());
+    assert!(registry.get("windows__inspect_winscope_trace").is_none());
     assert!(registry.get("wsl__inspect_winscope_trace").is_none());
 
     let windows = ["C:/workspace".to_string()];
@@ -1298,7 +1303,7 @@ async fn environment_registry_keeps_windows_and_ssh_tools_available_together() {
         assert!(registry.get("run_local_command").is_some());
         assert!(registry.get("ssh__run_local_command").is_some());
         assert!(registry.get("windows__run_local_command").is_some());
-        assert!(registry.get("windows__query_android_device").is_some());
+        assert!(registry.get("windows__query_android_device").is_none());
         assert!(registry.get("ssh__query_android_device").is_none());
         // Even with SSH as default, the local alias executes against the selected
         // project. The test SSH context points to an unavailable host deliberately.
@@ -1657,100 +1662,6 @@ fn persisted_steer_delivery_requires_the_same_active_turn() {
     assert!(active_steer_sender(&state, "steer-session", "old-turn").is_none());
     guard.cancellation().store(true, Ordering::Relaxed);
     assert!(active_steer_sender(&state, "steer-session", "current-turn").is_none());
-}
-
-#[test]
-fn logcat_query_reads_only_the_supplied_app_data_root() {
-    let nonce = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_nanos();
-    let data_root = std::env::temp_dir().join(format!("android-tool-logcat-query-{nonce}"));
-    std::fs::create_dir(&data_root).unwrap();
-    let result = (|| {
-        let root = data_root.join("logcat");
-        std::fs::create_dir_all(root.join("sessions")).unwrap();
-        let path = root.join("sessions/qa-session.log");
-        std::fs::write(&path, "I/CarAdapter: adapter-ready\nI/Other: unrelated\n").unwrap();
-        let connection = rusqlite::Connection::open(root.join("history.sqlite3")).unwrap();
-        connection.execute_batch("CREATE TABLE sessions (id TEXT PRIMARY KEY, serial TEXT, started_at INTEGER, ended_at INTEGER, file_path TEXT, line_count INTEGER)").unwrap();
-        connection
-            .execute(
-                "INSERT INTO sessions VALUES ('qa-session','qa-device',1,2,?1,2)",
-                [path.to_string_lossy().as_ref()],
-            )
-            .unwrap();
-        drop(connection);
-        let cancellation = AtomicBool::new(false);
-        let sessions = super::query_saved_logcat(json!({}), &data_root, &cancellation)?;
-        assert_eq!(sessions["sessions"][0]["id"], "qa-session");
-        let evidence = super::query_saved_logcat(
-            json!({"sessionId":"qa-session", "terms":["CarAdapter", "adapter-ready"]}),
-            &data_root,
-            &cancellation,
-        )?;
-        assert_eq!(evidence["evidence"], json!(["I/CarAdapter: adapter-ready"]));
-        assert_eq!(evidence["truncated"], false);
-        cancellation.store(true, Ordering::Relaxed);
-        assert!(super::query_saved_logcat(json!({}), &data_root, &cancellation).is_err());
-        Ok::<_, String>(())
-    })();
-    std::fs::remove_dir_all(&data_root).unwrap();
-    result.unwrap();
-}
-
-#[test]
-fn logcat_reader_bounds_oversized_lines_and_total_evidence() {
-    let cancellation = AtomicBool::new(false);
-    let source = Cursor::new(format!("kept\n{}\n", "x".repeat(70 * 1024)));
-    let (lines, truncated) =
-        read_bounded_logcat_evidence(BufReader::new(source), &[], 500, &cancellation).unwrap();
-    assert_eq!(lines, vec!["kept"]);
-    assert!(truncated);
-    let source = Cursor::new(format!("{}\n", "x".repeat(32 * 1024)).repeat(20));
-    let (lines, truncated) =
-        read_bounded_logcat_evidence(BufReader::new(source), &[], 500, &cancellation).unwrap();
-    assert_eq!(lines.len(), 16);
-    assert!(truncated);
-}
-
-#[test]
-fn logcat_reader_keeps_exact_completion_and_all_term_matching() {
-    let cancellation = AtomicBool::new(false);
-    let source = Cursor::new("I/Test: FIRST\r\nI/Test: second\n");
-    let (lines, truncated) =
-        read_bounded_logcat_evidence(BufReader::new(source), &[], 2, &cancellation).unwrap();
-    assert_eq!(lines, vec!["I/Test: FIRST", "I/Test: second"]);
-    assert!(!truncated);
-    let source = Cursor::new("I/Test: FIRST\r\nI/Test: second\n");
-    let (lines, truncated) = read_bounded_logcat_evidence(
-        BufReader::new(source),
-        &["test".into(), "first".into()],
-        2,
-        &cancellation,
-    )
-    .unwrap();
-    assert_eq!(lines, vec!["I/Test: FIRST"]);
-    assert!(!truncated);
-    cancellation.store(true, std::sync::atomic::Ordering::Relaxed);
-    assert!(
-        read_bounded_logcat_evidence(BufReader::new(Cursor::new("")), &[], 2, &cancellation)
-            .is_err()
-    );
-}
-
-#[test]
-fn bounds_logcat_evidence_without_reading_all_matches() {
-    let cancellation = AtomicBool::new(false);
-    let source = Cursor::new("I/Test: first\nI/Test: second\nI/Test: third\n");
-    let terms = vec!["test".to_string()];
-
-    let (lines, truncated) =
-        read_bounded_logcat_evidence(BufReader::new(source), &terms, 2, &cancellation)
-            .expect("bounded logcat reader should succeed");
-
-    assert_eq!(lines.len(), 2);
-    assert!(truncated);
 }
 
 #[test]

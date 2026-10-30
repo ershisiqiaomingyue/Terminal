@@ -38,9 +38,6 @@ pub enum TerminalTarget {
         #[serde(default)]
         cwd: Option<String>,
     },
-    Adb {
-        serial: String,
-    },
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -78,7 +75,7 @@ struct TerminalExitEvent {
     reconnectable: bool,
 }
 
-/// 终端会话的传输载体：本地 PTY 对（本机/WSL/ADB/ssh.exe 兜底）或 russh
+/// 终端会话的传输载体：本地 PTY 对（本机/WSL/ssh.exe 兜底）或 russh
 /// PTY 通道（v3 §21.3，SSH 主引擎——与对话/文件共享同一条连接）。
 enum SessionTransport {
     LocalPty {
@@ -166,23 +163,7 @@ fn target_kind(target: &TerminalTarget) -> &'static str {
         TerminalTarget::Local { .. } => "local",
         TerminalTarget::Wsl { .. } => "wsl",
         TerminalTarget::Ssh { .. } => "ssh",
-        TerminalTarget::Adb { .. } => "adb",
     }
-}
-
-fn adb_command(serial: &str) -> Result<CommandBuilder, String> {
-    let serial = serial.trim();
-    if serial.is_empty()
-        || !serial.chars().all(|character| {
-            character.is_ascii_alphanumeric() || matches!(character, ':' | '.' | '-' | '_')
-        })
-    {
-        return Err("ADB 设备序列号无效。".to_string());
-    }
-    let executable = crate::android_tools::find_adb()?;
-    let mut command = CommandBuilder::new(executable);
-    command.args(["-s", serial, "shell"]);
-    Ok(command)
 }
 
 fn normalized_shell(shell: &str) -> Result<&'static str, String> {
@@ -329,7 +310,7 @@ fn ssh_command(
     if let Some(askpass) = &ssh_askpass {
         command.env("SSH_ASKPASS", askpass.program_path());
         command.env("SSH_ASKPASS_REQUIRE", "force");
-        command.env("DISPLAY", "android-tool");
+        command.env("DISPLAY", "terminal");
     }
     command.args([
         "-o",
@@ -416,10 +397,10 @@ fn build_command(app: &AppHandle, target: &TerminalTarget) -> Result<TerminalLau
     match target {
         TerminalTarget::Local { shell, cwd } => {
             let mut command = local_command(shell)?;
-            // Only the local shell runs on Windows and can see the bundled
-            // toolchain; SSH and WSL are Linux-side and must not receive
-            // Windows paths.
-            for (name, value) in crate::android_tools::bundled_child_environment_variables() {
+            // Only the local shell runs on Windows and can see the locally
+            // configured toolchain; SSH and WSL are Linux-side and must not
+            // receive Windows paths.
+            for (name, value) in crate::runtime_env::child_environment_variables() {
                 command.env(name, value);
             }
             for (name, value) in agent_core::child_proxy_environment() {
@@ -440,10 +421,6 @@ fn build_command(app: &AppHandle, target: &TerminalTarget) -> Result<TerminalLau
         TerminalTarget::Ssh { connection_id, cwd } => {
             ssh_command(app, connection_id, cwd.as_deref())
         }
-        TerminalTarget::Adb { serial } => Ok(TerminalLaunch {
-            command: adb_command(serial)?,
-            ssh_askpass: None,
-        }),
     }
 }
 

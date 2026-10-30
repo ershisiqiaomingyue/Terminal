@@ -17,8 +17,10 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "rain-ui": ["../rain-ui/components/ui/index.ts"],
+      "rain-ui/*": ["../rain-ui/components/ui/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "../rain-ui/components/ui"]
 }

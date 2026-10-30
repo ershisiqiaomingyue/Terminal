@@ -5,9 +5,9 @@
    1:1 使用文件页渲染。CodeViewer 路由是懒加载，不在这里引入的话首次进终端页
    这些类全是裸的；code-viewer.css 自身会再引入 filepage 那份。 */
 @import "@/views/CodeViewer/code-viewer.css";
-/* 树行皮肤（.archive-tree-item / .archive-tree-scroll-list）在 ArchiveInspector
-   的样式表里，该路由同样懒加载——不引入则文件面板是一棵"裸树"。 */
-@import "@/views/ArchiveInspector/archive-inspector.css";
+/* 树行皮肤（.archive-tree-item / .archive-tree-scroll-list）原在 ArchiveInspector
+   的样式表里，视图删除后迁到 code-viewer-tree.css（CodeViewer 与终端共用）。 */
+@import "@/views/CodeViewer/code-viewer-tree.css";
 /* 弹层样式（十五轮）：ToolbarPopover（下载历史/设置/标签溢出菜单）与传输
    状态点的规则在这里，而该表原本只被 CodeViewerToolbar（页面组件）引入。 */
 @import "@/views/CodeViewer/code-viewer-toolbar.css";
@@ -1398,35 +1398,6 @@ html[data-custom-theme] .floating-window-card {
   color: var(--text-primary);
   background: var(--bg-surface);
   box-shadow: inset 0 0 0 1px var(--border-subtle);
-}
-
-/* ADB 会话才出现的设备切换条（独立一行，不挤占标题栏） */
-.terminal-device-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-  padding: 6px 12px;
-  border-bottom: var(--divider-subtle);
-  background: var(--surface-inset-bg);
-  overflow-x: auto;
-}
-
-.terminal-device-switch {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: nowrap;
-  min-width: 0;
-}
-
-.terminal-device-switch > svg {
-  color: var(--text-tertiary);
-  flex-shrink: 0;
-}
-
-.terminal-device-switch .adb-root-badge {
-  flex-shrink: 0;
 }
 
 /* ---------------------------------------------------------------- 右栏 --- */

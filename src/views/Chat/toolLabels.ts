@@ -5,11 +5,11 @@ import { canonicalToolName } from "./toolIdentity.ts";
  *
  * Two tables used to exist: `TOOL_LABELS` in AgentActivityTimeline and
  * `TOOL_STEP_TITLES` in chatMessagePresentation. They overlapped without being
- * identical, and both stopped at the local file/command tools, so Android
- * device tools, log tools, directory operations and task tools all rendered
- * their raw snake_case id (e.g. `query_android_device`) in the timeline, the
- * background-task rows and the permission prompt. Keeping one table here means
- * a new tool is named once and shows up everywhere.
+ * identical, and both stopped at the local file/command tools, so log tools,
+ * directory operations and task tools all rendered their raw snake_case id
+ * (e.g. `query_android_device`) in the timeline, the background-task rows and
+ * the permission prompt. Keeping one table here means a new tool is named once
+ * and shows up everywhere.
  *
  * Names are written as verb phrases so they read naturally after 正在…,
  * e.g. 正在查询设备 / 正在执行设备操作.
@@ -40,7 +40,6 @@ export const TOOL_LABELS: Record<string, string> = {
   read_local_log_range: "读取日志范围",
   search_local_logs: "搜索日志",
   rebuild_log_timeline: "重建日志时间线",
-  inspect_winscope_trace: "查看 WinScope 轨迹",
 
   // Write and file operations
   write_local_file: "写入文件",
@@ -85,31 +84,6 @@ export const TOOL_LABELS: Record<string, string> = {
   // Git
   get_git_status: "读取 Git 状态",
   get_git_diff: "读取 Git 差异",
-
-  // Android device and capture
-  query_android_device: "查询设备",
-  android_adb_read: "读取设备信息",
-  android_adb_action: "执行设备操作",
-  capture_android_logcat: "抓取 Logcat",
-  query_android_logcat: "读取 Logcat 会话",
-
-  // Android diagnostics
-  query_android_tasks: "查询任务记录",
-  query_android_archive_history: "读取归档历史",
-  query_android_diagnostics: "读取诊断产物",
-  query_android_bugreport: "读取 Bugreport",
-  query_android_heap_dump: "读取堆转储",
-  query_android_method_profile: "读取方法采样",
-  query_android_native_symbolizer: "符号化 Native 堆栈",
-  query_android_perfetto: "查询 Perfetto 轨迹",
-  query_android_simpleperf: "读取 CPU 热点",
-  query_android_benchmark: "读取基准结果",
-
-  // Android build and archives
-  query_android_aosp_build: "读取编译日志",
-  start_android_archive_task: "提交归档检查",
-  android_archive_read: "查看 APK 归档",
-  android_archive_edit: "编辑 APK 归档",
 };
 
 export function toolLabel(name: string) {

@@ -17,9 +17,9 @@ export const FALLBACK_COLS = 120;
 
 /**
  * 同时打开的终端页签上限（开发方案 6.7.2：WASM 内存只增不减，必须限制并发数）。
- * ADB Shell 视图与对话终端视图分别计数。
+ * 终端视图与对话终端视图分别计数。
  */
-export const MAX_ADB_TERMINALS = 8;
+export const MAX_TERMINALS = 8;
 export const MAX_CHAT_TERMINALS = 4;
 
 function clampNumber(value: number, min: number, max: number): number {

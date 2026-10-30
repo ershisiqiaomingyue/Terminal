@@ -35,9 +35,20 @@
 @import '../components/ui/file-diff-view.css';
 @import '../components/ui/file-change-card.css';
 @import '../components/ui/file-change-notice.css';
+@import '../components/BackgroundTasks/background-tasks.css';
 @import '../components/Sidebar/sidebar.css';
 @import '../components/Topbar/topbar.css';
 @import '../components/BootScreen/boot-screen.css';
+
+/* 2.5 rain-ui 源码组件库样式（workspace 外只读引用，置于 vendored 组件样式之后，
+   让 rain-ui 较新的规则在同名类上生效；缺失 token 已在 tokens.css 末尾补齐） */
+@import '../../../rain-ui/components/Button/button.css';
+@import '../../../rain-ui/components/Input/input.css';
+@import '../../../rain-ui/components/Select/select.css';
+@import '../../../rain-ui/components/Switch/switch.css';
+@import '../../../rain-ui/components/Divider/divider.css';
+@import '../../../rain-ui/components/Card/card.css';
+@import '../../../rain-ui/components/Badge/badge.css';
 
 /* 3. 业务视图 */
 @import '../views/Home/home.css';
@@ -297,72 +308,6 @@ html[data-theme] :is(button:not(.btn-primary):not(.btn-danger), [role="tab"], [r
   display: block;
 }
 
-.method-profiler-header,
-.simpleperf-header,
-.heap-dump-header,
-.benchmark-header,
-.native-sym-header,
-.device-control-header,
-.device-capture-header,
-.device-files-header,
-.logcat-top-header,
-.adb-terminal-top-header,
-.aosp-top-header,
-.pm-top-header,
-.archive-top-header,
-.adb-dev-top-header {
-  flex-wrap: nowrap;
-  min-width: 0;
-}
-
-.method-profiler-header > div:first-child,
-.simpleperf-header > div:first-child,
-.heap-dump-header > div:first-child,
-.benchmark-header > div:first-child,
-.native-sym-header > div:first-child,
-.device-control-header > div:first-child,
-.device-capture-header > div:first-child,
-.device-files-header > div:first-child {
-  display: flex;
-  align-items: center;
-  flex-wrap: nowrap;
-  min-width: 0;
-  flex: 1;
-  gap: 10px;
-}
-
-.method-profiler-header h2,
-.simpleperf-header h2,
-.heap-dump-header h2,
-.benchmark-header h2,
-.native-sym-header h2,
-.device-control-header h2,
-.device-capture-header h2,
-.device-files-header h2,
-.logcat-top-header h2,
-.adb-terminal-top-header h2,
-.aosp-top-header h2,
-.pm-top-header h2,
-.archive-top-header h2,
-.adb-dev-top-header h2 {
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-.method-profiler-header .modern-select,
-.simpleperf-header .modern-select,
-.heap-dump-header .modern-select,
-.benchmark-header .modern-select,
-.native-sym-header .modern-select,
-.device-control-header .modern-select,
-.device-capture-header .modern-select,
-.device-files-header .modern-select {
-  width: 260px !important;
-  min-width: 260px !important;
-  max-width: 260px !important;
-  flex: 0 0 260px;
-}
-
 @keyframes fadeInView {
   from {
     opacity: 0;
@@ -397,25 +342,7 @@ html[data-theme] :is(button:not(.btn-primary):not(.btn-danger), [role="tab"], [r
   .card-tool,
   .home-tool-row,
   .setting-card-group,
-  .device-control-card,
-  .heap-dump-config-card,
-  .heap-dump-table-wrap,
-  .method-profiler-config-card,
-  .method-profiler-table-wrap,
-  .simpleperf-config-card,
-  .simpleperf-table-wrap,
-  .native-sym-config-card,
-  .native-sym-viewport,
-  .device-capture-action-card,
-  .device-capture-preview-screen,
-  .pm-list-card,
-  .pm-detail-card,
   .terminal-panel-card,
-  .aosp-build-controls-card,
-  .aosp-task-status-card,
-  .aosp-console-viewport,
-  .benchmark-table-wrap,
-  .device-files-preview-box,
   .property-grid-card
 ),
 .code-viewer-container .code-viewer-pane-card {

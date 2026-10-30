@@ -6,3 +6,102 @@
 @import "./styles/settings-automation.css";
 @import "./styles/settings-terminal.css";
 @import "./styles/settings-skills.css";
+
+/* ==========================================================================
+   ChatGPT 桌面版风格八分区设置壳（v2 重做追加）：
+   居中模态 + 左侧窄导航（低调 16px 图标）+ 右侧滚动内容区（小标题 + 卡片）。
+   仅追加覆盖，不改上方既有规则。
+   ========================================================================== */
+
+/* --- 左侧导航：收窄、去色块、图标弱化 --- */
+.settings-dialog-nav {
+  width: 200px;
+  padding: 14px 10px;
+  gap: 2px;
+}
+
+.settings-nav-caption {
+  padding: 0 10px 10px;
+}
+
+.settings-nav-item {
+  padding: 8px 10px;
+  border-radius: 8px;
+  gap: 10px;
+}
+
+.settings-nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+}
+
+.settings-nav-item .settings-nav-icon {
+  color: var(--text-muted);
+  transition: color var(--transition-fast);
+}
+
+.settings-nav-item:hover .settings-nav-icon,
+.settings-nav-item.active .settings-nav-icon {
+  color: inherit;
+}
+
+.settings-nav-item .nav-item-label {
+  font-weight: 500;
+}
+
+.settings-nav-item.active .nav-item-label {
+  font-weight: 600;
+}
+
+/* --- 新面板（个性化 / Agent）的 rain-ui Card 布局：对齐既有卡片观感 --- */
+.settings-rain-card {
+  flex-shrink: 0;
+}
+
+/* 行自带 13px/18px 内边距，Card body 不再叠加第二层内边距 */
+.settings-rain-card > .card-body {
+  padding: 0;
+}
+
+/* 旧 setting-card-group 容器让位给外层 rain-ui Card，避免卡片套卡片的双框 */
+.settings-rain-card .setting-card-group {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-radius: 0 !important;
+  overflow: visible !important;
+}
+
+html[data-theme] .settings-rain-card .setting-card-group {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-radius: 0 !important;
+  overflow: visible !important;
+}
+
+/* 分组小标题在无内边距的 Card body 里自己补齐水平留白 */
+.settings-rain-card .setting-group-title {
+  padding: 14px 18px 0;
+  margin-bottom: 8px;
+}
+
+/* Agent 面板里悬浮在行与卡片之间的操作条（保存/恢复按钮）贴齐行内边距 */
+.settings-rain-card .settings-preference-actions {
+  margin-top: 0;
+  padding: 12px 18px;
+}
+
+/* 思考文案风格行不在分组容器内，保持与行内边距一致的留白 */
+html[data-theme] .settings-rain-card .setting-row-item.thinking-copy-style,
+.settings-rain-card .setting-row-item.thinking-copy-style {
+  margin: 8px 0 14px;
+}
+

@@ -25,7 +25,6 @@ export interface CreateBlockInput {
   sessionId: string;
   targetKind: BlockTargetKind;
   command?: string;
-  deviceSerial?: string;
   cwd?: string;
   source?: BlockSource;
   startedAt?: number;
@@ -99,7 +98,6 @@ export class BlockStore {
       id: this.createId(input.sessionId, sequence),
       sessionId: input.sessionId,
       targetKind: input.targetKind,
-      deviceSerial: input.deviceSerial,
       command: input.command ?? "",
       cwd: input.cwd,
       status: input.status ?? (input.command ? "running" : "idle"),
@@ -233,7 +231,7 @@ export class BlockStore {
     if (!block) return "";
     const header = `$ ${block.command || "(空命令)"}`;
     const meta = [
-      `- 会话：${block.targetKind}${block.deviceSerial ? ` / ${block.deviceSerial}` : ""}`,
+      `- 会话：${block.targetKind}`,
       block.cwd ? `- 目录：${block.cwd}` : "",
       `- 状态：${block.status}${block.exitCode === undefined ? "" : `（退出码 ${block.exitCode}）`}`,
       block.outputTruncated ? "- 注意：输出已被裁剪，仅保留尾部" : "",

@@ -10,7 +10,6 @@ import { parseCommandDraft, type CommandRisk } from "./commandComposer.ts";
 import { buildRepairPrompt } from "./repairPrompt.ts";
 import { buildBlockAiRequest, resolveModelChoice, type BlockAiDeps, type TerminalModelSelection, type TerminalProviderLike } from "./terminalAiService.ts";
 import { MAX_REQUEST_BYTES } from "./prompts.ts";
-import type { DeviceContext } from "./deviceContext.ts";
 
 export interface RepairProposal {
   command: string;
@@ -34,7 +33,6 @@ export interface ProposeRepairOptions {
   /** 第几轮，1 起。 */
   attempt?: number;
   previous?: { command: string; outcome: "failed" | "cancelled" }[];
-  device?: DeviceContext;
   selection?: TerminalModelSelection;
   signal?: AbortSignal;
 }
@@ -77,7 +75,6 @@ export async function proposeRepair(
     diagnosis: options.diagnosis,
     attempt: options.attempt ?? 1,
     previous: options.previous,
-    device: options.device,
   });
   if (prompt.bytes > MAX_REQUEST_BYTES * 2) {
     return {

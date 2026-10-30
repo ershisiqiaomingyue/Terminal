@@ -203,16 +203,17 @@ fn builtin_skill_paths(app: &AppHandle) -> Vec<PathBuf> {
         cfg!(debug_assertions).then(|| {
             PathBuf::from(env!("CARGO_MANIFEST_DIR"))
                 .join("resources")
-                .join("android-skills")
+                .join("agent-instructions")
+                .join("skills")
         }),
         app.path()
             .resource_dir()
             .ok()
-            .map(|path| path.join("android-skills")),
+            .map(|path| path.join("agent-instructions").join("skills")),
         app.path()
             .resource_dir()
             .ok()
-            .map(|path| path.join("resources").join("android-skills")),
+            .map(|path| path.join("resources").join("agent-instructions").join("skills")),
     ];
     candidates
         .into_iter()
@@ -239,7 +240,7 @@ fn skill_sources(app: &AppHandle, repositories: Vec<String>) -> Vec<SkillReposit
     if let Some(path) = builtin_skill_path(app) {
         sources.push(SkillRepositorySource {
             path,
-            display_path: "内置 Android Skills".to_string(),
+            display_path: "内置技能".to_string(),
             builtin: true,
         });
     }
@@ -421,8 +422,8 @@ fn parse_remote_skill_markdown(content: &str, fallback_name: &str) -> (String, O
 async fn download_github_archive(
     repository: &GitHubRepository,
 ) -> Result<(Vec<u8>, String), String> {
-    let client = crate::android_tools::configured_http_client_builder()?
-        .user_agent("android-tool-skills")
+    let client = crate::runtime_env::configured_http_client_builder()?
+        .user_agent("terminal-skills")
         .timeout(std::time::Duration::from_secs(90))
         .build()
         .map_err(|error| format!("无法创建 GitHub 请求: {error}"))?;
@@ -1051,7 +1052,7 @@ fn normalize_repositories(repositories: Vec<String>) -> Vec<String> {
 }
 
 fn detect_python_runtime() -> PythonRuntimeView {
-    if let Ok((command, text)) = crate::android_tools::inspect_python_runtime() {
+    if let Ok((command, text)) = crate::runtime_env::inspect_python_runtime() {
         if let Some(version) = parse_python_version(&text) {
             return PythonRuntimeView {
                 available: true,

@@ -1,4 +1,6 @@
 @import "./code-viewer-filepage.css";
+/* 文件树皮肤（archive-tree-* 与页面骨架），原属已删除的 ArchiveInspector 视图。 */
+@import "./code-viewer-tree.css";
 
 html[data-theme] .code-viewer-container {
   --archive-slot-bg: var(--page-pane-bg);

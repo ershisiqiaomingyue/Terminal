@@ -13,8 +13,6 @@ import type { TerminalTab } from "./types";
  * 点击时触发一次真实的开会话；不注册任何全局监听、不做轮询。
  */
 export interface EmptyPanePickerProps {
-  /** 有没有在线的 adb 设备（决定要不要显示 ADB 那一项）。 */
-  hasAdbDevice: boolean;
   /** 用户选了一种终端类型。 */
   onCreate: (type: TerminalTab["type"]) => void;
 }
@@ -25,21 +23,14 @@ interface PickerOption {
   hint: string;
 }
 
-const BASE_OPTIONS: PickerOption[] = [
+const OPTIONS: PickerOption[] = [
   { type: "local", label: "本地终端", hint: "PowerShell" },
   { type: "wsl", label: "WSL", hint: "默认发行版" },
   { type: "ssh", label: "SSH 远程", hint: "选择已保存的服务器" },
 ];
 
-export const EmptyPanePicker: React.FC<EmptyPanePickerProps> = ({ hasAdbDevice, onCreate }) => {
+export const EmptyPanePicker: React.FC<EmptyPanePickerProps> = ({ onCreate }) => {
   const [open, setOpen] = React.useState(false);
-  const options = React.useMemo(
-    () =>
-      hasAdbDevice
-        ? [{ type: "adb" as TerminalTab["type"], label: "ADB Shell", hint: "当前设备" }, ...BASE_OPTIONS]
-        : BASE_OPTIONS,
-    [hasAdbDevice],
-  );
 
   return (
     <div className="terminal-pane-empty" data-picker-open={open ? "true" : "false"}>
@@ -61,7 +52,7 @@ export const EmptyPanePicker: React.FC<EmptyPanePickerProps> = ({ hasAdbDevice, 
       </button>
       {open && (
         <div className="terminal-pane-picker" role="menu" onMouseDown={(event) => event.stopPropagation()}>
-          {options.map((option) => (
+          {OPTIONS.map((option) => (
             <button
               key={option.type}
               type="button"

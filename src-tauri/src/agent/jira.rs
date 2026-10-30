@@ -219,7 +219,7 @@ pub(super) fn jira_credential(host: &str) -> Option<StoredCredential> {
 pub async fn fetch_jira_issue(url: String) -> Result<JiraIssueContext, String> {
     let info = parse_jira_url_value(&url)?;
     let endpoint = jira_api_url(&info)?;
-    let mut request = crate::android_tools::configured_http_client_builder()?
+    let mut request = crate::runtime_env::configured_http_client_builder()?
         .timeout(std::time::Duration::from_secs(20))
         .build()
         .map_err(|error| format!("无法创建 Jira 请求: {error}"))?

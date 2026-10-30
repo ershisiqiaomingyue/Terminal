@@ -91,7 +91,7 @@ pub(super) async fn prepare_turn_skills(
         let skill_instructions = load_skill_instructions(&app, &effective_skill_ids)?;
         let selinux_enabled = effective_skill_ids.iter().any(|id| id == "selinux");
         let selinux_scope = if selinux_enabled {
-            load_selinux_source_scope(&app)?
+            crate::skill_runtime::load_selinux_source_scope(&app)?
         } else {
             Default::default()
         };

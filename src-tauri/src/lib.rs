@@ -12,15 +12,10 @@ mod agent;
 mod agent_errors;
 mod agent_events;
 mod agent_executor;
-mod agent_logcat;
-mod android_tasks;
-mod android_tools;
 mod app_identity;
 mod appdata_migration;
-mod adb_metadata;
 mod attachment_cache;
 mod background_process;
-mod bundled_environment;
 mod chat;
 mod code_viewer;
 mod code_transfers;
@@ -40,15 +35,16 @@ mod plugin_runtime;
 mod model_capability_cache;
 mod provider_store;
 mod project_preferences;
+mod runtime_env;
 mod skill_runtime;
 mod ssh;
+mod tasks;
 mod terminal;
 mod terminal_output;
 mod tool_windows;
 mod themes;
 mod upgrade;
 mod user_storage;
-mod trace_parser;
 mod wsl;
 mod webview_health;
 
@@ -589,8 +585,7 @@ pub fn run() {
     tauri::Builder::default()
         .manage(agent_core::AgentRuntimeState::default())
         .manage(agent::background_shell::BackgroundShellState::default())
-        .manage(android_tools::AndroidToolState::default())
-        .manage(android_tasks::AndroidTaskManager::default())
+        .manage(tasks::TaskManager::default())
         .manage(terminal::TerminalState::default())
         .manage(tool_windows::ToolWindowState::default())
         .manage(agent::CompletionNoticeState::default())
@@ -643,12 +638,10 @@ pub fn run() {
             diagnostics::setup(app.handle());
             user_storage::initialize(app.handle()).map_err(std::io::Error::other)?;
             if let Some(window) = app.get_webview_window("main") { webview_health::install(&window); }
-            bundled_environment::initialize(&app.path().resource_dir()?)
-                .map_err(std::io::Error::other)?;
-            if let Err(error) = android_tools::install_bundled_child_environment() {
+            if let Err(error) = runtime_env::install_child_environment() {
                 eprintln!("无法配置内置工具环境: {error}");
             }
-            if let Err(error) = android_tools::restore_environment_network_settings() {
+            if let Err(error) = runtime_env::restore_environment_network_settings() {
                 eprintln!("无法恢复网络代理配置: {error}");
             }
             model_capability_cache::ensure_capabilities_in_background(app.handle(), &[]);
@@ -731,142 +724,14 @@ pub fn run() {
             host_status::get_host_status,
             open_local_attachment,
             read_local_attachment_for_copy,
-            android_tools::query_commands::list_adb_devices,
-            android_tools::query_commands::list_adb_devices_passive,
-            android_tools::restart_adb,
-            android_tools::pair_adb_wireless,
-            android_tools::connect_adb_wireless,
-            android_tools::disconnect_adb_wireless,
-            android_tools::query_commands::get_adb_device_info,
-            android_tools::query_commands::list_adb_packages,
-            android_tools::query_commands::list_adb_processes,
-            android_tools::query_commands::get_adb_device_status,
-            android_tools::query_commands::get_adb_storage_info,
-            android_tools::query_commands::get_adb_capture_info,
-            android_tools::query_commands::list_adb_applications,
-            android_tools::query_commands::list_adb_process_details,
-            android_tools::run_adb_package_action,
-            android_tools::query_commands::get_adb_package_details,
-            android_tools::export_adb_package,
-            android_tools::install_adb_package,
-            android_tools::query_commands::list_adb_remote_files,
-            android_tools::query_commands::get_adb_privilege_status,
-            android_tools::request_adb_root,
-            android_tools::remount_adb_system,
-            android_tools::query_commands::read_adb_remote_text,
-            android_tools::write_adb_remote_text,
-            android_tools::pull_adb_file,
-            android_tools::push_adb_file,
-            android_tools::create_adb_directory,
-            android_tools::delete_adb_remote_path,
-            android_tools::query_commands::list_adb_backups,
-            android_tools::query_commands::get_adb_backup_directory,
-            android_tools::restore_adb_backup,
-            android_tools::capture_adb_screenshot,
-            android_tools::start_adb_screen_record,
-            android_tools::stop_adb_screen_record,
-            android_tools::restart_adb_device,
-            android_tools::run_adb_device_action,
-            android_tools::get_adb_diagnostic,
-            android_tools::get_adb_diagnostic_summary,
-            android_tools::get_android_performance_support_matrix,
-            android_tools::start_device_health_capture,
-            android_tools::start_adb_bugreport,
-            android_tools::start_perfetto_capture,
-            android_tools::run_perfetto_sql,
-            android_tools::diagnose_perfetto_trace,
-            android_tools::start_simpleperf_capture,
-            android_tools::read_simpleperf_report,
-            android_tools::start_method_profile_capture,
-            android_tools::read_method_profile_report,
-            android_tools::start_heap_dump,
-            android_tools::read_heap_dump_report,
-            android_tools::analyze_heap_dump,
-            android_tools::start_heap_shark_analysis,
-            android_tools::read_heap_shark_analysis,
-            android_tools::import_android_benchmark_result,
-            android_tools::read_android_benchmark_result,
-            android_tools::list_android_instrumentations,
-            android_tools::start_android_benchmark_run,
-            android_tools::start_crash_diagnostics,
-            android_tools::get_adb_graphics_diagnostic,
-            android_tools::query_commands::symbolize_native_tombstone,
-            android_tools::start_native_tombstone_symbolization,
-            android_tools::read_native_symbolization_report,
-            android_tools::start_winscope_capture,
-            android_tools::stop_winscope_capture,
-            android_tools::install_split_apks,
-            android_tools::start_split_apks_install,
-            android_tools::dump_uiautomator_hierarchy,
-            android_tools::start_uiautomator_hierarchy_dump,
-            android_tools::start_scrcpy,
-            android_tools::stop_scrcpy,
-            android_tools::list_environment_tools,
-            android_tools::check_environment_tool,
-            android_tools::save_environment_tool_path,
-            android_tools::download_environment_tool,
-            android_tools::get_environment_network_settings,
-            android_tools::save_environment_network_settings,
-            android_tools::inspect_aosp_workspace,
-            android_tools::read_aosp_build_log,
-            android_tools::probe_aosp_linux_workspace,
-            android_tools::discover_aosp_linux_workspaces,
-            android_tools::list_aosp_lunch_targets,
-            android_tools::list_aosp_directories,
-            android_tools::list_aosp_build_artifacts,
-            android_tools::start_aosp_linux_build,
-            android_tools::read_aosp_live_output,
-            android_tools::start_aosp_artifact_install,
-            android_tools::start_logcat,
-            android_tools::read_logcat_window_output,
-            android_tools::stop_logcat,
-            android_tools::list_logcat_history,
-            android_tools::read_logcat_history,
-            android_tools::delete_logcat_history,
-            android_tools::export_logcat_content,
-            android_tools::import_logcat_history,
-            android_tools::add_logcat_bookmark,
-            android_tools::list_logcat_bookmarks,
-            android_tools::query_logcat_evidence,
-            android_tools::inspect_android_archive,
-            android_tools::start_android_archive_inspection,
-            android_tools::read_android_archive_inspection,
-            android_tools::search_android_archive_entries,
-            android_tools::preview_android_archive_entry,
-            android_tools::extract_android_archive,
-            android_tools::start_android_archive_extract,
-            android_tools::begin_apk_edit_session,
-            android_tools::start_apk_edit_session,
-            android_tools::build_signed_apk,
-            android_tools::start_signed_apk_build,
-            android_tools::read_archive_build_result,
-            android_tools::install_archive_build,
-            android_tools::start_archive_build_install,
-            android_tools::list_archive_history,
-            android_tools::delete_archive_history,
-            android_tools::resume_apk_edit_session,
-            android_tools::read_archive_original_manifest,
-            android_tools::decompile_apk_with_jadx,
-            android_tools::start_jadx_decompile,
-            android_tools::inspect_jadx_workspace,
-            android_tools::read_jadx_source,
-            android_tools::list_apk_workspace_files,
-            android_tools::read_apk_workspace_file,
-            android_tools::write_apk_workspace_file,
-            android_tools::summarize_apk_workspace_diff,
-            android_tools::build_apks_from_aab,
-            android_tools::start_apks_from_aab_build,
-            android_tools::install_apks_with_bundletool,
-            android_tools::start_apks_with_bundletool_install,
-            android_tools::compare_android_archives,
-            android_tools::start_android_archive_compare,
-            android_tools::read_android_archive_compare_result,
-            android_tasks::list_android_tasks,
-            android_tasks::list_android_task_audit,
-            android_tasks::list_android_task_artifacts,
-            android_tasks::export_android_task_report,
-            android_tasks::list_android_operation_audit,
-            android_tasks::cancel_android_task,
+            runtime_env::list_environment_tools,
+            runtime_env::check_environment_tool,
+            runtime_env::save_environment_tool_path,
+            runtime_env::download_environment_tool,
+            runtime_env::get_environment_network_settings,
+            runtime_env::save_environment_network_settings,
+            tasks::list_tasks,
+            tasks::cancel_task,
             code_viewer::list_code_viewer_directory,
             code_viewer::preview_code_viewer_mutation,
             code_viewer::execute_code_viewer_mutation,

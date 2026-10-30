@@ -12,7 +12,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::{AppHandle, Manager, State};
 
-use crate::android_tasks::AndroidTaskManager;
+use crate::tasks::TaskManager;
 
 const SSH_CONFIG_FILE: &str = "ssh-connections.json";
 const SSH_CREDENTIAL_SERVICE: &str = "android-tool-ssh";
@@ -319,12 +319,12 @@ pub async fn test_ssh_connection_config(
 
 /// Starts a durable SSH connection probe. The actual network work runs off
 /// the command thread; callers observe phase progress through this state and
-/// the shared Android task stream.
+/// the shared task stream.
 #[tauri::command]
 pub fn start_ssh_connection(
     app: AppHandle,
     runtime: State<'_, SshRuntimeState>,
-    tasks: State<'_, AndroidTaskManager>,
+    tasks: State<'_, TaskManager>,
     id: String,
     path: Option<String>,
 ) -> Result<SshConnectionProgress, String> {
@@ -336,7 +336,7 @@ pub fn start_ssh_connection(
 pub fn connect_ssh_host_command(
     app: AppHandle,
     runtime: State<'_, SshRuntimeState>,
-    tasks: State<'_, AndroidTaskManager>,
+    tasks: State<'_, TaskManager>,
     id: String,
     path: Option<String>,
 ) -> Result<SshConnectionProgress, String> {
@@ -350,7 +350,7 @@ pub fn connect_ssh_host_command(
 pub(crate) fn connect_ssh_host(
     app: &AppHandle,
     runtime: &SshRuntimeState,
-    tasks: &AndroidTaskManager,
+    tasks: &TaskManager,
     id: &str,
     path: Option<String>,
 ) -> Result<SshConnectionProgress, String> {
@@ -360,7 +360,7 @@ pub(crate) fn connect_ssh_host(
 fn begin_ssh_connection(
     app: &AppHandle,
     runtime: &SshRuntimeState,
-    tasks: &AndroidTaskManager,
+    tasks: &TaskManager,
     id: String,
     path: Option<String>,
     select: bool,
@@ -386,7 +386,7 @@ fn begin_ssh_connection(
         .or_else(|| config.default_root.clone())
         .unwrap_or_else(|| "~".to_string());
     let task_state = tasks.clone();
-    let (task_id, _) = crate::android_tasks::create_task(
+    let (task_id, _) = crate::tasks::create_task(
         app,
         &task_state,
         "ssh-connect",
@@ -410,7 +410,7 @@ fn begin_ssh_connection(
     let app = app.clone();
     tauri::async_runtime::spawn(async move {
         let update = |progress: u8, message: &str| {
-            let _ = crate::android_tasks::update_task(&app, &task_id, progress, message);
+            let _ = crate::tasks::update_task(&app, &task_id, progress, message);
             let _ = set_connection_progress(
                 &runtime_state,
                 SshConnectionProgress {
@@ -438,7 +438,7 @@ fn begin_ssh_connection(
         .and_then(|result| result);
         if let Err(error) = verified {
             let message = format!("SSH 连接失败：{error}");
-            let _ = crate::android_tasks::finish_task(
+            let _ = crate::tasks::finish_task(
                 &app,
                 &task_state,
                 &task_id,
@@ -481,8 +481,8 @@ fn begin_ssh_connection(
                 Some(error),
             ),
         };
-        let _ = crate::android_tasks::update_task(&app, &task_id, 96, &message);
-        let _ = crate::android_tasks::finish_task(&app, &task_state, &task_id, None, None);
+        let _ = crate::tasks::update_task(&app, &task_id, 96, &message);
+        let _ = crate::tasks::finish_task(&app, &task_state, &task_id, None, None);
         let _ = set_connection_progress(
             &runtime_state,
             SshConnectionProgress {

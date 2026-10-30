@@ -17,14 +17,9 @@ import {
   Pencil,
   Plus,
   RefreshCw,
-  Search,
   Trash2,
   X,
-  Braces,
   Cpu,
-  File,
-  FileDiff,
-  FileText,
   Download,
   ExternalLink,
   FolderUp,
@@ -42,7 +37,6 @@ import { ContextMenu } from "@/components/ui/ContextMenu";
 import { notify } from "@/platform/notifications";
 import { Button, StepSpinner } from "@/components/ui";
 import {
-  listAdbDirectory,
   listLocalDirectory,
   listSshDirectory,
   readRemoteTextFile,
@@ -77,7 +71,6 @@ import { DownloadHistory, UploadHistory } from "@/views/CodeViewer/DownloadHisto
 import { useTransferActions } from "@/views/CodeViewer/useTransferActions";
 import { ToolbarPopover } from "@/views/CodeViewer/ToolbarPopover";
 import { Switch } from "@/components/ui/Switch";
-import { ListItem } from "@/components/ui/ListItem";
 import { FloatingWindow } from "./FloatingWindow";
 import type { DrawerPane, TerminalTab } from "./types";
 // 右栏 rail 激活态等补充样式；单独文件是为了不碰 terminal-workspace.css 里的禁区。
@@ -86,8 +79,6 @@ import "./drawer-bindings.css";
 interface TerminalDrawerProps {
   pane: DrawerPane;
   activeTab: TerminalTab | null;
-  /** 当前选中 ADB 设备序列号（文件浏览走 adb ls 时要） */
-  selectedSerial: string;
   /** 本机工作目录兜底：本地/新建会话还没回填 root 时用它 */
   fallbackRoot: string;
   /**
@@ -132,7 +123,6 @@ function resolveSshConnectionId(activeTab: TerminalTab | null, fallback?: string
 const TerminalDrawerImpl: React.FC<TerminalDrawerProps> = ({
   pane,
   activeTab,
-  selectedSerial,
   fallbackRoot,
   sshConnectionId,
   onClose,
@@ -190,12 +180,11 @@ const TerminalDrawerImpl: React.FC<TerminalDrawerProps> = ({
         />
       )}
       <div className="terminal-drawer-body">
-        {pane === "host" && <HostPane activeTab={activeTab} selectedSerial={selectedSerial} connectionId={connectionId} />}
+        {pane === "host" && <HostPane activeTab={activeTab} connectionId={connectionId} />}
         {pane === "git" && <GitPane activeTab={activeTab} fallbackRoot={fallbackRoot} connectionId={connectionId} followTerminal={followGit} />}
         {pane === "files" && (
           <FilesPane
             activeTab={activeTab}
-            selectedSerial={selectedSerial}
             fallbackRoot={fallbackRoot}
             connectionId={connectionId}
           />
@@ -251,7 +240,6 @@ function useRefresh(run: () => void, deps: React.DependencyList, intervalMs?: nu
  *
  * - local：`readHostStatus`（Windows 原生采集，含进程与端口）
  * - ssh：`getSshStatus`（agent-core 的 SshRemoteStatus，含延迟/核数/内存/磁盘）
- * - adb：`get_adb_storage_info`（设备只有存储与权限信息，其余显示占位）
  *
  * 说明：网速上下行、线程占用明细在三种数据源里都**没有**采集能力，
  * 这里如实显示"暂不支持"，不编造数值。
@@ -443,15 +431,13 @@ const SshRichStatus: React.FC<{ remote: Record<string, unknown> }> = ({ remote }
   );
 };
 
-const HostPane: React.FC<{ activeTab: TerminalTab | null; selectedSerial: string; connectionId?: string }> = ({
+const HostPane: React.FC<{ activeTab: TerminalTab | null; connectionId?: string }> = ({
   activeTab,
-  selectedSerial,
   connectionId,
 }) => {
   const kind = activeTab?.type ?? "local";
   const [status, setStatus] = useState<HostStatusSnapshot | null>(null);
   const [remote, setRemote] = useState<Record<string, unknown> | null>(null);
-  const [storage, setStorage] = useState<{ totalBytes: number; availableBytes: number } | null>(null);
   const [loading, setLoading] = useState(true);
   /**
    * 网速需要相邻两次快照求差（需求 4）。
@@ -474,13 +460,12 @@ const HostPane: React.FC<{ activeTab: TerminalTab | null; selectedSerial: string
   const [remoteError, setRemoteError] = useState<string | null>(null);
 
   // SWR：切回面板先用上次数据立即渲染（后台照常每 3/8s 刷新覆盖）。
-  const hostCacheKey = `host:${kind}:${connectionId ?? ""}:${selectedSerial}:${activeTab?.root ?? ""}`;
+  const hostCacheKey = `host:${kind}:${connectionId ?? ""}:${activeTab?.root ?? ""}`;
   useEffect(() => {
-    const cached = readDrawerCache<{ status: HostStatusSnapshot | null; remote: Record<string, unknown> | null; storage: { totalBytes: number; availableBytes: number } | null }>(hostCacheKey);
+    const cached = readDrawerCache<{ status: HostStatusSnapshot | null; remote: Record<string, unknown> | null }>(hostCacheKey);
     if (cached) {
       setStatus(cached.status);
       setRemote(cached.remote);
-      setStorage(cached.storage);
       setLoading(false);
     }
   }, [hostCacheKey]);
@@ -508,31 +493,11 @@ const HostPane: React.FC<{ activeTab: TerminalTab | null; selectedSerial: string
           setRemote(next);
           setRemoteError(null);
           setLoading(false);
-          writeDrawerCache(hostCacheKey, { status: null, remote: next, storage: null });
+          writeDrawerCache(hostCacheKey, { status: null, remote: next });
         })
         .catch((reason: unknown) => {
           setRemote(null);
           setRemoteError(reason instanceof Error ? reason.message : String(reason));
-          setLoading(false);
-        });
-      return;
-    }
-    if (kind === "adb") {
-      if (!selectedSerial) {
-        setLoading(false);
-        return;
-      }
-      void invoke<{ totalBytes: number; availableBytes: number }>("get_adb_storage_info", {
-        serial: selectedSerial,
-        path: activeTab?.root || "/data",
-      })
-        .then((next) => {
-          setStorage(next);
-          setLoading(false);
-          writeDrawerCache(hostCacheKey, { status: null, remote: null, storage: next });
-        })
-        .catch(() => {
-          setStorage(null);
           setLoading(false);
         });
       return;
@@ -565,9 +530,9 @@ const HostPane: React.FC<{ activeTab: TerminalTab | null; selectedSerial: string
       }
       setStatus(merged);
       setLoading(false);
-      writeDrawerCache(hostCacheKey, { status: merged, remote: null, storage: null });
+      writeDrawerCache(hostCacheKey, { status: merged, remote: null });
     });
-  }, [kind, connectionId, activeTab?.root, selectedSerial, hostCacheKey]);
+  }, [kind, connectionId, activeTab?.root, hostCacheKey]);
 
   // 指标每 5 秒刷新；SSH 远端命令较重，放慢到 8 秒。
   // 3 秒→5 秒是为了省电：每刷新一次要重绘整个抽屉卡片，实测每次约 0.14 秒 CPU，
@@ -579,22 +544,12 @@ const HostPane: React.FC<{ activeTab: TerminalTab | null; selectedSerial: string
     return <DrawerLoading text="正在读取主机状态" />;
   }
 
-  // 统一成 RemoteStatus 形状：SSH 用远端快照，ADB 用存储信息折算，本机用原生快照。
+  // 统一成 RemoteStatus 形状：SSH 用远端快照，本机用原生快照。
   const unified: Record<string, unknown> | null =
     kind === "ssh"
       ? remote
-      : kind === "adb"
-        ? storage
-          ? {
-              diskTotalBytes: storage.totalBytes,
-              diskAvailableBytes: storage.availableBytes,
-              diskUsedBytes: Math.max(0, storage.totalBytes - storage.availableBytes),
-              diskUsedPercent: storage.totalBytes > 0 ? ((storage.totalBytes - storage.availableBytes) / storage.totalBytes) * 100 : null,
-              checkedPath: activeTab?.root || "/data",
-            }
-          : null
-        : status
-          ? {
+      : status
+        ? {
               // systemStatusMetrics 用「总量 - 可用」算已用，所以必须把可用量一起给；
               // 只给 memoryUsedBytes 的话它读的是 memoryAvailableBytes，结果永远是 "- / 31.5 GB"。
               memoryTotalBytes: status.memoryTotalBytes,
@@ -623,7 +578,7 @@ const HostPane: React.FC<{ activeTab: TerminalTab | null; selectedSerial: string
     <>
 
 
-      {/* SSH 走富视图（每核/内存明细/网速/负载环/挂载点/进程），本机与 ADB 用通用卡。 */}
+      {/* SSH 走富视图（每核/内存明细/网速/负载环/挂载点/进程），本机与 WSL 用通用卡。 */}
       {kind === "ssh" && remote ? (
         <SshRichStatus remote={remote} />
       ) : (
@@ -658,7 +613,7 @@ const HostPane: React.FC<{ activeTab: TerminalTab | null; selectedSerial: string
       )}
 
       {/* 网速：只有本机后端采集了累计收发字节，能算出真实速率；
-          SSH / ADB 没有对应采集，整张卡不渲染（不写"暂不支持"）。 */}
+          SSH / WSL 没有对应采集，整张卡不渲染（不写"暂不支持"）。 */}
       {kind === "local" && rates && (
         <DrawerCard
           icon={<Network size={12} />}
@@ -752,9 +707,7 @@ const HostPane: React.FC<{ activeTab: TerminalTab | null; selectedSerial: string
                 ? `读取 SSH 主机状态失败：${remoteError}`
                 : "SSH 未连接"
               : "当前会话没有绑定 SSH 连接，无法读取主机状态。"
-            : kind === "adb"
-              ? "未检测到设备"
-              : "仅在桌面应用内可读取"}
+            : "仅在桌面应用内可读取"}
         </div>
       )}
     </>
@@ -766,13 +719,11 @@ const GitPane: React.FC<{ activeTab: TerminalTab | null; fallbackRoot: string; c
    * 版本控制跟随激活终端（需求 7 / v3 §16）：
    * - local / wsl：读该会话的工作目录（wsl 的 root 是远端路径，本地 git 读不到，退到本机工作区）
    * - ssh：走 `ssh_workspace_git` 在远端读同一份 git 数据（形状与本地完全一致）
-   * - adb：设备上通常没有 git，**明确说明不适用**而不是拿本机仓库冒充
    *
    * SSH 分支的 root 用 activeTab.root（终端页签的起始目录）：用户 cd 进仓库后
    * 由 OSC 7 / pwd 轮询把 root 更新过来，这里随之重取，不需要额外状态。
    */
   const kind = activeTab?.type ?? "local";
-  const isAdb = kind === "adb";
   const isSsh = kind === "ssh";
   const sshId = isSsh ? connectionId?.trim() || undefined : undefined;
   // 后端对空 root 会按远端家目录处理，所以 SSH 下 root 为空也照常发请求。
@@ -780,7 +731,7 @@ const GitPane: React.FC<{ activeTab: TerminalTab | null; fallbackRoot: string; c
   // 界面把路径说成「远端家目录」，而真实路径要等 cwd 跟随回来后才有。
   // 跟随关闭时锚定在终端打开时的工作目录（§22）：不跟着 cd 走。
   const effectiveRoot = followTerminal ? activeTab?.root : (activeTab?.rootAtOpen ?? activeTab?.root);
-  const root = isAdb ? "" : effectiveRoot || (isSsh ? "~" : fallbackRoot);
+  const root = effectiveRoot || (isSsh ? "~" : fallbackRoot);
   const [summary, setSummary] = useState<WorkspaceGitSummary | null>(null);
   const [changes, setChanges] = useState<WorkspaceGitChange[]>([]);
   const [loading, setLoading] = useState(true);
@@ -789,21 +740,15 @@ const GitPane: React.FC<{ activeTab: TerminalTab | null; fallbackRoot: string; c
   const cacheKey = `git:${kind}:${sshId ?? ""}:${root}`;
 
   useEffect(() => {
-    // ADB 不发请求也就没有可缓存的数据。
-    if (isAdb) return;
     const cached = readDrawerCache<{ summary: WorkspaceGitSummary | null; changes: WorkspaceGitChange[] }>(cacheKey);
     if (cached) {
       setSummary(cached.summary);
       setChanges(cached.changes);
       setLoading(false);
     }
-  }, [cacheKey, isAdb]);
+  }, [cacheKey]);
 
   const refresh = useCallback(() => {
-    if (isAdb) {
-      setLoading(false);
-      return;
-    }
     // SSH 拿不到连接 id 时直接说明原因：后端会报「缺少连接 ID」，回显给用户没有意义。
     if (isSsh && !sshId) {
       setError("当前会话没有可用的 SSH 连接 ID，无法读取远端 Git 状态。");
@@ -827,24 +772,15 @@ const GitPane: React.FC<{ activeTab: TerminalTab | null; fallbackRoot: string; c
         setError(reason instanceof Error ? reason.message : String(reason));
       })
       .finally(() => setLoading(false));
-  }, [cacheKey, isAdb, isSsh, root, sshId]);
+  }, [cacheKey, isSsh, root, sshId]);
 
   useRefresh(refresh, [refresh]);
 
-  // ADB 会话：设备上没有 git，明确说明不适用，避免"以为在看设备仓库"的误导。
-  if (isAdb) {
-    return (
-      <div className="terminal-drawer-empty">
-        当前是 ADB 设备会话，设备上没有 Git 仓库概念。
-        切换到本机、WSL 或 SSH 会话可查看版本控制。
-      </div>
-    );
-  }
   if (error) {
     return <div className="terminal-drawer-empty">读取 Git 状态失败：{error}</div>;
   }
   // SSH 没解析到连接 id 时，后面所有分支都读不出数据（会一直停在 loading），
-  // 直接说清原因；adb 分支已在上面早退，走到这里的只有 local/wsl/ssh。
+  // 直接说清原因。
   if (isSsh && !sshId) {
     return (
       <div className="terminal-drawer-empty">
@@ -930,34 +866,22 @@ const FILES_MEMORY = new Map<
   { root: string; path: string; file: { path: string; name: string; size?: number } | null }
 >();
 
-/** 列表图标按类型给（5.4）：目录 Folder、md 文本、json 花括号、diff 差异、其余 File。 */
-function entryIcon(entry: DirectoryEntry) {
-  if (entry.isDirectory) return <Folder size={13} />;
-  const ext = entry.name.includes(".") ? entry.name.split(".").pop()!.toLowerCase() : "";
-  if (ext === "md" || ext === "markdown") return <FileText size={13} />;
-  if (ext === "json") return <Braces size={13} />;
-  if (ext === "diff" || ext === "patch") return <FileDiff size={13} />;
-  return <File size={13} />;
-}
-
 const FilesPane: React.FC<{
   activeTab: TerminalTab | null;
-  selectedSerial: string;
   fallbackRoot: string;
   connectionId?: string;
-}> = ({ activeTab, selectedSerial, fallbackRoot, connectionId }) => {
+}> = ({ activeTab, fallbackRoot, connectionId }) => {
   // 跟随开关在面板自己的 ⋮ 菜单里（v3 §22 六轮）：设置会话级保存。
   const [followFiles, setFollowFiles] = useState(() => DRAWER_FOLLOW.files);
-  const kind = activeTab?.type === "adb" ? "adb" : activeTab?.type === "ssh" ? "ssh" : "local";
+  const kind = activeTab?.type === "ssh" ? "ssh" : "local";
   /**
-   * 起始目录：ADB 的 `root` 本身就是设备路径（如 `/data/local/tmp`），
-   * 优先用它；没设置才退回 `/sdcard`。SSH/本地用会话 root 或工作目录兜底。
+   * 起始目录：SSH/本地用会话 root 或工作目录兜底。
    */
   const effectiveRoot = followFiles ? activeTab?.root : (activeTab?.rootAtOpen ?? activeTab?.root);
   // SSH 空 root 回退 ~（与 GitPane 同语义）：不回退的话请求打到后端只会得到
   // 「请输入 SSH 绝对目录或 ~/ 路径」，这条报错没有可操作性（v3 §22 十七轮）。
   const rootPath =
-    effectiveRoot || (kind === "adb" ? "/sdcard" : kind === "ssh" ? "~" : fallbackRoot);
+    effectiveRoot || (kind === "ssh" ? "~" : fallbackRoot);
   const tabKey = activeTab?.id ?? "none";
   const source: PreviewSource = { kind, root: rootPath };
   const [path, setPath] = useState(
@@ -973,27 +897,6 @@ const FilesPane: React.FC<{
   // 工具栏（交互复制自代码查看器文件页）：搜索过滤 + 显示隐藏文件 + 新建。
   const [filter, setFilter] = useState("");
   const [showHidden, setShowHidden] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const visibleEntries = useMemo(() => {
-    const needle = filter.trim().toLowerCase();
-    return entries.filter((entry) => (showHidden || !entry.name.startsWith(".")) && (!needle || entry.name.toLowerCase().includes(needle)));
-  }, [entries, filter, showHidden]);
-  /** 新建文件/文件夹：local/ssh 复用代码查看器的后端 mutation（ADB 无对应命令）。 */
-  const createEntry = async (action: "create-file" | "create-directory") => {
-    setMenuOpen(false);
-    const name = window.prompt(action === "create-file" ? "新文件名" : "新文件夹名", "");
-    if (!name || !name.trim()) return;
-    const request = buildMutationRequest({ root: rootPath || path, path, action, name: name.trim(), recursive: false, overwrite: false, acknowledged: true });
-    const command = kind === "ssh" ? "execute_ssh_code_viewer_mutation" : "execute_code_viewer_mutation";
-    try {
-      await invoke(command, kind === "ssh" ? { request, connectionId } : { request });
-      if (treeTarget) void browser.loadFolder(treeRoot, true, treeTarget);
-      else setReloadTick((tick) => tick + 1);
-    } catch (reason) {
-      // 新建失败就地提示：错误文本放进目录错误条（面板已有渲染位）。
-      setError(reason instanceof Error ? reason.message : String(reason));
-    }
-  };
   // 预览状态：blocked 非空表示「前置校验没通过」，此时不发请求，只把原因显示出来。
   const [preview, setPreview] = useState<{
     path: string;
@@ -1041,7 +944,7 @@ const FilesPane: React.FC<{
   // ------------------------------------------------------------------
   // 文件树（v3 §22 四轮用户需求）：ssh/local 的面板主体换成代码查看器左侧
   // 同款 CodeFileTree（1:1：同一组件、同一套树行/悬浮元数据/拖拽样式），
-  // 数据源用同一个 useCodeBrowser hook；ADB 没有对应的后端命令，保留旧列表。
+  // 数据源用同一个 useCodeBrowser hook。
   // ------------------------------------------------------------------
   const treeTarget: BrowserTarget | null =
     kind === "ssh"
@@ -1157,8 +1060,8 @@ const FilesPane: React.FC<{
     setDirMenu({ entry, x: event.clientX, y: event.clientY, trigger: event.currentTarget });
   }, []);
   // 编辑模式（v3 §22 十二轮）：ssh/local 的文件编辑直接用 useCodeBrowser 的
-  // 完整机制（多标签/草稿/脏标/保存/自动刷新/冲突检测），ADB 没有对应后端，
-  // 保留旧只读预览通路。
+  // 完整机制（多标签/草稿/脏标/保存/自动刷新/冲突检测），其余情况保留旧只读
+  // 预览通路。
   const editorMode = Boolean(treeTarget);
   const closeAllEditorTabs = () => {
     for (const path of browser.openFiles) browser.closeFile(path);
@@ -1204,14 +1107,14 @@ const FilesPane: React.FC<{
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tabKey, rootPath]);
 
-  // 目录加载：path / 通路 / 设备 / 连接任一变化就重拉，序号不匹配的结果直接丢弃。
+  // 目录加载：path / 通路 / 连接任一变化就重拉，序号不匹配的结果直接丢弃。
   useEffect(() => {
     if (!path) {
       setLoading(false);
       return;
     }
     const seq = ++dirSeqRef.current;
-    const dirCacheKey = `files:${kind}:${selectedSerial}:${connectionId ?? ""}:${path}`;
+    const dirCacheKey = `files:${kind}:${connectionId ?? ""}:${path}`;
     const cached = readDrawerCache<DirectoryEntry[]>(dirCacheKey);
     if (cached) {
       // SWR：先显示上次目录，后台拉新（拉到再覆盖）；此时不显示加载态。
@@ -1231,11 +1134,9 @@ const FilesPane: React.FC<{
       return;
     }
     const task =
-      kind === "adb"
-        ? listAdbDirectory(selectedSerial, path)
-        : kind === "ssh"
-          ? listSshDirectory(connectionId!, path)
-          : listLocalDirectory(path);
+      kind === "ssh"
+        ? listSshDirectory(connectionId!, path)
+        : listLocalDirectory(path);
     void task
       .then((list) => {
         if (seq !== dirSeqRef.current) return;
@@ -1251,21 +1152,15 @@ const FilesPane: React.FC<{
         setLoadError(reason instanceof Error ? reason.message : String(reason));
         setLoading(false);
       });
-  }, [path, kind, selectedSerial, connectionId, reloadTick]);
+  }, [path, kind, connectionId, reloadTick]);
 
   const refresh = useCallback(() => setReloadTick((tick) => tick + 1), []);
 
   useRefresh(refresh, [refresh]);
 
-  /** 进入目录：记住位置，真正加载交给上面的 effect。 */
-  const navigate = (nextPath: string) => {
-    rememberPath(nextPath);
-    setPath(nextPath);
-  };
-
   /**
    * 打开文件预览：先做 5.3 的廉价判定（只看 name/size，不发请求），
-   * 判定不通过就把原因直接显示在预览面板里，一次 adb pull 都不白跑。
+   * 判定不通过就把原因直接显示在预览面板里，一次多余的读取都不白跑。
    */
   const openPreview = (entry: DirectoryEntry) => {
     const verdict = inspectPreviewEntry(source, entry);
@@ -1291,7 +1186,7 @@ const FilesPane: React.FC<{
     setPreviewError(null);
   };
 
-  // 真正读取正文：ADB / SSH 各走自己的读取命令，本地走代码查看器。
+  // 真正读取正文：SSH 走远端读取命令，本地走代码查看器。
   useEffect(() => {
     if (editorMode) return; // 编辑模式由 browser 钩子负责读取
     if (!preview) {
@@ -1320,8 +1215,7 @@ const FilesPane: React.FC<{
       kind === "local"
         ? invoke<string>("read_code_viewer_file", { path: preview.path })
         : readRemoteTextFile({
-            kind,
-            serial: selectedSerial,
+            kind: "ssh",
             connectionId,
             // root 用树根而不是实时 cwd：cd 跟随/锚定切换后两者可能不一致，
             // 后端按 root 校验文件在目录内，错位即读取失败（十轮修复）。
@@ -1339,7 +1233,7 @@ const FilesPane: React.FC<{
         setPreviewError(reason instanceof Error ? reason.message : String(reason));
         setPreviewLoading(false);
       });
-  }, [preview, kind, selectedSerial, connectionId, activeTab?.root]);
+  }, [preview, kind, connectionId, activeTab?.root]);
 
   // 超过 256 KB 关闭高亮（hljs 在大文件上是 O(n) 且生成大量 span），面板会提示。
   const highlightOff = previewText.length > MAX_HIGHLIGHT_BYTES;
@@ -1356,7 +1250,7 @@ const FilesPane: React.FC<{
   // 预览是**浮在整个工作区之上的可拖拽窗口**（设计要求 5.3 + 用户反馈）：
   // 既能继续看到并浏览目录，又能拖到任意位置、从八条边缩放。窗口本身 portal 到
   // body，所以这里的 DOM 层级只是"声明位置"，不影响它的定位基准。
-  // 浮窗可见性：编辑模式看钩子的标签列表，ADB 看旧预览状态。
+  // 浮窗可见性：编辑模式看钩子的标签列表，旧预览通路看预览状态。
   const windowOpen = editorMode ? browser.openFiles.length > 0 : preview !== null;
   const activeName = editorMode ? fileName(browser.activeFile) : preview?.name ?? "";
   const editorFile = editorMode ? browser.files[browser.activeFile] : undefined;
@@ -1434,7 +1328,7 @@ const FilesPane: React.FC<{
   const previewCard = windowOpen ? (
     <FloatingWindow label={`预览 ${activeName}`} onClose={closeFloatingWindow}>
       {/* 文件页 1:1（v3 §22 十二轮）：编辑模式直接绑 browser 钩子的草稿/保存，
-          ADB 保持只读旧通路。 */}
+          其余情况保持只读旧通路。 */}
       <article className="archive-main-article code-viewer-main code-viewer-pane-card">
         <div className="archive-preview-titlebar code-viewer-tab-bar">
           <FileTabStrip
@@ -1470,7 +1364,7 @@ const FilesPane: React.FC<{
               }
             }}
             // 右键批量关闭：路径全部关掉时把记忆的清单位置一起清掉，动作与单个关闭一致。
-            // ADB 只读预览只有一个标签，也允许「关闭全部」把它关掉。
+            // 旧只读预览只有一个标签，也允许「关闭全部」把它关掉。
             onCloseMany={(closing) => {
               if (!editorMode) {
                 if (preview && closing.includes(preview.path)) {
@@ -1655,7 +1549,7 @@ const FilesPane: React.FC<{
           ) : previewLoading ? (
             <div className="code-viewer-file-loading" role="status" aria-live="polite">
               <StepSpinner size={13} />
-              <span>{kind === "adb" ? "正在读取设备文件…" : "正在读取文件…"}</span>
+              <span>正在读取文件…</span>
             </div>
           ) : markdownPreview ? (
             <MarkdownFilePreview source={previewText} showOutline={outlineOpen} outlineId={previewOutlineId} />
@@ -1702,89 +1596,9 @@ const FilesPane: React.FC<{
     </FloatingWindow>
   ) : null;
 
-  const parent = parentPath(path);
   return (
     <>
-      {kind === "adb" && (
-        <>
-          <div className="terminal-drawer-path" title={path}>
-            <Folder size={12} />
-            <span>{path}</span>
-            <button type="button" className="terminal-sidebar-mini-btn" aria-label="刷新" onClick={refresh}>
-              <RefreshCw size={11} />
-            </button>
-            <div className="terminal-files-menu-anchor">
-              <button type="button" className="terminal-sidebar-mini-btn" aria-label="更多操作" aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}>
-                <MoreVertical size={11} />
-              </button>
-              {menuOpen && (
-                <>
-                  <div className="terminal-files-menu-backdrop" onClick={() => setMenuOpen(false)} />
-                  <div className="terminal-files-menu" role="menu">
-                    <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); refresh(); }}>刷新</button>
-                    <button type="button" role="menuitem" data-checked={showHidden ? "true" : "false"} onClick={() => { setShowHidden((v) => !v); setMenuOpen(false); }}>
-                      {showHidden ? "隐藏隐藏文件" : "显示隐藏文件"}
-                    </button>
-                    <button type="button" role="menuitem" onClick={() => void createEntry("create-file")}>新建文件</button>
-                    <button type="button" role="menuitem" onClick={() => void createEntry("create-directory")}>新建文件夹</button>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-          <div className="terminal-files-search">
-            <Search size={11} />
-            <input value={filter} onChange={(event) => setFilter(event.target.value)} placeholder="筛选当前目录" aria-label="筛选当前目录" spellCheck={false} />
-            {filter && (
-              <button type="button" className="terminal-sidebar-mini-btn" aria-label="清空筛选" onClick={() => setFilter("")}>
-                <X size={11} />
-              </button>
-            )}
-          </div>
-        </>
-      )}
-      {kind === "adb" ? (
-        <div className="terminal-drawer-files">
-          {parent && (
-            <ListItem
-              dense
-              divider={entries.length > 0}
-              ariaLabel="返回上一级"
-              leading={<Folder size={13} />}
-              title=".."
-              onClick={() => navigate(parent)}
-            />
-          )}
-          {loading && <DrawerLoading text="正在读取目录" />}
-          {!loading && (error || (loadError && !visibleEntries.length)) && (
-            <div className="terminal-drawer-empty">{error || loadError}</div>
-          )}
-          {!loading &&
-            !error &&
-            (!loadError || visibleEntries.length > 0) &&
-            visibleEntries.map((entry, index) => (
-              <ListItem
-                // 目录进下一层；文件开预览（前置校验在 openPreview 里）。
-                key={entry.path}
-                dense
-                divider={index < entries.length - 1}
-                ariaLabel={entry.path}
-                leading={entryIcon(entry)}
-                title={entry.name}
-                meta={
-                  typeof entry.size === "number" && !entry.isDirectory ? formatBytes(entry.size) : undefined
-                }
-                onClick={() => {
-                  if (entry.isDirectory) navigate(entry.path);
-                  else openPreview(entry);
-                }}
-              />
-            ))}
-          {!loading && !error && entries.length === 0 && (
-            <div className="terminal-drawer-empty">空目录</div>
-          )}
-        </div>
-      ) : treeTarget ? (
+      {treeTarget ? (
         <>
           {/* 文件预览页左侧控制行 1:1：同一组件（过滤框 + SSH 上传记录 + ⋮ 菜单）。 */}
           <CodeBrowserControls
@@ -1994,16 +1808,6 @@ const Meter: React.FC<{ percent: number; tone: "accent" | "warning" }> = ({ perc
   </div>
 );
 
-function parentPath(path: string): string {
-  const normalized = path.replace(/\\/g, "/").replace(/\/+$/, "");
-  const index = normalized.lastIndexOf("/");
-  if (index < 0) return "";
-  if (index === 0) return "/";
-  const parent = normalized.slice(0, index);
-  // Windows 盘符根（C:）没有上级
-  return /^[A-Za-z]:$/.test(parent) ? parent + "/" : parent;
-}
-
 /** 变更文件显示用：文件名（最后一段）。 */
 function basename(path: string): string {
   const normalized = path.replace(/\\/g, "/").replace(/\/+$/, "");
@@ -2027,14 +1831,13 @@ function dirnameTail(path: string): string {
 }
 
 /** 右栏四个入口按钮组成的竖排工具条。 */
-// 性能（十三轮）：抽屉整体 memo——index 的偶发重渲染（改标题/设备刷新等）
+// 性能（十三轮）：抽屉整体 memo——index 的偶发重渲染（改标题等）
 // 不再把三个面板（含文件树）整棵重算；onClose 语义恒定不参与比较。
 export const TerminalDrawer = React.memo(
   TerminalDrawerImpl,
   (prev, next) =>
     prev.pane === next.pane &&
     prev.activeTab === next.activeTab &&
-    prev.selectedSerial === next.selectedSerial &&
     prev.fallbackRoot === next.fallbackRoot &&
     prev.sshConnectionId === next.sshConnectionId,
 );
@@ -2069,7 +1872,7 @@ export const TerminalDrawerRail: React.FC<{
       className={"terminal-rail-btn" + (pane === "files" ? " active" : "")}
       aria-label="文件浏览"
       aria-pressed={pane === "files"}
-      title="文件浏览：本地目录或设备目录"
+      title="文件浏览：本地或远程目录"
       onClick={() => onToggle("files")}
     >
       {/* 用户明确要求 rail 上用普通文件夹图标（不要 FolderTree）。 */}

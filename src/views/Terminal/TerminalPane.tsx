@@ -97,7 +97,7 @@ export interface TerminalPaneProps {
   /**
    * 工作目录变化（设计文档 §15 cwd 跟随）：内核从 OSC 7 收到 `pwd` 后回调，
    * 由面板带上 tabId 上报父级，父级据此更新该页签的 root，右栏文件浏览自动跟随。
-   * 只有 SSH / 本地 shell 会发 OSC 7；ADB 设备侧一般不发，回调不会触发。
+   * 只有 SSH / 本地 shell 会发 OSC 7；回调不会触发时右栏不跟随。
    */
   onPwdChange?: (tabId: string, path: string) => void;
   /** 面板尺寸变化（父级负责 resize PTY）。 */
@@ -662,17 +662,15 @@ export const TerminalPane: React.FC<TerminalPaneProps> = ({
 
   const paneType = tab?.type;
   const paneTag =
-    paneType === "adb"
-      ? "ADB"
-      : paneType === "ssh"
-        ? "SSH"
-        : paneType === "wsl"
-          ? "WSL"
-          : paneType === "local"
-            ? tab?.shell === "cmd"
-              ? "CMD"
-              : "Local"
-            : "";
+    paneType === "ssh"
+      ? "SSH"
+      : paneType === "wsl"
+        ? "WSL"
+        : paneType === "local"
+          ? tab?.shell === "cmd"
+            ? "CMD"
+            : "Local"
+          : "";
   const queuedChars = queueRef.current.length;
 
   return (

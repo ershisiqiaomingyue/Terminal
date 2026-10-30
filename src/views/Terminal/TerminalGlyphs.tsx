@@ -3,10 +3,10 @@ import React from "react";
 /**
  * TerminalGlyphs
  * ---------------------------------------------------------------------------
- * 左栏「新建终端」菜单与终端卡片用的 6 个 16×16 自绘内联 SVG 图标。
+ * 左栏「新建终端」菜单与终端卡片用的 5 个 16×16 自绘内联 SVG 图标。
  *
  * 为什么不复用 lucide：lucide 是统一线宽的通用图标，菜单里 PowerShell、cmd、
- * WSL、SSH、ADB 五者外形几乎一样，扫一眼分不出类型（需求 R7 / 验收 V2-09 明确
+ * WSL、SSH 四者外形几乎一样，扫一眼分不出类型（需求 R7 / 验收 V2-09 明确
  * 要求「内联 SVG + 品牌色、不引入图标库」）。这里每个图标只用 3~6 个图元，
  * 靠**底色 + 一个特征形状**在 16px 下也能区分。
  *
@@ -14,7 +14,7 @@ import React from "react";
  * 形状按比例缩放（除 1px 描边外不做小数坐标）。
  */
 
-export type TerminalGlyphKind = "pwsh" | "cmd" | "wsl" | "ssh" | "adb" | "git";
+export type TerminalGlyphKind = "pwsh" | "cmd" | "wsl" | "ssh" | "git";
 
 interface TerminalGlyphProps {
   kind: TerminalGlyphKind;
@@ -29,7 +29,6 @@ const BG: Record<TerminalGlyphKind, string> = {
   cmd: "#0C0C0C",
   wsl: "#1B1B1F",
   ssh: "#1E3A4C",
-  adb: "#1B2A1F",
   git: "#2B1A14",
 };
 
@@ -71,17 +70,6 @@ const GlyphShape: React.FC<{ kind: TerminalGlyphKind }> = ({ kind }) => {
           <path d="M3.6 8h8.8" fill="none" stroke="#6FC3E0" strokeWidth="1" />
         </>
       );
-    case "adb":
-      // 安卓机器人头：绿色半圆 + 两根天线，一眼区分「设备」。
-      return (
-        <>
-          <path d="M4 11V8.4a4 4 0 0 1 8 0V11Z" fill="#3DDC84" />
-          <path d="M5.4 4.4 L4.2 3" fill="none" stroke="#3DDC84" strokeWidth="1.1" strokeLinecap="round" />
-          <path d="M10.6 4.4 L11.8 3" fill="none" stroke="#3DDC84" strokeWidth="1.1" strokeLinecap="round" />
-          <circle cx="6.4" cy="8" r="0.75" fill="#1B2A1F" />
-          <circle cx="9.6" cy="8" r="0.75" fill="#1B2A1F" />
-        </>
-      );
     case "git":
       // git 分支：两圆一斜线 + 一根主干，橙色。
       return (
@@ -112,9 +100,9 @@ export const TerminalGlyph: React.FC<TerminalGlyphProps> = ({ kind, size = 16, c
   </svg>
 );
 
-/** 各类型对应的图标 kind（本地终端按 shell 细化，WSL/SSH/ADB 直接映射）。 */
+/** 各类型对应的图标 kind（本地终端按 shell 细分，WSL/SSH 直接映射）。 */
 export const glyphForTabType = (
-  type: "local" | "adb" | "wsl" | "ssh",
+  type: "local" | "wsl" | "ssh",
   shell: "pwsh" | "cmd" = "pwsh",
 ): TerminalGlyphKind => {
   if (type === "local") return shell === "cmd" ? "cmd" : "pwsh";

@@ -31,22 +31,7 @@ export type ApplicationActionInvocation = {
 
 const TOOL_ACTIONS: Record<SupportedToolKey, Omit<ApplicationAction, "id" | "target">> = {
   "code-viewer": { label: "打开代码查看", destination: "代码查看", description: "浏览本地工程或全局 SSH 连接的远程目录树，预览代码和 Markdown。", parameters: [] },
-  scrcpy: { label: "启动实时投屏", destination: "Scrcpy 实时投屏", description: "选择 Android 设备后启动 Scrcpy 会话。", parameters: [{ name: "serial", description: "目标设备序列号，可省略" }] },
-  logcat: { label: "启动 Logcat 采集", destination: "Logcat 实时日志", description: "选择设备、应用日志过滤条件并启动 Logcat 采集。", parameters: [{ name: "serial", description: "目标设备序列号，可省略" }, { name: "query", description: "日志关键字或过滤表达式，可省略" }] },
-  shell: { label: "在终端中执行命令", destination: "终端", description: "选择设备并把待执行命令预填到终端，命令仍由终端确认发送。", parameters: [{ name: "serial", description: "目标设备序列号，可省略" }, { name: "command", description: "待确认的 ADB Shell 命令，可省略" }] },
-  files: { label: "浏览设备文件", destination: "设备文件与互传", description: "选择 Android 设备并打开指定目录或文件。", parameters: [{ name: "serial", description: "目标设备序列号，可省略" }, { name: "path", description: "设备文件或目录路径，可省略" }] },
-  apps: { label: "查看应用包", destination: "应用包管理器", description: "加载设备应用列表并定位指定应用包。", parameters: [{ name: "packageName", description: "应用包名，可省略" }, { name: "serial", description: "目标设备序列号，可省略" }] },
-  perf: { label: "准备 Perfetto 采集", destination: "性能监视", description: "选择设备、采集时长和已有的本地输出目录后启动 Perfetto。", parameters: [{ name: "serial", description: "目标设备序列号，可省略" }, { name: "durationSeconds", description: "采集秒数，可省略" }, { name: "destination", description: "已存在的本地输出目录；省略时页面要求选择目录" }] },
-  adb: { label: "刷新 ADB 设备", destination: "ADB 设备管理", description: "刷新 ADB 设备连接和诊断状态。", parameters: [{ name: "serial", description: "目标设备序列号，可省略" }] },
-  archive: { label: "解析 APK / JAR", destination: "APK / JAR 包查看器", description: "使用已知本地路径解析 APK 或 JAR 包结构与清单。", parameters: [{ name: "path", description: "已知的本地 APK 或 JAR 路径；省略时页面要求选择文件" }] },
-  aosp: { label: "执行 AOSP 任务", destination: "AOSP 构建与模块编译", description: "验证 AOSP 源码树，并按计划执行指定 lunch 目标和模块编译。", parameters: [{ name: "operation", description: "inspect 或 build；build 会在校验通过后直接启动构建" }, { name: "targetKind", description: "ssh 或 wsl，可省略" }, { name: "targetId", description: "已保存的 SSH 或 WSL 连接 ID，可省略" }, { name: "workspaceRoot", description: "AOSP 源码根目录，可省略" }, { name: "lunchTarget", description: "明确的 lunch 目标，可省略" }, { name: "moduleName", description: "要编译的模块名，可省略" }] },
-  capture: { label: "执行屏幕捕获", destination: "设备截图与录屏", description: "选择设备并启动截图或录屏；保存位置由页面确认。", parameters: [{ name: "serial", description: "目标设备序列号，可省略" }, { name: "operation", description: "screenshot 或 record，可省略" }] },
-  control: { label: "打开设备控制", destination: "设备快捷控制", description: "选择设备后预填受控的系统调试动作；重启和清除等动作仍需页面确认。", parameters: [{ name: "serial", description: "目标设备序列号，可省略" }, { name: "operation", description: "只读或调试动作名称，可省略" }] },
-  simpleperf: { label: "启动 Native CPU 采样", destination: "Native CPU 热点", description: "配置设备、包名、时长和已有输出目录后启动 Simpleperf。", parameters: [{ name: "serial", description: "目标设备序列号，可省略" }, { name: "packageName", description: "应用包名，可省略" }, { name: "durationSeconds", description: "采样秒数，可省略" }, { name: "destination", description: "已存在的本地输出目录；省略时页面要求选择目录" }] },
-  "method-profiler": { label: "启动 Java 方法采样", destination: "Java 方法采样", description: "配置目标应用、设备、时长和已有输出目录后采集方法 Trace。", parameters: [{ name: "serial", description: "目标设备序列号，可省略" }, { name: "packageName", description: "应用包名，可省略" }, { name: "durationSeconds", description: "采样秒数，可省略" }, { name: "destination", description: "已存在的本地输出目录；省略时页面要求选择目录" }] },
-  "heap-dump": { label: "启动 Java 堆转储", destination: "Java 堆转储", description: "配置目标应用、设备和已有输出目录后导出 HPROF。", parameters: [{ name: "serial", description: "目标设备序列号，可省略" }, { name: "packageName", description: "应用包名，可省略" }, { name: "destination", description: "已存在的本地输出目录；省略时页面要求选择目录" }] },
-  benchmark: { label: "执行基准与帧卡顿", destination: "基准与帧卡顿", description: "导入已知 Benchmark 结果或在设备上启动 AndroidX Benchmark。", parameters: [{ name: "serial", description: "目标设备序列号，可省略" }, { name: "operation", description: "import 或 run，可省略" }, { name: "path", description: "已知的 Benchmark 结果路径；import 时必填" }] },
-  "native-symbolizer": { label: "执行 Native 符号化", destination: "Native 符号化", description: "使用已知 tombstone 文件和符号目录进行栈回溯。", parameters: [{ name: "tombstonePath", description: "已知的本地 tombstone 文件路径" }, { name: "symbolsPath", description: "已知的本地未剥离符号目录" }] },
+  shell: { label: "在终端中执行命令", destination: "终端", description: "把待执行命令预填到终端，命令仍由终端确认发送。", parameters: [{ name: "command", description: "待确认的命令，可省略" }] },
 };
 
 const TOOL_KEYS = Object.keys(TOOL_ACTIONS) as SupportedToolKey[];

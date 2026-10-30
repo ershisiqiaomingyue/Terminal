@@ -703,3 +703,37 @@ html[data-theme] {
 html[data-theme="light"] {
   --status-pending-border: 1.5px solid rgba(15, 23, 42, 0.35);
 }
+
+/* ==========================================================================
+   rain-ui 兼容 token（vendored tokens 缺口补齐）
+   - D:\workspace\rain-ui 组件源码经 alias 直接引入，其 css 依赖以下变量；
+     本文件补齐缺失项，值与 rain-ui/assets/styles/tokens.css 保持一致。
+   - 字号 token 来自 rain-ui typography.css。
+   ========================================================================== */
+:root {
+  --accent-ink: #818cf8;
+  --btn-secondary-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --card-interactive-hover: rgba(255, 255, 255, 0.045);
+  --card-tone-muted: #141922;
+  --card-tone-subtle: #10141c;
+  --card-tone-deep: #0c1017;
+  --radius-control: 7px;
+  --radius-overlay: 14px;
+  --radius-panel: 11px;
+  --switch-active-bg: #34c759;
+  --text-title: 16px;
+  --text-body: 13px;
+  --text-label: 12px;
+  --text-meta: 11px;
+  --z-menu: 60;
+  --z-raised: 10;
+}
+
+html[data-theme="light"] {
+  --accent-ink: #4f46e5;
+  --btn-secondary-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --card-interactive-hover: rgba(15, 23, 42, 0.035);
+  --card-tone-muted: #fafbfd;
+  --card-tone-subtle: #f2f5f9;
+  --card-tone-deep: #e9eef5;
+}

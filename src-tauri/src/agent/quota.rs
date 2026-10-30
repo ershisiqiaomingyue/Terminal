@@ -7,7 +7,7 @@ pub(super) async fn query_custom_quota(
     access_token: Option<&str>,
     checked_at: &str,
 ) -> Result<AgentQuotaView, String> {
-    let client = crate::android_tools::configured_http_client_builder()?
+    let client = crate::runtime_env::configured_http_client_builder()?
         .timeout(std::time::Duration::from_secs(10))
         .redirect(reqwest::redirect::Policy::none())
         .build()
@@ -258,7 +258,7 @@ pub(super) async fn query_relay_quota(
     if endpoints.is_empty() {
         return Ok(None);
     }
-    let client = crate::android_tools::configured_http_client_builder()?
+    let client = crate::runtime_env::configured_http_client_builder()?
         .timeout(std::time::Duration::from_secs(3))
         .build()
         .map_err(|error| format!("无法创建中转额度请求: {error}"))?;

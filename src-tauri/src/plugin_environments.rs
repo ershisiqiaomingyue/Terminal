@@ -15,15 +15,15 @@ impl PluginEnvironments {
     pub(crate) fn resolve(required: &[&str], legacy_node: Option<&Path>) -> Result<Self, String> {
         Self::resolve_with(required, |id| match id {
             "node" => {
-                let result = crate::android_tools::inspect_node_runtime();
+                let result = crate::runtime_env::inspect_node_runtime();
                 if result.is_ok() {
                     return result;
                 }
                 // Adopt a validated runtime left by the earlier model-plugin installer.
                 if let Some(path) = legacy_node.filter(|path| path.is_file()) {
-                    if crate::android_tools::validate_node_runtime(path).is_ok() {
-                        crate::android_tools::save_environment_tool_path(
-                            crate::android_tools::EnvironmentToolPathRequest {
+                    if crate::runtime_env::validate_node_runtime(path).is_ok() {
+                        crate::runtime_env::save_environment_tool_path(
+                            crate::runtime_env::EnvironmentToolPathRequest {
                                 tool_id: "node".into(),
                                 path: path.to_string_lossy().into_owned(),
                             },
@@ -33,7 +33,7 @@ impl PluginEnvironments {
                 }
                 result
             }
-            "python" => crate::android_tools::inspect_python_runtime().map(|(path, _)| path),
+            "python" => crate::runtime_env::inspect_python_runtime().map(|(path, _)| path),
             _ => Err(format!("不支持的插件运行环境：{id}")),
         })
     }

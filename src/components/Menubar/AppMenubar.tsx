@@ -19,6 +19,7 @@ import {
 } from "./menubar";
 
 import { sendTerminalMenu as send } from "@/platform/terminalMenu";
+import { BackgroundTasksPopover } from "@/components/BackgroundTasks/BackgroundTasksPopover";
 
 function openSettings(section: SettingsSection) {
   window.dispatchEvent(new CustomEvent("android-tool-open-settings", { detail: { section } }));
@@ -59,7 +60,6 @@ export const AppMenubar: React.FC = () => {
           <MenubarSeparator />
           <MenubarItem onSelect={() => send({ action: "new-wsl" })}>新建 WSL 会话</MenubarItem>
           <MenubarItem onSelect={() => send({ action: "new-ssh" })}>新建 SSH 连接…</MenubarItem>
-          <MenubarItem onSelect={() => send({ action: "new-adb" })}>新建 ADB Shell</MenubarItem>
           <MenubarSeparator />
           <MenubarItem onSelect={() => send({ action: "close-current" })}>
             关闭当前终端<MenubarShortcut>Ctrl+W</MenubarShortcut>
@@ -99,18 +99,21 @@ export const AppMenubar: React.FC = () => {
       <MenubarMenu>
         <MenubarTrigger>设置</MenubarTrigger>
         <MenubarContent>
-          <MenubarItem onSelect={() => openSettings("terminal")}>终端外观…</MenubarItem>
-          <MenubarItem onSelect={() => openSettings("ssh")}>SSH 连接…</MenubarItem>
-          <MenubarItem onSelect={() => openSettings("wsl")}>WSL 配置…</MenubarItem>
+          <MenubarItem onSelect={() => openSettings("appearance")}>终端外观…</MenubarItem>
+          <MenubarItem onSelect={() => openSettings("environment")}>环境（Node / Python）…</MenubarItem>
         </MenubarContent>
       </MenubarMenu>
+
+      <div className="terminal-menubar-tail" aria-hidden={false}>
+        <BackgroundTasksPopover />
+      </div>
 
       <MenubarMenu>
         <MenubarTrigger>帮助</MenubarTrigger>
         <MenubarContent>
           <MenubarItem
             onSelect={() =>
-              notify("Terminal · 支持本地 / WSL / SSH / ADB 多面板终端", "info", 4200)
+              notify("Terminal · 支持本地 / WSL / SSH 多面板终端", "info", 4200)
             }
           >
             关于 Terminal

@@ -6,24 +6,21 @@
  * 这里只放**纯函数**，不发任何请求：
  *   ① 5.3 的判定顺序完全靠目录项 name/size 就能算出来，做成纯函数才能用
  *      `node --experimental-strip-types --test` 直接跑（本仓 tests/*.test.mts 的做法）。
- *   ② IO 仍留在 `src/platform/terminalWorkspace.ts`（listAdbDirectory /
- *      listSshDirectory / listLocalDirectory / readRemoteTextFile），
- *      避免为了一次预览判定把三套通路再抄一遍。
- *
- * 为什么要有这层判定：ADB 通路最贵——后端要先把文件 `adb pull` 到临时目录再读。
- * 3 MB 的日志点下去要等十几秒，然后后端回一句「文件过大」，等于白等。
+ *   ② IO 仍留在 `src/platform/terminalWorkspace.ts`（listSshDirectory /
+ *      listLocalDirectory / readRemoteTextFile），
+ *      避免为了一次预览判定把两套通路再抄一遍。
  */
 
 /** 单个文件的预览上限。与后端硬约束保持一致：
- *  `code_viewer.rs` 的 MAX_FILE_BYTES = 1 MB，`android_tools.rs` 的 MAX_REMOTE_TEXT_BYTES = 8 MB。 */
-export const PREVIEW_LIMITS = { local: 1024 * 1024, ssh: 1024 * 1024, adb: 8 * 1024 * 1024 } as const;
+ *  `code_viewer.rs` 的 MAX_FILE_BYTES = 1 MB。 */
+export const PREVIEW_LIMITS = { local: 1024 * 1024, ssh: 1024 * 1024 } as const;
 
 export type PreviewSourceKind = keyof typeof PREVIEW_LIMITS;
 
-/** 预览来源：由焦点页签推导（local / ssh / adb 三条通路）。 */
+/** 预览来源：由焦点页签推导（local / ssh 两条通路）。 */
 export interface PreviewSource {
   kind: PreviewSourceKind;
-  /** 该来源可浏览的根目录；ADB 为设备路径，本地/SSH 为会话 root。 */
+  /** 该来源可浏览的根目录；本地/SSH 为会话 root。 */
   root: string;
 }
 

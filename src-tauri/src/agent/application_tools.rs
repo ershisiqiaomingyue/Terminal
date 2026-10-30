@@ -590,3 +590,30 @@ pub(super) struct RebuildTimelineTool {
     pub(super) paths: Vec<String>,
     pub(super) cancellation: Arc<AtomicBool>,
 }
+
+#[async_trait]
+impl ToolHandler for RebuildTimelineTool {
+    fn definition(&self) -> ToolDefinition {
+        ToolDefinition::new(
+            "rebuild_log_timeline",
+            "Rebuild a bounded event timeline from selected local logs.",
+            json!({
+                "type": "object",
+                "properties": { "max_events": { "type": "integer", "maximum": 512 } }
+            }),
+        )
+    }
+
+    async fn execute(&self, input: Value) -> Result<Value, String> {
+        let max_events = input
+            .get("max_events")
+            .and_then(Value::as_u64)
+            .unwrap_or(64) as usize;
+        serde_json::to_value(rebuild_timeline_with_cancellation(
+            &self.paths,
+            max_events,
+            &self.cancellation,
+        )?)
+        .map_err(|error| error.to_string())
+    }
+}

@@ -50,38 +50,7 @@ export async function saveFile(title: string, defaultPath: string, filters?: Dia
   return selected ?? null;
 }
 
-export interface AdbDevice {
-  serial: string;
-  state: string;
-  model?: string;
-  product?: string;
-  device?: string;
-  transportId?: string;
-}
-
-export function deviceLabel(device: AdbDevice): string {
-  return device.model ? `${device.model} (${device.serial})` : device.serial;
-}
-
-/** Select 里只显示一个名称。括号中的序列号留给详情，避免选项被裁切。 */
-export function deviceOptionLabel(device: AdbDevice): string {
-  return device.model || device.product || device.serial;
-}
-
-export async function listAdbDevices(): Promise<AdbDevice[]> {
-  return invoke<AdbDevice[]>("list_adb_devices");
-}
-
-/**
- * 被动刷新设备列表：ADB 服务没在跑就直接返回空数组，不会顺手把 adb 启起来。
- * 界面上的自动轮询（进页面、定时器）用这个；用户手动点「刷新」才用
- * {@link listAdbDevices}。
- */
-export async function listAdbDevicesPassive(): Promise<AdbDevice[]> {
-  return invoke<AdbDevice[]>("list_adb_devices_passive");
-}
-
-export interface AndroidTask {
+export interface Task {
   id: string;
   kind: string;
   target: string;
@@ -92,22 +61,22 @@ export interface AndroidTask {
   finishedAt?: number | null;
   artifactPath?: string | null;
   error?: string | null;
-  /** P5-E：提交时刻的所属 turn（后端权威下发）；旧任务缺失。 */
+  /** 提交时刻的所属 turn（后端权威下发）；旧任务缺失。 */
   turnId?: string | null;
 }
 
-export async function listAndroidTasks(): Promise<AndroidTask[]> {
-  return invoke<AndroidTask[]>("list_android_tasks");
+export async function listTasks(): Promise<Task[]> {
+  return invoke<Task[]>("list_tasks");
 }
 
-export async function cancelAndroidTask(id: string): Promise<void> {
-  await invoke("cancel_android_task", { id });
+export async function cancelTask(id: string): Promise<void> {
+  await invoke("cancel_task", { id });
 }
 
-export async function waitForTask(id: string, onUpdate?: (task: AndroidTask) => void, timeoutMs = 30 * 60 * 1000): Promise<AndroidTask> {
+export async function waitForTask(id: string, onUpdate?: (task: Task) => void, timeoutMs = 30 * 60 * 1000): Promise<Task> {
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
-    const tasks = await listAndroidTasks();
+    const tasks = await listTasks();
     const task = tasks.find((item) => item.id === id);
     if (task) {
       onUpdate?.(task);

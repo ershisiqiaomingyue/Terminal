@@ -61,30 +61,7 @@
 }
 
 @media (max-width: 720px) {
-  .tool-window-action-frame :is(
-    .adb-dev-top-header, .adb-terminal-top-header, .pm-top-header,
-    .device-files-header, .device-capture-header, .device-control-header,
-    .logcat-top-header, .simpleperf-header, .method-profiler-header,
-    .heap-dump-header, .benchmark-header, .aosp-top-header, .native-sym-header
-  ) {
-    height: auto;
-    min-height: 48px;
-    padding: 10px 14px;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
   .tool-window-action-frame header > div { min-width: 0; flex-wrap: wrap; }
   .tool-window-action-frame header h2 { overflow-wrap: anywhere; }
   .tool-window-action-frame header .modern-select { max-width: 100%; }
-  .tool-window-action-frame :is(.simpleperf-config-card, .method-profiler-config-card, .heap-dump-config-card) > div > div {
-    min-width: 0 !important;
-    max-width: 100%;
-  }
-  .tool-window-action-frame :is(.simpleperf-table-wrap, .method-profiler-table-wrap, .heap-dump-table-wrap, .benchmark-table-wrap) {
-    overflow-x: auto;
-  }
-  .tool-window-action-frame :is(.simpleperf-table-head, .simpleperf-table-row,
-    .method-profiler-table-head, .method-profiler-table-row,
-    .heap-dump-table-head, .heap-dump-table-row,
-    .benchmark-table-head, .benchmark-table-row) { min-width: 560px; }
 }

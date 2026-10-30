@@ -1,7 +1,6 @@
 [workspace]
 members = [
     "crates/agent-core",
-    "crates/android-core",
     "src-tauri",
 ]
 resolver = "2"

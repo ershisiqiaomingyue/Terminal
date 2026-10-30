@@ -31,7 +31,6 @@ import { usePaneWidth } from "./usePaneWidth";
 import { FileTabStrip, type FileTabItem } from "./FileTabStrip";
 import { CodeHighlightEditor } from "./CodeHighlightEditor";
 import { isMarkdownFile, projectFilePath, projectName as projectNameOf, tabTitles, fileName, type TabCloseAction } from "./fileTabs";
-import "../ArchiveInspector/archive-inspector.css";
 import "./code-viewer.css";
 
 function folderName(path: string) { return path.split(/[\\/]/).filter(Boolean).pop() || path; }
