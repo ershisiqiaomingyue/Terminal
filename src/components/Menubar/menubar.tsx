@@ -3,6 +3,7 @@
 import * as React from "react";
 import * as MenubarPrimitive from "@radix-ui/react-menubar";
 import { Check, ChevronRight, Circle } from "lucide-react";
+import { buttonVariants } from "rain-ui";
 import { cn } from "./cn";
 import "./menubar.css";
 
@@ -38,7 +39,11 @@ const MenubarTrigger = React.forwardRef<
   React.ElementRef<typeof MenubarPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof MenubarPrimitive.Trigger>
 >(({ className, ...props }, ref) => (
-  <MenubarPrimitive.Trigger ref={ref} className={cn("mb-trigger", className)} {...props} />
+  <MenubarPrimitive.Trigger
+    ref={ref}
+    className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "mb-trigger", className)}
+    {...props}
+  />
 ));
 MenubarTrigger.displayName = MenubarPrimitive.Trigger.displayName;
 

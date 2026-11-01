@@ -68,7 +68,7 @@ export const AppMenubar: React.FC = () => {
       <Button
         type="button"
         variant="ghost"
-        className="mb-trigger mb-settings-trigger"
+        size="sm"
         onMouseDown={(event) => event.stopPropagation()}
         onClick={() => openSettings("general")}
       >

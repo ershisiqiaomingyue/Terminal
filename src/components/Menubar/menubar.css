@@ -13,26 +13,14 @@
   -webkit-app-region: no-drag;
 }
 
+/* 尺寸、圆角、悬停和焦点环全部来自 rain-ui Button；这里只补 Radix 的打开态。 */
 .mb-trigger {
-  display: inline-flex;
-  align-items: center;
-  height: 24px;
-  padding: 0 10px;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  font-size: 12.5px;
-  font-family: var(--font-sans);
-  color: var(--text-secondary);
   cursor: default;
-  outline: none;
-  transition: background 0.13s ease, color 0.13s ease;
 }
-.mb-trigger:hover,
 .mb-trigger[data-highlighted],
 .mb-trigger[data-state="open"] {
-  background: var(--bg-hover);
-  color: var(--text-primary);
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
 }
 
 .mb-content {
