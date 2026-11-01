@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Button, Input } from "@/components/ui";
-import { ConfirmDialog } from "@/components/ConfirmDialog/ConfirmDialog";
+import { Button, Input } from "rain-ui";
+import { ConfirmDialog } from "rain-ui";
 import { invoke, formatInvokeError } from "@/platform/runtime";
 import { recordTransfer, formatTransferBytes, useFileTransfers, type FileTransfer, type UploadConflict, type UploadPolicy } from "./fileTransfers";
 import { downloadErrorMessage, downloadNeedsAuthorization, inspectAuthorizedDownload, type DownloadAccess, type DownloadInfo } from "./downloadAuthorization";
@@ -104,7 +104,7 @@ export function useTransferActions(target: BrowserTarget, connected: boolean, on
   return { download, upload, pickUpload, busy, preparing, error, dialog: confirmation && <ConfirmDialog open className="code-transfer-confirm" title={confirmation.title} message={confirmation.message}
     variant="primary" confirmLabel={confirmation.authorize ? "授权本次下载" : confirmation.upload ? "保留两份上传" : "继续下载"} cancelLabel="取消"
     onConfirm={() => choose(confirmation.authorize ? "authorize" : confirmation.upload ? "rename" : "download")} onCancel={() => choose(null)}
-    additionalAction={confirmation.upload ? <Button size="sm" variant="danger" onClick={() => choose("overwrite")}>覆盖远程同名文件</Button> : undefined} >
+    additionalAction={confirmation.upload ? <Button variant="destructive" onClick={() => choose("overwrite")}>覆盖远程同名文件</Button> : undefined} >
     {confirmation.authorize && <Input key="download-sudo-password" type="password" aria-label="不同的 sudo 密码（可选）" placeholder="留空使用 SSH 已保存密码或免密 sudo" autoComplete="off" onChange={(event) => { sudoPassword.current = event.target.value; }} />}
     </ConfirmDialog> };
 }

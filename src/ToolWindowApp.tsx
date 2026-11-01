@@ -8,6 +8,7 @@ import { HOME_TOOLS } from "@/views/Home";
 import { SystemStatusIndicator } from "@/components/Sidebar/SystemStatusIndicator";
 import { GLOBAL_NOTIFICATION_EVENT, notify, type GlobalNotification } from "@/platform/notifications";
 import { formatInvokeError, invoke, isTauri } from "@/platform/runtime";
+import { Button } from "rain-ui";
 import { openToolWindow, type ToolWindowInfo } from "@/platform/toolWindows";
 import { useWindowDrag } from "@/platform/windowDrag";
 import "./tool-window.css";
@@ -64,12 +65,12 @@ export function ToolWindowApp({ info }: { info: ToolWindowInfo }) {
     <header className="standalone-tool-topbar" {...windowDragHandlers}>
       <span className="standalone-tool-title">{info.title}</span>
       <div className="topbar-window-controls" data-tauri-drag-region="false">
-        <button className="topbar-theme-toggle" title="打开工具" aria-label="打开工具" aria-haspopup="dialog" aria-expanded={searchOpen} disabled={creating} onClick={() => setSearchOpen(true)}>{creating ? <LoaderCircle size={15} /> : <Plus size={15} />}</button>
-        <button className="topbar-theme-toggle" title="显示主窗口" aria-label="显示主窗口" onClick={() => void invoke("focus_main_window").catch((error) => notify(formatInvokeError(error), "error"))}><Monitor size={15} /></button>
+        <Button variant="bare" className="topbar-theme-toggle" title="打开工具" aria-label="打开工具" aria-haspopup="dialog" aria-expanded={searchOpen} disabled={creating} onClick={() => setSearchOpen(true)} icon={creating ? <LoaderCircle size={15} /> : <Plus size={15} />} />
+        <Button variant="bare" className="topbar-theme-toggle" title="显示主窗口" aria-label="显示主窗口" onClick={() => void invoke("focus_main_window").catch((error) => notify(formatInvokeError(error), "error"))} icon={<Monitor size={15} />} />
         <SystemStatusIndicator placement="topbar" />
-        <button className="topbar-theme-toggle" title="最小化" aria-label="最小化" onClick={() => run("minimize")}><Minus size={14} /></button>
-        <button className="topbar-theme-toggle" title="最大化" aria-label="最大化" onClick={() => run("toggleMaximize")}><Square size={13} /></button>
-        <button className="topbar-theme-toggle" title="关闭窗口" aria-label="关闭窗口" onClick={() => run("close")}><X size={15} /></button>
+        <Button variant="bare" className="topbar-theme-toggle" title="最小化" aria-label="最小化" onClick={() => run("minimize")} icon={<Minus size={14} />} />
+        <Button variant="bare" className="topbar-theme-toggle" title="最大化" aria-label="最大化" onClick={() => run("toggleMaximize")} icon={<Square size={13} />} />
+        <Button variant="bare" className="topbar-theme-toggle" title="关闭窗口" aria-label="关闭窗口" onClick={() => run("close")} icon={<X size={15} />} />
       </div>
     </header>
     <main className="standalone-tool-content"><AppErrorBoundary><ToolWindowView type={info.toolKey} active onOpenTool={(key) => void openTool(key)} onBack={() => void invoke("focus_main_window")} /></AppErrorBoundary></main>

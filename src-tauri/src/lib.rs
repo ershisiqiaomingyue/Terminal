@@ -817,6 +817,7 @@ pub fn run() {
             agent::resolve_agent_permission,
             agent::discover_agent_models,
             agent::check_agent_provider,
+            agent::test_agent_provider_chat,
             agent::get_provider_quota,
             agent::refresh_agent_capabilities,
             model_capability_cache::get_agent_model_capabilities,

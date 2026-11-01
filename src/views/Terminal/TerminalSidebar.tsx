@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { ChevronDown, Plus, RefreshCw, SquareTerminal, X } from "lucide-react";
 import type { SavedServerEntry } from "@/platform/terminalWorkspace";
 import { sshServerDotStatus, useGlobalSshConnection } from "@/platform/globalSsh";
-import { Badge, Button, ListItem } from "@/components/ui";
+import { Badge, Button, ListItem } from "rain-ui";
 import { TerminalGlyph, type TerminalGlyphKind } from "./TerminalGlyphs";
 import { startPointerDrag } from "./pointerDrag";
 import type { TerminalTab } from "./types";
@@ -186,17 +186,17 @@ export const TerminalSidebar: React.FC<TerminalSidebarProps> = ({
               原来是一个按钮同时承担两件事，用户点 `+` 想看菜单、点箭头又想直接开，
               两种预期互相打架。 */}
           <div className="terminal-add-group">
-            <button
-              type="button"
+            <Button
+              type="button" variant="bare"
               className="terminal-add-btn is-primary"
               aria-label={`新建${KIND_LABEL[lastKind]}`}
               title={`新建${KIND_LABEL[lastKind]}（上次使用的类型）`}
               onClick={() => createLocal(lastKind)}
             >
               <Plus size={14} />
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              type="button" variant="bare"
               className="terminal-add-btn is-caret"
               aria-label="选择终端类型"
               aria-haspopup="menu"
@@ -205,7 +205,7 @@ export const TerminalSidebar: React.FC<TerminalSidebarProps> = ({
               onClick={() => setMenuOpen((open) => !open)}
             >
               <ChevronDown size={11} />
-            </button>
+            </Button>
           </div>
           {menuOpen && (
             // 菜单项一律单行（需求：删掉第二行的说明文字）。
@@ -214,44 +214,44 @@ export const TerminalSidebar: React.FC<TerminalSidebarProps> = ({
             // 原本写在第二行的信息没有丢：类型/不可用原因都挪进 title 悬停提示。
             <div className="terminal-add-menu" role="menu">
               <div className="terminal-add-menu-group">本地环境</div>
-              <button
-                type="button"
+              <Button
+                type="button" variant="bare"
                 role="menuitem"
                 title="在新终端里启动 pwsh"
                 onClick={() => pick(() => createLocal("pwsh"))}
               >
                 <TerminalGlyph kind="pwsh" size={16} />
                 <span>终端 · PowerShell 7</span>
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                type="button" variant="bare"
                 role="menuitem"
                 title="在新终端里启动 cmd"
                 onClick={() => pick(() => createLocal("cmd"))}
               >
                 <TerminalGlyph kind="cmd" size={16} />
                 <span>命令提示符</span>
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                type="button" variant="bare"
                 role="menuitem"
                 title="按已保存的 WSL 配置打开"
                 onClick={() => pick(() => createLocal("wsl"))}
               >
                 <TerminalGlyph kind="wsl" size={16} />
                 <span>WSL 环境</span>
-              </button>
+              </Button>
               <div className="terminal-add-menu-divider" />
               <div className="terminal-add-menu-group">服务器与远程</div>
-              <button
-                type="button"
+              <Button
+                type="button" variant="bare"
                 role="menuitem"
                 title="新建一条 SSH 连接并打开终端"
                 onClick={() => pick(onAddSsh)}
               >
                 <TerminalGlyph kind="ssh" size={16} />
                 <span>SSH 远程服务器</span>
-              </button>
+              </Button>
             </div>
           )}
         </div>
@@ -304,7 +304,6 @@ export const TerminalSidebar: React.FC<TerminalSidebarProps> = ({
                       {tabs.length > 1 ? (
                         <Button
                           variant="bare"
-                          size="xs"
                           icon={<X size={11} />}
                           aria-label={`关闭 ${tab.title}`}
                           title={`关闭 ${tab.title}`}
@@ -328,14 +327,14 @@ export const TerminalSidebar: React.FC<TerminalSidebarProps> = ({
       <section className="terminal-sidebar-section terminal-sidebar-servers">
         <div className="terminal-sidebar-section-title">
           <span>已保存服务器</span>
-          <button
-            type="button"
+          <Button
+            type="button" variant="bare"
             className="terminal-sidebar-mini-btn"
             aria-label="刷新已保存服务器"
             onClick={onRefreshServers}
           >
             <RefreshCw size={11} className={savedServersLoading ? "animate-spin" : undefined} />
-          </button>
+          </Button>
         </div>
         <div className="terminal-sidebar-scroll" role="list" aria-label="已保存服务器">
           {savedServers.length === 0 && (

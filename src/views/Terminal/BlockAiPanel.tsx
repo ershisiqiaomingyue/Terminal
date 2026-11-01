@@ -11,7 +11,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { AlertCircle, Check, Copy, HelpCircle, Stethoscope, Terminal, Wrench, X } from "lucide-react";
-import { Button, Spinner } from "@/components/ui";
+import { Button, Spinner } from "rain-ui";
 import { MarkdownMessage } from "@/views/Chat/MarkdownMessage";
 import type { CommandBlock } from "@/platform/terminal/blocks/types.ts";
 import { runBlockAi, type BlockAiOutcome, type TerminalModelSelection } from "@/platform/terminal/ai/terminalAiService.ts";
@@ -162,14 +162,13 @@ export const BlockAiPanel: React.FC<BlockAiPanelProps> = ({
           {/* 两个动作互斥：已经解释过就建议诊断，反之亦然。 */}
           <Button
             variant="bare"
-            size="sm"
             disabled={busy}
             onClick={() => void run(state.mode === "explain" ? "diagnose" : "explain")}
             title={state.mode === "explain" ? "改问：为什么失败 / 怎么修" : "改问：这条命令在做什么"}
           >
             {state.mode === "explain" ? "诊断" : "解释"}
           </Button>
-          <Button variant="bare" size="sm" icon={<X size={14} />} aria-label="关闭" title="关闭" onClick={onClose} />
+          <Button variant="bare" icon={<X size={14} />} aria-label="关闭" title="关闭" onClick={onClose} />
         </div>
       </header>
 
@@ -188,7 +187,7 @@ export const BlockAiPanel: React.FC<BlockAiPanelProps> = ({
               <div className="block-ai-error-text">{state.error.message}</div>
               <div className="block-ai-error-code">错误码：{state.error.code}</div>
             </div>
-            <Button variant="subtle" size="xs" onClick={() => void run(state.mode)} disabled={busy}>
+            <Button variant="ghost" onClick={() => void run(state.mode)} disabled={busy}>
               重试
             </Button>
           </div>
@@ -223,8 +222,7 @@ export const BlockAiPanel: React.FC<BlockAiPanelProps> = ({
               <div className="block-ai-suggestion" key={command}>
                 <code>{command}</code>
                 <Button
-                  variant="subtle"
-                  size="xs"
+                  variant="ghost"
                   disabled={!onInsertCommand}
                   onClick={() => onInsertCommand?.(command)}
                   title="插入到终端输入框，需你确认后再回车"
@@ -245,7 +243,6 @@ export const BlockAiPanel: React.FC<BlockAiPanelProps> = ({
           {onRepairRequest && state.mode === "diagnose" && state.status === "done" && state.text ? (
             <Button
               variant="secondary"
-              size="sm"
               icon={<Wrench size={13} />}
               onClick={() => onRepairRequest(state.text)}
               title="按这份诊断生成一条修复命令；生成后仍需你审批才会执行"
@@ -255,7 +252,6 @@ export const BlockAiPanel: React.FC<BlockAiPanelProps> = ({
           ) : null}
           <Button
             variant="bare"
-            size="sm"
             icon={copied ? <Check size={13} /> : <Copy size={13} />}
             disabled={!state.text}
             onClick={copy}
@@ -278,7 +274,7 @@ export const BlockAiPanel: React.FC<BlockAiPanelProps> = ({
             }}
             disabled={busy}
           />
-          <Button variant="secondary" size="sm" disabled={busy || !question.trim()} onClick={submitFollowUp}>
+          <Button variant="secondary" disabled={busy || !question.trim()} onClick={submitFollowUp}>
             追问
           </Button>
         </div>

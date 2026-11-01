@@ -9,6 +9,7 @@
  * 状态完全由父级持有（父级掌握重试计时器与 tabId），本组件只负责画。
  */
 import React from "react";
+import { Button } from "rain-ui";
 import { AlertTriangle, CheckCircle2, Info, RotateCw, X } from "lucide-react";
 import type { SshRetryState } from "./paneRearrange";
 import { SSH_RETRY_MAX_ATTEMPTS } from "./paneRearrange";
@@ -71,18 +72,18 @@ export const PaneBanner: React.FC<PaneBannerProps> = ({
               }）…`}
           {retry.lastError ? <small>{retry.lastError}</small> : null}
         </span>
-        <button className="terminal-pane-banner-action" type="button" onClick={onRetryNow}>
+        <Button className="terminal-pane-banner-action" type="button" variant="bare" onClick={onRetryNow}>
           <RotateCw size={11} /> 立即重连
-        </button>
-        <button
+        </Button>
+        <Button
           className="terminal-pane-banner-close"
-          type="button"
+          type="button" variant="bare"
           onClick={onDismissRetry}
           aria-label="停止自动重连"
           title="停止自动重连"
         >
           <X size={11} />
-        </button>
+        </Button>
       </div>
     );
   }
@@ -95,15 +96,15 @@ export const PaneBanner: React.FC<PaneBannerProps> = ({
     >
       <span className="terminal-pane-banner-icon">{NOTICE_ICON[current.kind]}</span>
       <span className="terminal-pane-banner-text">{current.text}</span>
-      <button
+      <Button
         className="terminal-pane-banner-close"
-        type="button"
+        type="button" variant="bare"
         onClick={onDismissNotice}
         aria-label="关闭提示"
         title="关闭提示"
       >
         <X size={11} />
-      </button>
+      </Button>
     </div>
   );
 };

@@ -7,7 +7,8 @@ export type TerminalMenuDetail =
   | { action: "new-ssh" }
   | { action: "close-current" }
   | { action: "layout"; value: "1x1" | "1x2" | "2v" | "2x2" }
-  | { action: "pane"; value: "host" | "git" | "files" };
+  | { action: "pane"; value: "host" | "git" | "files" }
+  | { action: "toggle-sidebar" };
 
 export function sendTerminalMenu(detail: TerminalMenuDetail): void {
   window.dispatchEvent(new CustomEvent(TERMINAL_MENU_EVENT, { detail }));

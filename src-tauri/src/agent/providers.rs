@@ -381,6 +381,90 @@ pub(super) fn provider_model_is_listed(body: &Value, model_id: &str) -> Option<b
     }))
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AgentProviderChatTestRequest {
+    pub id: String,
+    pub name: String,
+    pub kind: ProviderKind,
+    pub base_url: String,
+    pub model: String,
+    pub api_key: Option<String>,
+    pub message: String,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AgentProviderChatTestResponse {
+    pub text: String,
+}
+
+/// Perform one lightweight, real model request without starting a full Agent
+/// turn. Settings tests need to prove the endpoint, credential and model work,
+/// but must not wait for workspace preparation, tools or multi-round planning.
+#[tauri::command]
+pub async fn test_agent_provider_chat(
+    request: AgentProviderChatTestRequest,
+) -> Result<AgentProviderChatTestResponse, String> {
+    let provider_id = request.id.trim().to_string();
+    let provider_name = request.name.trim().to_string();
+    let base_url = request.base_url.trim().trim_end_matches('/').to_string();
+    let model = request.model.trim().to_string();
+    let message = request.message.trim().to_string();
+    if provider_id.is_empty() || provider_name.is_empty() || base_url.is_empty() || model.is_empty() {
+        return Err("Provider 配置、模型和测试消息不能为空".to_string());
+    }
+    if message.is_empty() {
+        return Err("测试消息不能为空".to_string());
+    }
+
+    let api_key = request
+        .api_key
+        .filter(|value| !value.trim().is_empty())
+        .or_else(|| provider_credential(&provider_id).ok())
+        .unwrap_or_default();
+    if api_key.is_empty() && request.kind != ProviderKind::OpenAiCompatible {
+        return Err("未配置 API Key，无法发送测试消息".to_string());
+    }
+
+    let config = ProviderConfig::new(
+        provider_id.clone(),
+        provider_name,
+        request.kind,
+        base_url,
+        format!("keyring:{provider_id}"),
+    )
+    .map_err(|error| error.to_string())?;
+    let client = HttpProviderClient::new(config, api_key).map_err(|error| error.to_string())?;
+    let provider_request = ProviderRequest::new(
+        "settings-provider-test",
+        model,
+        vec![AgentMessage::user(message)],
+        Vec::new(),
+    )
+    .with_max_tokens(256)
+    .with_usage_reporting(false)
+    .with_reasoning_encrypted_content(false);
+
+    let response = tokio::time::timeout(std::time::Duration::from_secs(60), async {
+        let mut stream = client.stream(provider_request).await.map_err(|error| error.to_string())?;
+        let mut text = String::new();
+        while let Some(event) = stream.next().await {
+            match event.map_err(|error| error.to_string())? {
+                AgentEvent::TextDelta { text: delta, .. } => text.push_str(&delta),
+                AgentEvent::Error { message, .. } => return Err(message),
+                AgentEvent::Completed { .. } | AgentEvent::Cancelled { .. } => break,
+                _ => {}
+            }
+        }
+        Ok::<String, String>(text)
+    })
+    .await
+    .map_err(|_| "模型测试超过 60 秒，已停止等待。请检查 Provider 是否可用或网络连接是否正常。".to_string())??;
+
+    Ok(AgentProviderChatTestResponse { text: response })
+}
+
 #[tauri::command]
 pub async fn check_agent_provider(
     request: AgentProviderCheckRequest,

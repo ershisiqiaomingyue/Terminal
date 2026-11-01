@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { Button } from "rain-ui";
 import { ChevronDown, LoaderCircle, PanelTop, Plus, X } from "lucide-react";
 import { createPortal } from "react-dom";
 import type React from "react";
@@ -131,8 +132,8 @@ export function TopbarTabs({ tabs, activeId, onSelect, onPromote, onClose, onAdd
       if (next !== undefined) { event.preventDefault(); choose(visible[next].id); }
     }}>
       {visible.map((tab, index) => <div key={tab.id} className={`topbar-tab${tab.id === activeId ? " is-active" : ""}${preview?.id === tab.id ? " is-dragging-out" : ""}`} role="presentation" data-tauri-drag-region="false">
-        <button type="button" className="topbar-tab-select" data-tab-id={tab.id} role="tab" aria-selected={tab.id === activeId} aria-busy={opening === tab.id} tabIndex={tab.id === activeId || (!tabs.some((item) => item.id === activeId) && index === 0) ? 0 : -1} title={opening === tab.id ? "正在打开独立窗口…" : tab.title} onPointerDown={(event) => beginDrag(event, tab.id)} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={clearDrag} onLostPointerCapture={clearDrag} onClick={() => selectTab(tab.id)}>{(tab.icon || opening === tab.id) && <span className="topbar-tab-icon" aria-hidden="true">{opening === tab.id ? <LoaderCircle className="topbar-tab-opening" size={14} /> : tab.icon}</span>}<span className="topbar-tab-title">{tab.title}</span></button>
-        {tab.closable && <button type="button" className="topbar-tab-close" title={`关闭${tab.title}`} aria-label={`关闭${tab.title}`} disabled={opening === tab.id} onClick={() => close(tab.id)}><X size={12} /></button>}
+        <Button type="button" variant="bare" className="topbar-tab-select" data-tab-id={tab.id} role="tab" aria-selected={tab.id === activeId} aria-busy={opening === tab.id} tabIndex={tab.id === activeId || (!tabs.some((item) => item.id === activeId) && index === 0) ? 0 : -1} title={opening === tab.id ? "正在打开独立窗口…" : tab.title} onPointerDown={(event) => beginDrag(event, tab.id)} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={clearDrag} onLostPointerCapture={clearDrag} onClick={() => selectTab(tab.id)}>{(tab.icon || opening === tab.id) && <span className="topbar-tab-icon" aria-hidden="true">{opening === tab.id ? <LoaderCircle className="topbar-tab-opening" size={14} /> : tab.icon}</span>}<span className="topbar-tab-title">{tab.title}</span></Button>
+        {tab.closable && <Button type="button" variant="bare" className="topbar-tab-close" title={`关闭${tab.title}`} aria-label={`关闭${tab.title}`} disabled={opening === tab.id} onClick={() => close(tab.id)}><X size={12} /></Button>}
       </div>)}
     </div>
     <div className="topbar-tab-actions" data-tauri-drag-region="false">
@@ -151,12 +152,12 @@ export function TopbarTabs({ tabs, activeId, onSelect, onPromote, onClose, onAdd
         if (next !== undefined) { event.preventDefault(); buttons[next]?.focus(); }
       }}>
         {hidden.map((tab) => <div key={tab.id} className={`topbar-tabs-menu-row${tab.id === activeId ? " is-active" : ""}`} role="none">
-          <button type="button" className="topbar-tabs-menu-select" role="menuitemradio" aria-checked={tab.id === activeId} title={tab.title} onClick={() => { onPromote?.(tab.id); choose(tab.id); }}>{tab.icon && <span className="topbar-tab-icon" aria-hidden="true">{tab.icon}</span>}<span className="topbar-tab-title">{tab.title}</span></button>
-          {tab.closable && <button type="button" className="topbar-tab-close" role="menuitem" title={`关闭${tab.title}`} aria-label={`关闭${tab.title}`} onClick={() => close(tab.id)}><X size={12} /></button>}
+          <Button type="button" variant="bare" className="topbar-tabs-menu-select" role="menuitemradio" aria-checked={tab.id === activeId} title={tab.title} onClick={() => { onPromote?.(tab.id); choose(tab.id); }}>{tab.icon && <span className="topbar-tab-icon" aria-hidden="true">{tab.icon}</span>}<span className="topbar-tab-title">{tab.title}</span></Button>
+          {tab.closable && <Button type="button" variant="bare" className="topbar-tab-close" role="menuitem" title={`关闭${tab.title}`} aria-label={`关闭${tab.title}`} onClick={() => close(tab.id)}><X size={12} /></Button>}
         </div>)}
       </div>}
       </div>}
-      {onAdd && <button type="button" className="topbar-tab-add" title="打开工具" aria-label="打开工具" onClick={onAdd}><Plus size={16} /></button>}
+      {onAdd && <Button type="button" variant="bare" className="topbar-tab-add" title="打开工具" aria-label="打开工具" onClick={onAdd}><Plus size={16} /></Button>}
     </div>
     {preview && previewTab && createPortal(<div ref={previewRef} className={`topbar-tab-drag-preview${preview.canRelease ? " is-ready" : ""}`} style={{ minWidth: `min(${preview.width}px, calc(100vw - 16px))` }} aria-hidden="true">
       <div className="topbar-tab-drag-card">

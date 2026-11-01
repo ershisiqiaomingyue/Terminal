@@ -1,22 +1,27 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { Button } from "rain-ui";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { Minus, Square, X, Copy } from "lucide-react";
+import { ArrowLeft, ArrowRight, Minus, Square, X, Copy } from "lucide-react";
 import { isTauri } from "@/platform/runtime";
 import { readAppTheme, subscribeAppTheme, type AppTheme } from "@/platform/theme";
 import { AppMenubar } from "./AppMenubar";
 import "./titlebar.css";
 
-/** 菜单起点：左侧留 100px 空白（不放前进/后退箭头）。 */
-const MENU_LEFT_OFFSET = 100;
-
 /**
- * 应用标题栏。
- *
- * 布局照桌面编辑器的习惯：左边一段空白的可拖动区（不放前进/后退箭头），
- * 从 100px 处开始内嵌菜单栏，右侧是原生风格的最小化 / 最大化 / 关闭。
+ * 应用标题栏（对齐 ChatGPT 桌面端）：
+ * 最左是后退/前进箭头，随后是内嵌菜单栏（终端侧栏折叠 + 「设置 / 帮助」两个菜单），
+ * 最右是 Windows 原生位置的最小化 / 最大化 / 关闭（贴住窗口右缘）。
  * 整条栏都是窗口拖动区，只有菜单与按钮自己吃掉鼠标事件。
  */
-export const TitleBar: React.FC<{ onMouseDown?: (event: React.MouseEvent) => void }> = ({ onMouseDown }) => {
+export interface TitleBarProps {
+  onMouseDown?: (event: React.MouseEvent) => void;
+  canBack?: boolean;
+  canForward?: boolean;
+  onBack?: () => void;
+  onForward?: () => void;
+}
+
+export const TitleBar: React.FC<TitleBarProps> = ({ onMouseDown, canBack = false, canForward = false, onBack, onForward }) => {
   const [theme, setTheme] = useState<AppTheme>(readAppTheme);
   const [maximized, setMaximized] = useState(false);
   useEffect(() => subscribeAppTheme(setTheme), []);
@@ -46,8 +51,29 @@ export const TitleBar: React.FC<{ onMouseDown?: (event: React.MouseEvent) => voi
 
   return (
     <header className="titlebar" data-theme={theme} onMouseDown={onMouseDown}>
-      {/* 左侧留白：只是可拖动区，不放任何按钮 */}
-      <div className="titlebar-gutter" style={{ width: MENU_LEFT_OFFSET }} aria-hidden="true" />
+      {/* 后退 / 前进：跟随应用视图历史（终端 ↔ 设置），到头即禁用 */}
+      <div className="titlebar-nav" onMouseDown={(event) => event.stopPropagation()}>
+        <Button
+          type="button" variant="bare"
+          className="titlebar-btn"
+          disabled={!canBack}
+          title="后退"
+          aria-label="后退"
+          onClick={onBack}
+        >
+          <ArrowLeft size={15} />
+        </Button>
+        <Button
+          type="button" variant="bare"
+          className="titlebar-btn"
+          disabled={!canForward}
+          title="前进"
+          aria-label="前进"
+          onClick={onForward}
+        >
+          <ArrowRight size={15} />
+        </Button>
+      </div>
 
       <div className="titlebar-menu" onMouseDown={(event) => event.stopPropagation()}>
         <AppMenubar />
@@ -56,21 +82,21 @@ export const TitleBar: React.FC<{ onMouseDown?: (event: React.MouseEvent) => voi
       <div className="titlebar-spacer" />
 
       <div className="titlebar-controls" onMouseDown={(event) => event.stopPropagation()}>
-        <button type="button" className="titlebar-btn" title="最小化" aria-label="最小化" onClick={() => run("minimize")}>
+        <Button type="button" variant="bare" className="titlebar-btn" title="最小化" aria-label="最小化" onClick={() => run("minimize")}>
           <Minus size={14} />
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          type="button" variant="bare"
           className="titlebar-btn"
           title={maximized ? "还原" : "最大化"}
           aria-label={maximized ? "还原" : "最大化"}
           onClick={() => run("toggleMaximize")}
         >
           {maximized ? <Copy size={11} /> : <Square size={11} />}
-        </button>
-        <button type="button" className="titlebar-btn titlebar-btn-close" title="关闭" aria-label="关闭" onClick={() => run("close")}>
+        </Button>
+        <Button type="button" variant="bare" className="titlebar-btn titlebar-btn-close" title="关闭" aria-label="关闭" onClick={() => run("close")}>
           <X size={14} />
-        </button>
+        </Button>
       </div>
     </header>
   );

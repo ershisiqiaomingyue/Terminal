@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "rain-ui";
 import { ComposerNoticeSlot } from "./ComposerNoticeDock";
-import { TaskStepList } from "@/components/ui/TaskStepList";
+import { TaskStepList } from "rain-ui";
 import { isWorkspaceChangePath } from "./activityState";
 import type { AgentEventPayload } from "@/platform/chatApi";
 import type { ComposerFileChanges, ComposerFileEntry, ComposerTaskStep } from "./types";
@@ -87,7 +87,7 @@ export function ComposerTaskList({ steps, goal, startedAt, finishedAt, active, o
     state={state}
     meta={<span className="composer-task-progress-pill">{elapsed} · {completed}/{steps.length}</span>}
     actions={paused
-      ? <Button variant="subtle" size="xs" className="composer-task-delete" icon={<Trash2 size={13} />} aria-label="删除任务编排" title="删除任务编排" onClick={onDelete} />
+      ? <Button variant="ghost" className="composer-task-delete" icon={<Trash2 size={13} />} aria-label="删除任务编排" title="删除任务编排" onClick={onDelete} />
       : undefined}
     >
     <TaskStepList compact steps={steps.map((step) => ({ status: step.status, content: step.title }))} />

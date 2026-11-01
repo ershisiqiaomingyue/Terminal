@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "rain-ui";
 import { Plus, Terminal as TerminalIcon } from "lucide-react";
 import type { TerminalTab } from "./types";
 
@@ -37,8 +38,8 @@ export const EmptyPanePicker: React.FC<EmptyPanePickerProps> = ({ onCreate }) =>
       <TerminalIcon size={20} />
       <span>空闲面板</span>
       <small>点下面的按钮在这块面板里开一个终端</small>
-      <button
-        type="button"
+      <Button
+        type="button" variant="bare"
         className="terminal-pane-empty-add"
         onClick={(event) => {
           event.stopPropagation();
@@ -49,13 +50,13 @@ export const EmptyPanePicker: React.FC<EmptyPanePickerProps> = ({ onCreate }) =>
       >
         <Plus size={13} />
         新建终端
-      </button>
+      </Button>
       {open && (
         <div className="terminal-pane-picker" role="menu" onMouseDown={(event) => event.stopPropagation()}>
           {OPTIONS.map((option) => (
-            <button
+            <Button
               key={option.type}
-              type="button"
+              type="button" variant="bare"
               role="menuitem"
               className="terminal-pane-picker-item"
               onClick={(event) => {
@@ -66,7 +67,7 @@ export const EmptyPanePicker: React.FC<EmptyPanePickerProps> = ({ onCreate }) =>
             >
               <span className="terminal-pane-picker-label">{option.label}</span>
               <span className="terminal-pane-picker-hint">{option.hint}</span>
-            </button>
+            </Button>
           ))}
         </div>
       )}

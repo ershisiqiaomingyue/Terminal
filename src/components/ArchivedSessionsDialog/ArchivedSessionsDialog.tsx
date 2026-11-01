@@ -1,7 +1,7 @@
 import React from "react";
 import { Archive, RotateCcw, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { Modal } from "@/components/ui/Modal";
+import { Button } from "rain-ui";
+import { Modal } from "rain-ui";
 import { formatInvokeError, isTauri } from "@/platform/runtime";
 import {
   archiveHistorySession,
@@ -108,12 +108,12 @@ export function ArchivedSessionsDialog({ onClose }: { onClose: () => void }) {
           </span>
           <span className="archive-dialog-actions">
             {removing?.id === summary.id ? <>
-              <Button size="xs" variant="danger" loading={busyId === summary.id} disabled={Boolean(busyId)} onClick={() => void remove(summary)}>确认删除</Button>
-              <Button size="xs" variant="subtle" disabled={Boolean(busyId)} onClick={() => setRemoving(null)}>取消</Button>
+              <Button variant="destructive" loading={busyId === summary.id} disabled={Boolean(busyId)} onClick={() => void remove(summary)}>确认删除</Button>
+              <Button variant="ghost" disabled={Boolean(busyId)} onClick={() => setRemoving(null)}>取消</Button>
             </> : <>
-              <Button size="xs" variant="subtle" icon={<RotateCcw size={13} />} disabled={Boolean(busyId)} onClick={() => void restore(summary)}>恢复</Button>
+              <Button variant="ghost" icon={<RotateCcw size={13} />} disabled={Boolean(busyId)} onClick={() => void restore(summary)}>恢复</Button>
               {/* 彻底删除会把历史记录一起抹掉，比归档重，所以先换成二次确认。 */}
-              <Button size="xs" variant="subtle" icon={<Trash2 size={13} />} disabled={Boolean(busyId)} onClick={() => setRemoving(summary)}>删除</Button>
+              <Button variant="ghost" icon={<Trash2 size={13} />} disabled={Boolean(busyId)} onClick={() => setRemoving(summary)}>删除</Button>
             </>}
           </span>
         </li>)}

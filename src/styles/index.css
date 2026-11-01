@@ -1,3 +1,6 @@
+/* 0. rain-ui (shadcn) Tailwind 底座与设计令牌 */
+@import './rain.css';
+
 /* ==========================================================================
    Android-Tool Modern Design System - Master Index
    - 整合所有 Token、原子样式、独立组件及视图
@@ -11,46 +14,52 @@
 @import './tokens.css';
 @import './typography.css';
 @import './ambient.css';
+@import './base.css';
 
 /* 2. 独立原子与分子级组件 */
-@import '../components/Divider/divider.css';
-@import '../components/Button/button.css';
-@import '../components/Input/input.css';
-@import '../components/Select/select.css';
-@import '../components/Switch/switch.css';
-@import '../components/Badge/badge.css';
-@import '../components/Table/table.css';
+@import '../../../rain-ui/components/Divider/divider.css';
+@import '../../../rain-ui/components/Badge/badge.css';
+@import '../../../rain-ui/components/Table/table.css';
 @import './terminal.css';
-@import '../components/PropertyGrid/property-grid.css';
-@import '../components/Card/card.css';
-@import '../components/ui/toast.css';
-@import '../components/ui/list-item.css';
-@import '../components/ui/notice-panel.css';
-@import '../components/ui/attachment.css';
-@import '../components/ui/progress-ring.css';
-@import '../components/ui/spinner.css';
-@import '../components/ui/compaction-progress.css';
-@import '../components/ui/usage-metrics.css';
-@import '../components/ui/file-preview-panel.css';
-@import '../components/ui/file-diff-view.css';
-@import '../components/ui/file-change-card.css';
-@import '../components/ui/file-change-notice.css';
+@import '../../../rain-ui/components/PropertyGrid/property-grid.css';
+@import '../../../rain-ui/components/ui/portal.css';
+@import '../../../rain-ui/components/ui/list-item.css';
+@import '../../../rain-ui/components/ui/notice-panel.css';
+@import '../../../rain-ui/components/ui/attachment.css';
+@import '../../../rain-ui/components/ui/progress-ring.css';
+@import '../../../rain-ui/components/ui/spinner.css';
+@import '../../../rain-ui/components/ui/compaction-progress.css';
+@import '../../../rain-ui/components/ui/usage-metrics.css';
+@import '../../../rain-ui/components/ui/file-preview-panel.css';
+@import '../../../rain-ui/components/ui/file-diff-view.css';
+@import '../../../rain-ui/components/ui/file-change-card.css';
+@import '../../../rain-ui/components/ui/file-change-notice.css';
 @import '../components/BackgroundTasks/background-tasks.css';
 @import '../components/Sidebar/sidebar.css';
 @import '../components/Topbar/topbar.css';
-@import '../components/BootScreen/boot-screen.css';
+@import '../../../rain-ui/components/BootScreen/boot-screen.css';
 
-/* 2.5 rain-ui 源码组件库样式（workspace 外只读引用，置于 vendored 组件样式之后，
-   让 rain-ui 较新的规则在同名类上生效；缺失 token 已在 tokens.css 末尾补齐） */
+/* 2.5 rain-ui 源码组件库样式（workspace 外只读引用，作为 Button/Input/Select/Switch/Card 的唯一样式来源） */
 @import '../../../rain-ui/components/Button/button.css';
 @import '../../../rain-ui/components/Input/input.css';
 @import '../../../rain-ui/components/Select/select.css';
 @import '../../../rain-ui/components/Switch/switch.css';
-@import '../../../rain-ui/components/Divider/divider.css';
 @import '../../../rain-ui/components/Card/card.css';
-@import '../../../rain-ui/components/Badge/badge.css';
 
-/* 3. 业务视图 */
+@import '../../../rain-ui/components/ui/modal.css';
+@import '../../../rain-ui/components/ui/tooltip.css';
+@import '../../../rain-ui/components/ui/context-menu.css';
+@import '../../../rain-ui/components/ui/access-mode-menu.css';
+@import '../../../rain-ui/components/ui/task-step-list.css';
+@import '../../../rain-ui/components/SessionTabs/session-tabs.css';
+@import '../../../rain-ui/components/ToolEmptyState/tool-empty-state.css';
+@import '../../../rain-ui/components/Button/tool-back-button.css';
+@import '../../../rain-ui/components/ToolIcon/tool-icon.css';
+@import '../../../rain-ui/components/ConfirmDialog/confirm-dialog.css';
+@import '../../../rain-ui/components/RenameDialog/rename-dialog.css';
+@import '../../../rain-ui/components/BorderGlow/border-glow.css';
+
+/* 3. 业务视图 */ 
 @import '../views/Home/home.css';
 @import '../views/Settings/settings.css';
 
@@ -411,3 +420,4 @@ html[data-app-idle] *::before,
 html[data-app-idle] *::after {
   animation-play-state: paused !important;
 }
+

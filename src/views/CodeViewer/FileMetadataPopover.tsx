@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Info, LoaderCircle } from "lucide-react";
-import { Button } from "@/components/ui";
+import { Button } from "rain-ui";
 import { formatInvokeError } from "@/platform/runtime";
 import "./file-metadata.css";
 
@@ -34,7 +34,7 @@ export function FileMetadataPopover({ cacheKey, load }: { cacheKey: string; load
     void load().then(setMetadata).catch((reason) => setError(formatInvokeError(reason))).finally(() => setLoading(false));
   };
   return <span className="file-metadata-control">
-    <Button type="button" variant="subtle" size="xs" icon={<Info size={14} />} aria-label="文件信息" title="文件信息" aria-expanded={open} onClick={toggle} />
+    <Button type="button" variant="ghost" icon={<Info size={14} />} aria-label="文件信息" title="文件信息" aria-expanded={open} onClick={toggle} />
     {open && <div className="file-metadata-popover" role="status" aria-label="文件信息">
       <strong>文件信息</strong>
       {loading ? <span className="file-metadata-loading"><LoaderCircle size={13} className="inline-spin" />正在读取</span> : error ? <span className="file-metadata-error">{error}</span> : metadata && <dl>

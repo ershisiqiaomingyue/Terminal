@@ -1,5 +1,5 @@
 import { HelpCircle } from "lucide-react";
-import { Modal } from "@/components/ui";
+import { Modal } from "rain-ui";
 import { MarkdownMessage } from "@/views/Chat/MarkdownMessage";
 import { HELP_CONTENT } from "./helpContent";
 import "./help-dialog.css";

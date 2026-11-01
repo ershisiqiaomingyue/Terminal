@@ -1,16 +1,16 @@
 import { createElement, type HTMLAttributes } from "react";
 import { X } from "lucide-react";
-import { Button, type ButtonProps } from "@/components/ui/Button";
-import { Input, type InputProps } from "@/components/ui/Input";
+import { Button, type ButtonProps } from "rain-ui";
+import { Input, type InputProps } from "rain-ui";
 
 /** Shared treatment for composer tasks, queued messages and user interactions. */
 export function ChatNoticeSurface({ as = "div", className = "", ...props }: HTMLAttributes<HTMLElement> & { as?: "div" | "section" }) {
   return createElement(as, { ...props, className: `chat-notice-surface ${className}` });
 }
 
-export function ChatNoticeAction({ className = "", variant = "subtle", children, ...props }: ButtonProps) {
-  return <Button type="button" size="xs" variant={variant}
-    className={`chat-notice-action${children == null ? " is-icon" : ""}${variant === "primary" ? " is-emphasized" : ""} ${className}`} {...props}>{children}</Button>;
+export function ChatNoticeAction({ className = "", variant = "ghost", children, ...props }: ButtonProps) {
+  return <Button type="button" variant={variant}
+    className={`chat-notice-action${children == null ? " is-icon" : ""}${variant === "default" ? " is-emphasized" : ""} ${className}`} {...props}>{children}</Button>;
 }
 
 export function ChatNoticeClose({ label, ...props }: Omit<ButtonProps, "children" | "icon" | "aria-label"> & { label: string }) {
@@ -23,5 +23,5 @@ export function ChatNoticeSpinner() {
 }
 
 export function ChatNoticeInput({ wrapperClassName = "", ...props }: InputProps) {
-  return <Input size="sm" wrapperClassName={`chat-notice-input ${wrapperClassName}`} {...props} />;
+  return <Input wrapperClassName={`chat-notice-input ${wrapperClassName}`} {...props} />;
 }

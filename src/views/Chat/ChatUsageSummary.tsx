@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef } from "react";
 import type { AgentQuota } from "../../platform/chatApi";
-import { Tooltip } from "../../components/ui/Tooltip";
+import { Tooltip } from "rain-ui";
 import { ChatBillingSummary } from "./ChatBillingSummary";
 import { cacheStatAnomaly, formatCacheHitRate, latestRequestCacheHitRate, usageCacheHitRate, usageInputTotal, type TurnPricing } from "./chatUsage";
 import { sessionTokenPair, type SessionTokenTotals } from "./tokenUsagePresentation";

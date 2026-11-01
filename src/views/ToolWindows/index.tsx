@@ -1,4 +1,4 @@
-import { ToolEmptyState } from "@/components/ui/ToolEmptyState";
+import { ToolEmptyState } from "rain-ui";
 import React from "react";
 import { isTauri } from "@/platform/runtime";
 import "./tool-window-action.css";

@@ -251,10 +251,11 @@ pub(crate) use log_commands::{
 pub(crate) use providers::{
     __cmd__check_agent_provider, __cmd__discover_agent_models,
     __cmd__get_agent_model_context_window, __cmd__get_local_artifacts, __cmd__get_provider_quota,
-    __cmd__refresh_agent_capabilities, __tauri_command_name_check_agent_provider,
-    __tauri_command_name_discover_agent_models,
+    __cmd__refresh_agent_capabilities, __cmd__test_agent_provider_chat,
+    __tauri_command_name_check_agent_provider, __tauri_command_name_discover_agent_models,
     __tauri_command_name_get_agent_model_context_window, __tauri_command_name_get_local_artifacts,
     __tauri_command_name_get_provider_quota, __tauri_command_name_refresh_agent_capabilities,
+    __tauri_command_name_test_agent_provider_chat,
 };
 pub(crate) use queue::{
     __cmd__agent_one_shot, __cmd__enqueue_agent_message, __cmd__get_agent_thread_snapshot,

@@ -1,5 +1,5 @@
-import { NoticePermissionContent, NoticeQuestionContent, NoticeQueueRow, NoticeBackgroundTask } from "@/components/ui/NoticeContent";
-import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import { NoticePermissionContent, NoticeQuestionContent, NoticeQueueRow, NoticeBackgroundTask } from "rain-ui";
+import { SegmentedControl } from "rain-ui";
 import React, { useEffect, useState } from "react";
 import {
   Search,
@@ -43,10 +43,10 @@ import {
   Divider,
   Input,
   TaskStepList,
-  ToastCard,
-  useToast,
-  ToastProvider,
-  type ToastTone,
+  Portal,
+  usePortal,
+  PortalProvider,
+  type PortalTone,
   NoticePanel,
   Attachment,
   attachmentKindOf,
@@ -59,7 +59,7 @@ import {
   FileDiffView,
   FileChangeCard,
   FileChangeNotice,
-} from "@/components/ui";
+} from "rain-ui";
 import { ToolActivityStatus } from "@/views/Chat/ToolActivityStatus";
 import { AgentModelPicker, type AgentModelSelection } from "@/components/AgentModelPicker/AgentModelPicker";
 import type { AgentProvider } from "@/platform/api";
@@ -189,8 +189,8 @@ const ComponentsGallery: React.FC = () => {
     modelId: "deepseek-v4-flash",
   });
   const [inferenceLevel, setInferenceLevel] = useState<ReasoningEffort>("medium" as ReasoningEffort);
-  const toast = useToast();
-  const [galleryTone, setGalleryTone] = useState<ToastTone>("success");
+  const portal = usePortal();
+  const [galleryTone, setGalleryTone] = useState<PortalTone>("success");
   const [answerDraft, setAnswerDraft] = useState("");
   const [accessMode, setAccessMode] = useState<AccessMode>("ask");
 
@@ -310,15 +310,15 @@ const ComponentsGallery: React.FC = () => {
       >
         <Row label="变体矩阵">
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
-            <Button variant="primary" icon={<Sparkles size={13} />}>
+            <Button variant="default" icon={<Sparkles size={13} />}>
               Primary 强调
             </Button>
             <Button variant="secondary">Secondary 底座</Button>
-            <Button variant="danger" icon={<Trash2 size={13} />}>
+            <Button variant="destructive" icon={<Trash2 size={13} />}>
               Danger 危险
             </Button>
-            <Button variant="subtle">Subtle 幽灵</Button>
-            <Button variant="primary" loading>
+            <Button variant="ghost">Subtle 幽灵</Button>
+            <Button variant="default" loading>
               加载中
             </Button>
             <Button variant="secondary" icon={<KeyRound size={13} />}>
@@ -334,16 +334,16 @@ const ComponentsGallery: React.FC = () => {
 
         <Row label="尺寸" hint="xs / sm / md / lg">
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
-            <Button variant="secondary" size="xs">
+            <Button variant="secondary">
               xs
             </Button>
-            <Button variant="secondary" size="sm">
+            <Button variant="secondary">
               sm
             </Button>
-            <Button variant="secondary" size="md">
+            <Button variant="secondary">
               md
             </Button>
-            <Button variant="secondary" size="lg">
+            <Button variant="secondary">
               lg
             </Button>
           </div>
@@ -353,27 +353,27 @@ const ComponentsGallery: React.FC = () => {
 
         <Row label="图标按钮 · 尺寸" hint="只传 icon、不传 children 时自动成为方形按钮（aspect-ratio: 1）">
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
-            <Button variant="subtle" size="xs" icon={<Copy size={13} />} title="复制" aria-label="复制" />
-            <Button variant="subtle" size="sm" icon={<Copy size={14} />} title="复制" aria-label="复制" />
-            <Button variant="subtle" size="md" icon={<Copy size={15} />} title="复制" aria-label="复制" />
-            <Button variant="subtle" size="lg" icon={<Copy size={16} />} title="复制" aria-label="复制" />
+            <Button variant="ghost" icon={<Copy size={13} />} title="复制" aria-label="复制" />
+            <Button variant="ghost" icon={<Copy size={14} />} title="复制" aria-label="复制" />
+            <Button variant="ghost" icon={<Copy size={15} />} title="复制" aria-label="复制" />
+            <Button variant="ghost" icon={<Copy size={16} />} title="复制" aria-label="复制" />
           </div>
         </Row>
 
         <Row label="图标按钮 · 语义动作" hint="subtle 保持透明扁平，避免工具条被磨砂方块填满；danger-hover 悬停才转红">
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
-            <Button variant="subtle" size="sm" icon={<RefreshCw size={14} />} title="刷新" aria-label="刷新" />
-            <Button variant="subtle" size="sm" icon={<Settings2 size={14} />} title="设置" aria-label="设置" />
-            <Button variant="subtle" size="sm" icon={<FolderOpen size={14} />} title="打开目录" aria-label="打开目录" />
-            <Button variant="subtle" size="sm" icon={<MoreHorizontal size={14} />} title="更多" aria-label="更多" />
-            <Button variant="subtle" size="sm" className="btn-danger-hover" icon={<Trash2 size={14} />} title="删除" aria-label="删除" />
+            <Button variant="ghost" icon={<RefreshCw size={14} />} title="刷新" aria-label="刷新" />
+            <Button variant="ghost" icon={<Settings2 size={14} />} title="设置" aria-label="设置" />
+            <Button variant="ghost" icon={<FolderOpen size={14} />} title="打开目录" aria-label="打开目录" />
+            <Button variant="ghost" icon={<MoreHorizontal size={14} />} title="更多" aria-label="更多" />
+            <Button variant="ghost" className="btn-danger-hover" icon={<Trash2 size={14} />} title="删除" aria-label="删除" />
           </div>
         </Row>
 
         <Row label="图标按钮 · 带文字对照" hint="同样传 icon，但补上 children 就变成常规胶囊按钮">
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
-            <Button variant="subtle" size="sm" icon={<Copy size={14} />}>复制路径</Button>
-            <Button variant="subtle" size="sm" icon={<RefreshCw size={14} />} loading>刷新中</Button>
+            <Button variant="ghost" icon={<Copy size={14} />}>复制路径</Button>
+            <Button variant="ghost" icon={<RefreshCw size={14} />} loading>刷新中</Button>
           </div>
         </Row>
       </Section>
@@ -385,7 +385,6 @@ const ComponentsGallery: React.FC = () => {
       >
         <Row label="Input · 带前缀与清除" hint="内凹槽位、前缀图标与一键清除">
             <Input
-              size="md"
               prefixIcon={<Search size={14} />}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
@@ -397,9 +396,9 @@ const ComponentsGallery: React.FC = () => {
 
         <Row label="Switch · 开关" hint="开启 / 关闭 / 禁用三态">
             <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
-              <Switch checked={switch1} onChange={setSwitch1} label="开启状态" />
-              <Switch checked={switch2} onChange={setSwitch2} label="关闭状态" />
-              <Switch disabled checked label="禁用激活" />
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 12 }}><Switch checked={switch1} onCheckedChange={setSwitch1} aria-label="开启状态" />开启状态</span>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 12 }}><Switch checked={switch2} onCheckedChange={setSwitch2} aria-label="关闭状态" />关闭状态</span>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 12 }}><Switch disabled checked aria-label="禁用激活" />禁用激活</span>
             </div>
         </Row>
 
@@ -426,7 +425,6 @@ const ComponentsGallery: React.FC = () => {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0,1fr))", gap: 20 }}>
           <Row label="基础下拉">
             <Select
-              size="md"
               defaultValue="120hz"
               options={[
                 { label: "自动适配刷新率 (Dynamic 120Hz)", value: "120hz" },
@@ -438,7 +436,6 @@ const ComponentsGallery: React.FC = () => {
 
           <Row label="分组 + 可搜索">
             <Select
-              size="md"
               searchable
               searchPlaceholder="搜索设备..."
               defaultValue="pixel"
@@ -525,10 +522,10 @@ const ComponentsGallery: React.FC = () => {
         desc="极虚分割线表头与行、等宽数值、行内操作"
         aside={
           <div style={{ display: "flex", gap: 8 }}>
-            <Button variant="secondary" size="sm" icon={<Download size={13} />}>
+            <Button variant="secondary" icon={<Download size={13} />}>
               导出 CSV
             </Button>
-            <Button variant="primary" size="sm" icon={<RefreshCw size={13} />}>
+            <Button variant="default" icon={<RefreshCw size={13} />}>
               刷新
             </Button>
           </div>
@@ -567,7 +564,7 @@ const ComponentsGallery: React.FC = () => {
                 </Badge>
               </td>
               <td style={{ textAlign: "right" }}>
-                <Button variant="subtle" size="xs">
+                <Button variant="ghost">
                   导出日志
                 </Button>
               </td>
@@ -592,7 +589,7 @@ const ComponentsGallery: React.FC = () => {
                 </Badge>
               </td>
               <td style={{ textAlign: "right" }}>
-                <Button variant="danger" size="xs">
+                <Button variant="destructive">
                   强行停止
                 </Button>
               </td>
@@ -602,10 +599,10 @@ const ComponentsGallery: React.FC = () => {
         <CardFooter style={{ justifyContent: "space-between", padding: "12px 0 0", borderTop: 0 }}>
           <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>显示第 1 至 2 项</span>
           <div style={{ display: "flex", gap: 6 }}>
-            <Button variant="secondary" size="xs" disabled>
+            <Button variant="secondary" disabled>
               上一页
             </Button>
-            <Button variant="secondary" size="xs">
+            <Button variant="secondary">
               下一页
             </Button>
           </div>
@@ -682,17 +679,18 @@ const ComponentsGallery: React.FC = () => {
         </div>
       </Section>
 
-      {/* ── 08 Toast ─────────────────────────────────────────────────────── */}
+      {/* ── 08 Portal ────────────────────────────────────────────────────── */}
       <Section
-        title="08 · Toast 轻提示"
-        desc="全应用共用一套右下角堆叠：色调只由图标承担，表面保持中性，所以连续弹多条不会变成一排彩色块；错误停留 4.8s，确认类 3s"
-        aside={<Badge variant="primary">ToastProvider</Badge>}
+        title="08 · Portal 全局提示"
+        desc="业务层直接调用 usePortal()；底部居中胶囊堆栈，成功绿、失败红、警告黄、信息强调色，最多同时 3 条"
+        aside={<Badge variant="primary">PortalProvider</Badge>}
       >
-        <Row label="静态样片" hint="ToastCard 是纯展示版本，可直接放进页面预览">
+        <Row label="静态样片" hint="Portal 是通用组件，可直接放进页面预览">
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <ToastCard tone="success" message="技能已加载，共 14 项可调用。" />
-            <ToastCard tone="info" message="正在读取技能说明…" />
-            <ToastCard tone="error" message="连接失败：目标设备未授权 ADB 调试。" actionLabel="重试" />
+            <Portal tone="success" appearance="solid" message="技能已加载，共 14 项可调用。" />
+            <Portal tone="warning" appearance="solid" message="目标设备存储空间不足。" />
+            <Portal tone="info" appearance="solid" message="正在读取技能说明…" />
+            <Portal tone="error" appearance="solid" message="连接失败：目标设备未授权 ADB 调试。" actionLabel="重试" />
           </div>
         </Row>
 
@@ -700,13 +698,13 @@ const ComponentsGallery: React.FC = () => {
 
         <Row label="交互触发" hint="点击后从右下角升起，可用右上角关闭，也可挂一个动作按钮">
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
-            <Button variant="secondary" size="sm" onClick={() => toast.success("技能已启用。")}>success</Button>
-            <Button variant="secondary" size="sm" onClick={() => toast.info("正在同步远程目录…")}>info</Button>
-            <Button variant="secondary" size="sm" onClick={() => toast.error("构建失败：找不到 lunch 目标。")}>error</Button>
+            <Button variant="secondary" onClick={() => portal.success("技能已启用。")}>success</Button>
+            <Button variant="secondary" onClick={() => portal.warning("设备存储空间不足。")}>warning</Button>
+            <Button variant="secondary" onClick={() => portal.info("正在同步远程目录…")}>info</Button>
+            <Button variant="secondary" onClick={() => portal.error("构建失败：找不到 lunch 目标。")}>error</Button>
             <Button
               variant="secondary"
-              size="sm"
-              onClick={() => toast.push({ message: "已删除 3 条会话。", tone: "success", action: { label: "撤销", onClick: () => toast.info("已撤销。") } })}
+              onClick={() => portal.push({ message: "已删除 3 条会话。", tone: "success", action: { label: "撤销", onClick: () => portal.info("已撤销。") } })}
             >
               带撤销动作
             </Button>
@@ -866,7 +864,7 @@ const ComponentsGallery: React.FC = () => {
               kind="image"
               detail="248 KB"
               src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36'%3E%3Crect width='36' height='36' fill='%236366f1'/%3E%3Ccircle cx='18' cy='14' r='7' fill='%23fff' opacity='.8'/%3E%3Crect y='24' width='36' height='12' fill='%23fff' opacity='.55'/%3E%3C/svg%3E"
-              onOpen={() => toast.info("打开图片预览")}
+                onOpen={() => portal.info("打开图片预览")}
               onRemove={() => undefined}
             />
             <Attachment
@@ -874,7 +872,7 @@ const ComponentsGallery: React.FC = () => {
               kind="image"
               detail="92 KB"
               src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36'%3E%3Crect width='36' height='36' fill='%230ea5e9'/%3E%3Crect x='5' y='7' width='26' height='3' fill='%23fff' opacity='.85'/%3E%3Crect x='5' y='14' width='18' height='3' fill='%23fff' opacity='.7'/%3E%3Crect x='5' y='21' width='22' height='3' fill='%23fff' opacity='.5'/%3E%3C/svg%3E"
-              onOpen={() => toast.info("打开图片预览")}
+                onOpen={() => portal.info("打开图片预览")}
               onRemove={() => undefined}
             />
             <Attachment name="pending.png" kind="image" detail="待加载" onRemove={() => undefined} />
@@ -909,7 +907,7 @@ const ComponentsGallery: React.FC = () => {
         <Row label="过程状态" hint="正在准备 / 准备失败可重试 / 只读无移除">
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             <Attachment name="recording.mp4" kind="text" preparing />
-            <Attachment name="broken.apk" kind="archive" error="读取失败：文件被占用" onRetry={() => toast.info("重试中")} />
+            <Attachment name="broken.apk" kind="archive" error="读取失败：文件被占用" onRetry={() => portal.info("重试中")} />
             <Attachment name="readonly.json" kind="json" detail="1.0 KB" />
           </div>
         </Row>
@@ -923,7 +921,7 @@ const ComponentsGallery: React.FC = () => {
               kind="image"
               shape="tile"
               src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56'%3E%3Crect width='56' height='56' fill='%236366f1'/%3E%3C/svg%3E"
-              onOpen={() => toast.info("打开预览")}
+              onOpen={() => portal.info("打开预览")}
               onRemove={() => undefined}
             />
             <Attachment
@@ -931,7 +929,7 @@ const ComponentsGallery: React.FC = () => {
               kind="image"
               shape="tile"
               src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56'%3E%3Crect width='56' height='56' fill='%23e11d48'/%3E%3C/svg%3E"
-              onOpen={() => toast.info("打开预览")}
+              onOpen={() => portal.info("打开预览")}
             />
             <Attachment name="c.png" kind="image" shape="tile" onRemove={() => undefined} />
           </div>
@@ -990,7 +988,7 @@ const ComponentsGallery: React.FC = () => {
                 { id: "cache", label: "缓存命中", value: "78%", detail: "最近一次模型请求的缓存命中率" },
               ]}
               balance={{ label: "余额", value: "¥42.60", detail: "点击重新查询账户余额" }}
-              onRefreshBalance={() => toast.info("正在查询余额")}
+              onRefreshBalance={() => portal.info("正在查询余额")}
               cost={{ label: "本轮消耗", value: "≈¥0.012", detail: "根据用量估算，≈ 表示估算值" }}
             />
             <UsageMetrics
@@ -1023,9 +1021,9 @@ const ComponentsGallery: React.FC = () => {
               added={26}
               removed={12}
               searchable
-              onClose={() => toast.info("关闭预览")}
-              onCopy={() => toast.info("已复制文件内容")}
-              onRetry={() => toast.info("重新读取")}
+              onClose={() => portal.info("关闭预览")}
+              onCopy={() => portal.info("已复制文件内容")}
+              onRetry={() => portal.info("重新读取")}
             >
               <FileDiffView rows={[
                 { kind: "meta", text: "@@ -12,2 +12,3 @@" },
@@ -1049,7 +1047,7 @@ const ComponentsGallery: React.FC = () => {
               matchIndex={1}
               matches={7}
               onMoveMatch={() => undefined}
-              onClose={() => toast.info("关闭预览")}
+              onClose={() => portal.info("关闭预览")}
             >
               <pre style={{ margin: 0, padding: 10, font: "11.5px/1.7 var(--font-mono)", color: "var(--text-secondary)" }}>
 {`const order: NoticeKind[] = [
@@ -1078,9 +1076,9 @@ const ComponentsGallery: React.FC = () => {
                 { path: "src/components/ui/Thumbnail.tsx", status: "deleted", addedLines: 0, removedLines: 64 },
                 { path: "src/components/ui/index.ts", status: "modified", addedLines: 2, removedLines: 0 },
               ]}
-              onOpenFile={() => toast.info("打开文件预览")}
-              onReview={() => toast.info("查看变更")}
-              onUndo={() => toast.info("撤销本轮全部改动")}
+              onOpenFile={() => portal.info("打开文件预览")}
+              onReview={() => portal.info("查看变更")}
+              onUndo={() => portal.info("撤销本轮全部改动")}
             />
           </div>
         </Row>
@@ -1094,9 +1092,9 @@ const ComponentsGallery: React.FC = () => {
                 { path: "src/views/Components/index.tsx", status: "modified", addedLines: 12, removedLines: 4 },
                 { path: "src/styles/index.css", status: "modified", addedLines: 2, removedLines: 0 },
               ]}
-              onOpenFile={() => toast.info("打开文件预览")}
-              onReview={() => toast.info("查看变更")}
-              onUndo={() => toast.info("撤销本轮全部改动")}
+              onOpenFile={() => portal.info("打开文件预览")}
+              onReview={() => portal.info("查看变更")}
+              onUndo={() => portal.info("撤销本轮全部改动")}
             />
           </div>
         </Row>
@@ -1112,7 +1110,7 @@ const ComponentsGallery: React.FC = () => {
                 { path: "c.ts", status: "created", addedLines: 3, removedLines: 0 },
               ]}
               revertedPaths={["b.ts"]}
-              onReview={() => toast.info("查看变更")}
+              onReview={() => portal.info("查看变更")}
             />
           </div>
         </Row>
@@ -1120,11 +1118,11 @@ const ComponentsGallery: React.FC = () => {
     </div>
   );
 };
-/** Provider lives here so the gallery can demonstrate live toasts. */
+/** Provider lives here so the gallery can demonstrate live portals. */
 export const ComponentsView: React.FC = () => (
-  <ToastProvider>
+  <PortalProvider position="bottom-center" appearance="solid">
     <ComponentsGallery />
-  </ToastProvider>
+  </PortalProvider>
 );
 
 export default ComponentsView;

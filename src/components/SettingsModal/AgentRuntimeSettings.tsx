@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Save } from "lucide-react";
-import { Button, Input } from "@/components/ui";
+import { Button, Card, Input } from "rain-ui";
 import { formatInvokeError, invoke, isTauri } from "@/platform/runtime";
-import { useSettingsNotification } from "./SettingsNotification";
+import { usePortal } from "rain-ui";
 
 /**
  * P6-B UI：等待时长的数据面。
@@ -59,7 +59,7 @@ function formatSeconds(seconds: number): string {
 }
 
 export function AgentRuntimeSettings() {
-  const notify = useSettingsNotification();
+  const portal = usePortal();
   const [settings, setSettings] = useState<AgentRuntimeSettings | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({
     permissionTimeoutSec: "300",
@@ -80,10 +80,10 @@ export function AgentRuntimeSettings() {
         });
       })
       .catch((error) => {
-        if (!cancelled) notify(formatInvokeError(error), "error");
+        if (!cancelled) portal(formatInvokeError(error), "error");
       });
     return () => { cancelled = true; };
-  }, [notify]);
+  }, [portal]);
 
   const max = settings?.maxPermissionTimeoutSec ?? 3600;
   const parsed = useMemo(() => {
@@ -116,9 +116,9 @@ export function AgentRuntimeSettings() {
         permissionTimeoutSec: String(value.permissionTimeoutSec),
         questionTimeoutSec: String(value.questionTimeoutSec),
       });
-      notify("等待时长已保存，立即生效。", "success");
+      portal("等待时长已保存，立即生效。", "success");
     } catch (error) {
-      notify(formatInvokeError(error), "error");
+      portal(formatInvokeError(error), "error");
     } finally {
       setSaving(false);
     }
@@ -127,7 +127,7 @@ export function AgentRuntimeSettings() {
   return (
     <div>
       <div className="setting-group-title">对话运行时</div>
-      <div className="setting-card-group">
+      <Card tone="surface" className="setting-card-group">
         {FIELDS.map((field) => (
           <div className="setting-row-item" key={field.key}>
             <div className="setting-label-block">
@@ -136,7 +136,6 @@ export function AgentRuntimeSettings() {
             </div>
             <div className="setting-control-block">
               <Input
-                size="sm"
                 type="number"
                 min={0}
                 max={max}
@@ -147,7 +146,6 @@ export function AgentRuntimeSettings() {
                 }
               />
               <Button
-                size="sm"
                 icon={<Save size={14} />}
                 loading={saving}
                 disabled={!dirty || !FIELDS.every((item) => valid(item.key))}
@@ -161,8 +159,7 @@ export function AgentRuntimeSettings() {
                 {field.presets.map((value) => (
                   <Button
                     key={value}
-                    size="sm"
-                    variant={parsed[field.key] === value ? "primary" : "subtle"}
+                    variant={parsed[field.key] === value ? "default" : "ghost"}
                     onClick={() =>
                       setDrafts((current) => ({ ...current, [field.key]: String(value) }))
                     }
@@ -184,7 +181,8 @@ export function AgentRuntimeSettings() {
             </span>
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
+

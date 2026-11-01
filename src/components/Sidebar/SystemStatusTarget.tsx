@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { ChevronRight, Square, SquareCheck } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "rain-ui";
 
 const statusLabels: Record<string, string> = {
   connected: "已连接", connecting: "连接中", failed: "连接失败", disconnected: "已断开", idle: "未连接",
@@ -19,7 +19,7 @@ export function SystemStatusTarget({ title, subtitle, description, icon, selecte
   const bindable = Boolean(onToggleBind);
   const bindLabel = bound ? "已绑定到当前对话，点击解除绑定" : "绑定到当前对话";
   return <section className={`system-environment-target${selected ? " is-selected" : ""}${bindable ? " is-bindable" : ""}`}>
-    <Button variant="subtle" size="xs" className="system-environment-target-button" aria-pressed={selected}
+    <Button variant="ghost" className="system-environment-target-button" aria-pressed={selected}
       aria-label={description || (secondary ? `${title}，${secondary}` : title)} disabled={disabled} onClick={onSelect}>
       <span className="system-environment-target-icon" aria-hidden="true">{icon}</span>
       <span className="system-environment-target-copy"><b>{title}</b>{secondary && <small>{secondary}</small>}</span>
@@ -28,7 +28,7 @@ export function SystemStatusTarget({ title, subtitle, description, icon, selecte
         {status === "connected" && latency && <small className="system-environment-latency" title={`连接延迟 ${latency}`}>{latency}</small>}
       </span> : <ChevronRight size={13} />}
     </Button>
-    {bindable && <Button variant="subtle" size="xs" className={`system-environment-target-bind${bound ? " is-bound" : ""}`}
+    {bindable && <Button variant="ghost" className={`system-environment-target-bind${bound ? " is-bound" : ""}`}
       aria-pressed={bound} aria-label={bindLabel} title={bindLabel} disabled={disabled} onClick={() => onToggleBind?.()}>
       {bound ? <SquareCheck size={13} /> : <Square size={13} />}
     </Button>}

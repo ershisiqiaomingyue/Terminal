@@ -7,8 +7,8 @@ import {
 import type { TerminalOutputEvent } from "@/platform/terminalHandoff";
 import { isTerminalQueryResponse } from "@/platform/terminalReplay";
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
-import { useConfirmAction } from "@/components/ConfirmDialog/useConfirmAction";
-import { ContextMenu } from "@/components/ui/ContextMenu";
+import { useConfirmAction } from "rain-ui";
+import { ContextMenu } from "rain-ui";
 import "@xterm/xterm/css/xterm.css";
 import {
   AlertTriangle,
@@ -22,7 +22,7 @@ import {
   Info,
   PanelLeft,
 } from "lucide-react";
-import { Button } from "@/components/ui";
+import { Button } from "rain-ui";
 import type { TerminalEngine } from "@/platform/terminalAdapter";
 import { MAX_TERMINALS } from "@/platform/scrollbackBudget";
 import { BlockTracker } from "@/platform/terminal/blocks/blockTracker";
@@ -73,9 +73,9 @@ import { TerminalDrawer, TerminalDrawerRail } from "./TerminalDrawer";
 import { TerminalPane, readPaneReplayText, type TerminalPaneHandle } from "./TerminalPane";
 import { PaneSplitter } from "./PaneSplitter";
 import { normalizeTerminalPwd } from "./terminalPwd";
-import { PaneResizeHandle } from "@/components/ResizablePane/PaneResizeHandle";
-import { usePaneWidth } from "@/components/ResizablePane/usePaneWidth";
-import { TERMINAL_DRAWER_PANE } from "@/components/ResizablePane/paneWidth";
+import { PaneResizeHandle } from "rain-ui";
+import { usePaneWidth } from "rain-ui";
+import { TERMINAL_DRAWER_PANE } from "rain-ui";
 import {
   DEFAULT_EDGE_RATIO,
   canAcceptDrop,
@@ -891,6 +891,9 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
         break;
       case "pane":
         handleToggleDrawer(detail.value);
+        break;
+      case "toggle-sidebar":
+        setSidebarCollapsed((current) => !current);
         break;
     }
   };
@@ -2178,15 +2181,16 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
       {" "}
       <span>常用命令</span>{" "}
       {quickCommands.map((item) => (
-        <button
+        
+          <Button
           key={item.command}
-          type="button"
+          type="button" variant="bare"
           onClick={() => handleQuickCmdClick(item.command)}
           title={item.command}
         >
           {" "}
           {item.label}{" "}
-        </button>
+        </Button>
       ))}{" "}
     </div>
   );
@@ -2401,18 +2405,6 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
               {" "}
               <div className="terminal-header-leading">
                 {" "}
-                <Button
-                  type="button"
-                  variant="surface"
-                  size="sm"
-                  className="terminal-icon-button terminal-sidebar-toggle"
-                  title={sidebarCollapsed ? "展开终端列表" : "收起终端列表"}
-                  aria-label={sidebarCollapsed ? "展开终端列表" : "收起终端列表"}
-                  aria-expanded={!sidebarCollapsed}
-                  aria-controls="terminal-sidebar"
-                  icon={<PanelLeft size={14} strokeWidth={1.7} />}
-                  onClick={() => setSidebarCollapsed((current) => !current)}
-                />{" "}
                 <div className="terminal-header-title">
                   {" "}
                   <TerminalIcon size={14} /> <span>{currentTab?.title || "终端"}</span>{" "}
@@ -2422,9 +2414,10 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
               <div className="terminal-layout-switch" role="group" aria-label="面板布局">
                 {" "}
                 {layoutOptions.map((option) => (
-                  <button
+                  
+                    <Button
                     key={option.value}
-                    type="button"
+                    type="button" variant="bare"
                     aria-pressed={activeLayoutKey === option.value}
                     data-active={activeLayoutKey === option.value ? "true" : "false"}
                     onClick={() => handleLayoutChange(option.value)}
@@ -2432,7 +2425,7 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
                   >
                     {" "}
                     {option.label}{" "}
-                  </button>
+                  </Button>
                 ))}{" "}
               </div>{" "}
             </div>{" "}
@@ -2565,7 +2558,6 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
                 </code>{" "}
                 <Button
                   variant="secondary"
-                  size="xs"
                   onClick={() => openBlockAi("diagnose", failureHintBlock.id)}
                 >
                   {" "}
@@ -2573,7 +2565,6 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ onBack }) => {
                 </Button>{" "}
                 <Button
                   variant="bare"
-                  size="xs"
                   icon={<X size={12} />}
                   aria-label="忽略这条提示"
                   title="忽略"

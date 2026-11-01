@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "@/components/ui/Button";
-import { NoticeQueueRow } from "@/components/ui/NoticeContent";
-import { useConfirmAction } from "@/components/ConfirmDialog/useConfirmAction";
+import { Button } from "rain-ui";
+import { NoticeQueueRow } from "rain-ui";
+import { useConfirmAction } from "rain-ui";
 import { ComposerNoticeSlot } from "./ComposerNoticeDock";
 import { AttachmentImage } from "./AttachmentImage";
 import type { AgentImageAttachment, QueuedThreadArtifact } from "@/platform/chatApi";

@@ -1,0 +1,105 @@
+/* ==========================================================================
+   rain-ui (shadcn) 设计令牌 —— 与 rain-ui/demo/tailwind.css 保持一致。
+   亮色 :root / 暗色 [data-theme="dark"]（Terminal 用 data-theme 切换主题）。
+   ========================================================================== */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222.2 47.4% 11.2%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 47.4% 11.2%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 47.4% 11.2%;
+
+  /* 默认主色：Slate Indigo 雾霾靛青 #6366F1 */
+  --primary: 239 84% 67%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+
+  --muted: 214 32% 92%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+
+  --accent: 214 32% 92%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+
+  --destructive: 2 64% 58%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 239 84% 67%;
+
+  --radius: 0.625rem;
+
+  /* 桌面级按钮质感令牌 */
+  --accent-glow: 0 2px 8px rgba(99, 102, 241, 0.22);
+  --accent-subtle: rgba(99, 102, 241, 0.12);
+  --btn-primary-rim: inset 0 1px 1px 0 rgba(255, 255, 255, 0.25);
+  --btn-primary-shadow: 0 2px 10px hsl(var(--primary) / 0.30), inset 0 1px 1px 0 rgba(255, 255, 255, 0.25);
+  --btn-glass-accent-bg: hsl(var(--primary) / 0.12);
+  --btn-glass-accent-hover: hsl(var(--primary) / 0.18);
+  --btn-glass-accent-active: hsl(var(--primary) / 0.24);
+  --btn-glass-accent-text: hsl(var(--primary));
+  --btn-glass-rim: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+
+  --btn-danger-bg: hsl(2 64% 58% / 0.10);
+  --btn-danger-hover: hsl(2 64% 58% / 0.18);
+  --btn-danger-text: hsl(2 64% 52%);
+  --btn-danger-rim: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+[data-theme="dark"] {
+  --background: 224 25% 6%;           /* #0b0d12 黑晶底座 */
+  --foreground: 210 20% 98%;
+
+  --card: 223 20% 11%;
+  --card-foreground: 210 20% 98%;
+
+  --popover: 223 20% 11%;
+  --popover-foreground: 210 20% 98%;
+
+  --primary: 239 84% 67%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 220 14% 17%;
+  --secondary-foreground: 210 20% 96%;
+
+  --muted: 220 13% 23%;
+  --muted-foreground: 217.9 10.6% 64.9%;
+
+  --accent: 220 13% 23%;
+  --accent-foreground: 210 20% 96%;
+
+  --destructive: 2 70% 65%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 220 13% 18%;
+  --input: 220 13% 18%;
+  --ring: 239 84% 67%;
+
+  --btn-primary-rim: inset 0 1px 1px 0 rgba(255, 255, 255, 0.18);
+  --btn-primary-shadow: 0 2px 12px hsl(var(--primary) / 0.35), inset 0 1px 1px 0 rgba(255, 255, 255, 0.18);
+  --btn-glass-accent-bg: hsl(var(--primary) / 0.22);
+  --btn-glass-accent-hover: hsl(var(--primary) / 0.30);
+  --btn-glass-accent-active: hsl(var(--primary) / 0.38);
+  --btn-glass-accent-text: hsl(239 92% 78%);
+  --btn-glass-rim: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+
+  --btn-danger-bg: hsl(2 70% 65% / 0.16);
+  --btn-danger-hover: hsl(2 70% 65% / 0.24);
+  --btn-danger-text: hsl(2 78% 74%);
+  --btn-danger-rim: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+}

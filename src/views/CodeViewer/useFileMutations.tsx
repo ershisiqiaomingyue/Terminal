@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Checkbox } from "@/components/ui/Checkbox";
-import { Input } from "@/components/ui/Input";
-import { ConfirmDialog } from "@/components/ConfirmDialog/ConfirmDialog";
+import { Checkbox } from "rain-ui";
+import { Input } from "rain-ui";
+import { ConfirmDialog } from "rain-ui";
 import { notify } from "@/platform/notifications";
 import { formatInvokeError, invoke } from "@/platform/runtime";
 import type { BrowserEntry, BrowserTarget } from "./useCodeBrowser";
@@ -112,7 +112,7 @@ export function useFileMutations({ target, root, connected, loading, dirty, affe
       {unsaved && <p className="code-mutation-warning">此项包含当前编辑文件。{deleting ? "未保存的编辑也会被丢弃。" : "未保存的编辑会保留在新路径下。"}</p>}
       {conflict && <div className="code-mutation-conflict"><p>目标文件夹中已有同名项。普通确认已禁用；覆盖会永久替换目标，不会创建备份。</p><Checkbox label="我确认覆盖同名项（永久替换目标）" checked={overwrite} disabled={busy} onChange={setOverwrite} /></div>}
       {naming && <div className="code-mutation-name-field">
-        <Input size="sm" value={name} disabled={busy} aria-label="新名称" placeholder={creating ? selection.action === "create-file" ? "文件名称" : "文件夹名称" : "新名称"} aria-invalid={Boolean(error)} aria-describedby="code-mutation-name-error" onChange={(event) => setName(event.target.value)} />
+        <Input value={name} disabled={busy} aria-label="新名称" placeholder={creating ? selection.action === "create-file" ? "文件名称" : "文件夹名称" : "新名称"} aria-invalid={Boolean(error)} aria-describedby="code-mutation-name-error" onChange={(event) => setName(event.target.value)} />
         <p id="code-mutation-name-error" className="code-mutation-name-error" role="status" aria-live="polite">{error || "\u00a0"}</p>
       </div>}
       {deleting && directory && <Checkbox label="同时删除全部子目录和文件" checked={recursive} disabled={busy} onChange={setRecursive} />}

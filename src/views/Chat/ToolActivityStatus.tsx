@@ -1,6 +1,6 @@
 import React from "react";
 import { Check, Circle, CircleHelp, CircleMinus, CirclePause, X } from "lucide-react";
-import { Spinner } from "@/components/ui";
+import { Spinner } from "rain-ui";
 import type { ToolGroupPresentationState } from "./timelinePresentation";
 
 const STATUS_LABELS: Record<ToolGroupPresentationState, string> = {

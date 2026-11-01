@@ -1,17 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
-  X,
-  SlidersHorizontal,
+  Settings,
+  SquareTerminal,
   Palette,
-  Paintbrush,
-  Cpu,
-  Puzzle,
-  Code2,
-  Wrench,
   Bot,
+  Puzzle,  Braces,
+  Wrench,
+  Search,
   type LucideIcon,
 } from "lucide-react";
-import { Button } from "rain-ui";
+import { Button, Input, PortalProvider, cn } from "rain-ui";
 import { subscribeAppTheme } from "@/platform/theme";
 import { GeneralPanel } from "./GeneralPanel";
 import { AgentPanel } from "./AgentPanel";
@@ -19,11 +17,9 @@ import { TerminalPanel } from "./TerminalPanel";
 import { EnvironmentToolsPanel } from "./EnvironmentToolsPanel";
 import { LspPanel } from "./LspPanel";
 import { PersonalizationPanel } from "./PersonalizationPanel";
-import { AgentAssistPanel } from "./AgentAssistPanel";
-import { SettingsNotificationProvider } from "./SettingsNotification";
 const PluginsPanel = React.lazy(() => import("./PluginsPanel").then((module) => ({ default: module.PluginsPanel })));
 
-/** 新设置壳的八个分区 id（导航与面板渲染都只用这份列表）。 */
+/** 新设置壳的七个分区 id（导航与面板渲染都只用这份列表）。 */
 export type SettingsSectionId =
   | "general"
   | "appearance"
@@ -82,15 +78,34 @@ export const normalizeSettingsSection = (section?: string | null): SettingsSecti
     : "general";
 };
 
-const NAVIGATION_ITEMS: { id: SettingsSectionId; label: string; icon: LucideIcon }[] = [
-  { id: "general", label: "常规", icon: SlidersHorizontal },
-  { id: "appearance", label: "外观", icon: Palette },
-  { id: "personalization", label: "个性化", icon: Paintbrush },
-  { id: "engine", label: "引擎", icon: Cpu },
-  { id: "plugins", label: "插件", icon: Puzzle },
-  { id: "lsp", label: "LSP", icon: Code2 },
-  { id: "environment", label: "环境", icon: Wrench },
-  { id: "agent", label: "Agent", icon: Bot },
+/**
+ * 左侧导航按功能层级分组：一级是分组标题（个人 / AI / 集成），二级才是可点的
+ * 分区。分区 id 保持稳定（历史事件仍用旧值），显示名与右侧面板的 pane-title
+ * 一一对应，避免「导航叫外观、内容其实是终端」这类错位。
+ */
+const NAV_GROUPS: { label: string; items: { id: SettingsSectionId; label: string; icon: LucideIcon }[] }[] = [
+  {
+    label: "个人",
+    items: [
+      { id: "general", label: "常规", icon: Settings },
+      { id: "appearance", label: "终端", icon: SquareTerminal },
+      { id: "personalization", label: "个性化", icon: Palette },
+    ],
+  },
+  {
+    label: "AI",
+    items: [
+      { id: "engine", label: "Agent 与模型", icon: Bot },
+    ],
+  },
+  {
+    label: "集成",
+    items: [
+      { id: "plugins", label: "插件", icon: Puzzle },
+      { id: "lsp", label: "语言服务器", icon: Braces },
+      { id: "environment", label: "环境", icon: Wrench },
+    ],
+  },
 ];
 
 interface SettingsModalProps {
@@ -101,6 +116,7 @@ interface SettingsModalProps {
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, section, onClose }) => {
   const [activeSection, setActiveSection] = useState<SettingsSectionId>(normalizeSettingsSection(section));
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     if (isOpen && section) setActiveSection(normalizeSettingsSection(section));
@@ -126,6 +142,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, section, o
     };
   }, []);
 
+  const visibleGroups = useMemo(() => {
+    const keyword = query.trim().toLowerCase();
+    if (!keyword) return NAV_GROUPS;
+    return NAV_GROUPS
+      .map((group) => ({
+        ...group,
+        items: group.items.filter(
+          (item) => item.label.toLowerCase().includes(keyword) || group.label.toLowerCase().includes(keyword),
+        ),
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [query]);
+
   if (!isOpen) return null;
 
   const renderActivePanel = () => {
@@ -139,72 +168,84 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, section, o
       case "engine":
         return <AgentPanel />;
       case "plugins":
-        return <React.Suspense fallback={<p className="setting-desc">正在加载插件…</p>}><PluginsPanel /></React.Suspense>;
+        return (
+          <React.Suspense fallback={<p className="px-5 py-4 text-[13px] text-muted-foreground">正在加载插件…</p>}>
+            <PluginsPanel />
+          </React.Suspense>
+        );
       case "lsp":
         return <LspPanel />;
       case "environment":
         return <EnvironmentToolsPanel />;
-      case "agent":
-        return <AgentAssistPanel />;
       default:
         return <GeneralPanel />;
     }
   };
 
   return (
-    <div
-      className="settings-modal-overlay"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="settings-modal-dialog" role="dialog" aria-modal="true">
-        <SettingsNotificationProvider>
-          {/* 顶部标题栏 */}
-          <header className="settings-modal-header">
-            <div className="settings-modal-header-title">
-              <SlidersHorizontal size={16} />
-              <span>设置</span>
+    <div className="relative z-10 flex h-full min-h-0 flex-1 flex-col bg-background text-foreground">
+      <PortalProvider position="bottom-center" appearance="solid">
+        {/* 主体左右双栏：导航与内容同顶距对齐，返回走标题栏 ← 或 Esc */}
+        <div className="flex min-h-0 flex-1">
+          <nav
+            aria-label="设置分类"
+            className="flex w-[238px] shrink-0 flex-col overflow-y-auto border-r border-border/70 bg-background px-2 pb-6 pt-5"
+          >
+            <div className="px-2 pb-4 text-[19px] font-bold tracking-tight">设置</div>
+            <div className="pb-5">
+              <Input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                size="lg"
+                prefixIcon={<Search size={15} className="text-muted-foreground" />}
+                placeholder="搜索"
+                aria-label="搜索设置"
+              />
             </div>
-            <Button
-              type="button"
-              variant="subtle"
-              icon={<X size={15} />}
-              onClick={onClose}
-              aria-label="关闭设置"
-              title="关闭设置 (Esc)"
-            />
-          </header>
 
-          {/* 主体左右双栏结构 */}
-          <div className="settings-dialog-body">
-            {/* 左侧导航栏 */}
-            <nav className="settings-dialog-nav" aria-label="设置分类">
-              <div className="settings-nav-caption">应用设置</div>
-              {NAVIGATION_ITEMS.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={`settings-nav-item ${activeSection === item.id ? "active" : ""}`}
-                  onClick={() => setActiveSection(item.id)}
-                >
-                  <span className="settings-nav-icon">
-                    <item.icon size={16} strokeWidth={1.8} />
-                  </span>
-                  <span className="nav-item-label">{item.label}</span>
-                </button>
-              ))}
-            </nav>
+            {visibleGroups.map((group) => (
+              <div key={group.label}>
+                <div className="px-2 pb-1.5 pt-4 text-[13px] font-medium text-muted-foreground">{group.label}</div>
+                <div className="flex flex-col gap-0.5">
+                  {group.items.map((item) => {
+                    const Icon = item.icon;
+                    const active = activeSection === item.id;
+                    return (
+                      <Button
+                        key={item.id}
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className={cn(
+                          "h-[32px] w-full justify-start rounded-[8px] px-2.5 text-[13px] font-normal leading-5 active:translate-y-0 active:scale-100 active:bg-foreground/[0.05]",
+                          active && "bg-foreground/[0.06] hover:bg-foreground/[0.06]",
+                        )}
+                        onClick={() => setActiveSection(item.id)}
+                      >
+                        <span className="flex min-w-0 items-center gap-2.5 leading-5">
+                          <Icon className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.8} aria-hidden />
+                          <span className="truncate">{item.label}</span>
+                        </span>
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+            {visibleGroups.length === 0 && (
+              <p className="px-2.5 py-3 text-[13px] text-muted-foreground">没有匹配「{query.trim()}」的设置项</p>
+            )}
+          </nav>
 
-            {/* 右侧面板内容主视口 */}
-            <main className="settings-dialog-content">
-              {renderActivePanel()}
-            </main>
-          </div>
-        </SettingsNotificationProvider>
-      </div>
+          <main className="min-w-0 flex-1 overflow-y-scroll bg-background px-8 pt-5 [scrollbar-gutter:stable]">
+            <div className="mx-auto w-full max-w-[728px]">{renderActivePanel()}</div>
+          </main>
+        </div>
+      </PortalProvider>
     </div>
   );
 };
 
 export default SettingsModal;
+
+

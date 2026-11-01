@@ -1,107 +1,1120 @@
-/* Import order preserves the existing theme and component cascade. */
-@import "./styles/settings-shell.css";
-@import "./styles/settings-controls.css";
-@import "./styles/settings-providers.css";
-@import "./styles/settings-connections.css";
-@import "./styles/settings-automation.css";
-@import "./styles/settings-terminal.css";
-@import "./styles/settings-skills.css";
-
 /* ==========================================================================
-   ChatGPT 桌面版风格八分区设置壳（v2 重做追加）：
-   居中模态 + 左侧窄导航（低调 16px 图标）+ 右侧滚动内容区（小标题 + 卡片）。
-   仅追加覆盖，不改上方既有规则。
+   Settings — 全新重写（v6）
+   设计基准：参考截图（Codex 风格）
+   - 整页纯白：左导航与右内容区同为白底，之间一条极淡分隔线
+   - 左导航：标题 + 搜索 + 分组项；hover / 激活均为图中同款浅灰圆角块
+   - 右内容：限宽内容列；分组小标题 + 白色细描边卡片；行内左右两区，
+     左侧标题+描述，右侧控件（rain-ui 组件 default 尺寸，样式由组件自带）
    ========================================================================== */
 
-/* --- 左侧导航：收窄、去色块、图标弱化 --- */
-.settings-dialog-nav {
-  width: 200px;
-  padding: 14px 10px;
-  gap: 2px;
-}
+/* --------------------------------------------------------------------------
+   1. 页面壳
+   -------------------------------------------------------------------------- */
 
-.settings-nav-caption {
-  padding: 0 10px 10px;
-}
-
-.settings-nav-item {
-  padding: 8px 10px;
-  border-radius: 8px;
-  gap: 10px;
-}
-
-.settings-nav-icon {
+.settings-page {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  background: #fff;
+  animation: settings-page-in 0.18s ease-out;
+}
+
+@keyframes settings-page-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.settings-page-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* --------------------------------------------------------------------------
+   2. 左侧导航
+   -------------------------------------------------------------------------- */
+
+.settings-page-nav {
+  width: 220px;
   flex-shrink: 0;
-  width: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 10px 12px;
+  background: #fff;
+  border-right: 1px solid var(--divider-subtle-color, rgba(0, 0, 0, 0.06));
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+  isolation: isolate;
 }
 
-.settings-nav-item .settings-nav-icon {
-  color: var(--text-muted);
-  transition: color var(--transition-fast);
+.settings-nav-title {
+  position: relative;
+  padding: 0 8px 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.015em;
 }
 
-.settings-nav-item:hover .settings-nav-icon,
-.settings-nav-item.active .settings-nav-icon {
-  color: inherit;
+.settings-page-nav > .desk-input {
+  margin-bottom: 8px;
 }
 
-.settings-nav-item .nav-item-label {
+.settings-nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.settings-nav-group + .settings-nav-group {
+  margin-top: 10px;
+}
+
+.settings-nav-group-label {
+  position: relative;
+  padding: 0 8px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  user-select: none;
+}
+
+/* 导航项：rain-ui Button(ghost)。hover / 激活与参考图一致：浅灰圆角块 */
+.settings-nav-rain {
+  width: 100%;
+  justify-content: flex-start;
+  text-align: left;
   font-weight: 500;
+  border-radius: 8px;
 }
 
-.settings-nav-item.active .nav-item-label {
+.settings-page-nav .settings-nav-rain:hover {
+  background: #ececec;
+  color: var(--text-primary);
+}
+
+.settings-nav-rain.is-active,
+.settings-page-nav .settings-nav-rain.is-active:hover {
+  background: #ececec;
+  color: var(--text-primary);
   font-weight: 600;
 }
 
-/* --- 新面板（个性化 / Agent）的 rain-ui Card 布局：对齐既有卡片观感 --- */
-.settings-rain-card {
-  flex-shrink: 0;
+.settings-nav-empty {
+  padding: 8px;
+  text-align: center;
 }
 
-/* 行自带 13px/18px 内边距，Card body 不再叠加第二层内边距 */
-.settings-rain-card > .card-body {
+/* --------------------------------------------------------------------------
+   3. 右侧内容区
+   -------------------------------------------------------------------------- */
+
+.settings-page-content {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 24px 32px 48px;
+  background: #fff;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+.settings-page-content::-webkit-scrollbar { width: 6px; }
+.settings-page-content::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: var(--radius-full);
+}
+
+.settings-page-content .settings-pane,
+.settings-page-content .plugins-pane {
+  width: 100%;
+  max-width: 704px;
+  margin: 0 auto;
+}
+
+.settings-page-content .pane-header {
+  margin: 0 0 20px;
+  padding: 0;
+  border: 0;
+}
+
+.settings-page-content .pane-title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.settings-page-content .terminal-pane-desc {
+  margin: -20px 0 24px;
+}
+
+/* 分组之间留白 */
+.settings-page-content .settings-general-section + .settings-general-section {
+  margin-top: 22px;
+}
+
+.settings-page-content .setting-group-title {
+  margin: 0 0 6px;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.3;
+  letter-spacing: -0.008em;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+}
+
+/* --------------------------------------------------------------------------
+   4. 卡片与设置行（核心：每行分左右两区，左文案右控件）
+   -------------------------------------------------------------------------- */
+
+.settings-page-content .card.setting-card-group,
+.settings-page-content .settings-rain-card,
+.settings-page-content .settings-environment-list,
+.settings-page-content .plugin-items,
+.settings-page-content .plugin-source-card,
+.settings-page-content .skills-manager.card,
+.settings-page-content .skill-details.card {
+  background: #fff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  overflow: hidden;
+}
+
+.settings-page-content .settings-rain-card > .card-body {
   padding: 0;
 }
 
 /* 旧 setting-card-group 容器让位给外层 rain-ui Card，避免卡片套卡片的双框 */
-.settings-rain-card .setting-card-group {
-  background: transparent !important;
-  border: 0 !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border-radius: 0 !important;
-  overflow: visible !important;
+.settings-page-content .settings-rain-card .setting-card-group {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-radius: 0;
+  overflow: visible;
+  margin-bottom: 0;
 }
 
-html[data-theme] .settings-rain-card .setting-card-group {
-  background: transparent !important;
-  border: 0 !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border-radius: 0 !important;
-  overflow: visible !important;
+.settings-page-content .settings-rain-card .setting-group-title {
+  padding: 10px 14px 0;
+  margin-bottom: 6px;
 }
 
-/* 分组小标题在无内边距的 Card body 里自己补齐水平留白 */
-.settings-rain-card .setting-group-title {
-  padding: 14px 18px 0;
-  margin-bottom: 8px;
+html[data-theme] .settings-page-content :is(.card.setting-card-group, .settings-rain-card, .settings-environment-list, .plugin-items, .plugin-source-card) {
+  background: #fff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
-/* Agent 面板里悬浮在行与卡片之间的操作条（保存/恢复按钮）贴齐行内边距 */
-.settings-rain-card .settings-preference-actions {
-  margin-top: 0;
-  padding: 12px 18px;
+.setting-row-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  padding: 9px 14px;
+  gap: 16px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
 }
 
-/* 思考文案风格行不在分组容器内，保持与行内边距一致的留白 */
-html[data-theme] .settings-rain-card .setting-row-item.thinking-copy-style,
-.settings-rain-card .setting-row-item.thinking-copy-style {
-  margin: 8px 0 14px;
+/* 行间发丝线：左右内缩，不通栏 */
+.settings-page-content .setting-row-item + .setting-row-item {
+  border-top: 0;
 }
 
+.settings-page-content .setting-row-item + .setting-row-item::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 14px;
+  right: 14px;
+  height: 1px;
+  background: var(--divider-color);
+  pointer-events: none;
+}
+
+.setting-row-item:has(.is-open) {
+  z-index: 1000;
+  position: relative;
+}
+
+.setting-label-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-page-content .setting-title {
+  font-size: 12.5px;
+  font-weight: 550;
+  line-height: 1.4;
+  letter-spacing: -0.008em;
+  color: var(--text-primary);
+}
+
+.settings-page-content .setting-desc {
+  margin-top: 1px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--text-tertiary);
+}
+
+/* 右侧控件区：内容自适应宽度，靠右对齐；控件用 rain-ui default 尺寸 */
+.setting-control-block {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0 1 auto;
+  width: auto;
+  max-width: 55%;
+  gap: 8px;
+}
+
+/* 内联错误 */
+.code-transfer-error {
+  color: var(--status-danger-text);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* 面板里悬浮在行与卡片之间的操作条（保存/恢复按钮） */
+.settings-preference-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 16px;
+}
+
+/* 当前内核不支持、或当前内核下无效的设置项：保留在界面上说明原因，但不可操作 */
+.setting-row-item.is-disabled {
+  opacity: 0.62;
+}
+
+.setting-row-item.is-disabled .terminal-range {
+  cursor: not-allowed;
+}
+
+/* 字体选择控件：下拉 + 预览上下排 */
+.settings-page-content .font-setting-control {
+  width: 260px;
+  max-width: 55%;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 5px;
+}
+
+.settings-page-content .font-setting-preview {
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.settings-page-content .font-setting-preview-mono {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+}
+
+/* SSH 下载位置等路径控件：输入框 + 图标按钮一行排 */
+.settings-page-content .theme-setting-control {
+  width: 380px;
+  max-width: 55%;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.settings-page-content .theme-setting-control > .desk-input,
+.settings-page-content .theme-setting-control > input {
+  min-width: 0;
+  width: auto;
+  flex: 1 1 200px;
+}
+
+.theme-source-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.theme-remote-controls { display: flex; flex-direction: column; gap: 7px; margin-top: 8px; }
+.theme-remote-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.theme-remote-row > .input-shell { flex: 1; min-width: 0; }
+.theme-remote-row > .btn { flex-shrink: 0; }
+.theme-family-preview { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+.theme-family-preview .setting-desc { max-height: 84px; overflow-y: auto; scrollbar-gutter: stable; overflow-wrap: anywhere; }
+
+/* Agent 面板思考文案风格的行 */
+.setting-row-item.thinking-copy-row { align-items: flex-start; }
+.setting-row-item.thinking-copy-style .setting-control-block { flex: 0 1 320px; }
+.setting-row-item.thinking-copy-style {
+  margin: 8px 12px 14px;
+  border: 0;
+  border-radius: var(--radius-base);
+}
+.setting-row-item.thinking-copy-style:hover {
+  border-radius: var(--radius-base);
+  background: var(--bg-hover);
+}
+.thinking-copy-input {
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  min-height: 96px;
+  max-height: 240px;
+  resize: vertical;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+/* --------------------------------------------------------------------------
+   5. 设置通知（右下角轻提示）
+   -------------------------------------------------------------------------- */
+
+.settings-notification-stack {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 13000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  width: min(400px, calc(100% - 32px));
+  pointer-events: none;
+}
+
+.settings-notification {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: max-content;
+  max-width: 100%;
+  padding: 9px 11px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text-primary);
+  background: var(--popover-bg);
+  box-shadow: var(--shadow-lg);
+  font-size: 12px;
+  line-height: 1.45;
+  animation: settings-notice-in 0.16s ease-out;
+}
+
+.settings-notification svg { flex: 0 0 auto; margin-top: 1px; color: var(--text-secondary); }
+.settings-notification span { min-width: 0; overflow-wrap: anywhere; }
+.settings-notification.is-success svg { color: var(--status-success-text); }
+.settings-notification.is-error svg { color: var(--status-danger-text); }
+
+@keyframes settings-notice-in {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --------------------------------------------------------------------------
+   6. 环境工具面板
+   -------------------------------------------------------------------------- */
+
+.settings-environment-header {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.settings-environment-intro {
+  margin: 4px 0 0;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.settings-environment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  overflow: hidden;
+}
+
+.settings-environment-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 88px;
+  color: var(--text-tertiary);
+  font-size: 12px;
+}
+
+.settings-environment-loading svg {
+  animation: settings-env-spin 0.9s linear infinite;
+}
+
+@keyframes settings-env-spin {
+  to { transform: rotate(360deg); }
+}
+
+.settings-environment-tool {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 11px;
+  padding: 13px 16px;
+  border: 0;
+  border-radius: var(--radius-base);
+  background: var(--surface-inset-bg);
+  transition: background-color var(--transition-fast);
+}
+
+.settings-environment-tool:hover {
+  background: var(--surface-action-hover-bg);
+}
+
+.settings-environment-tool-icon {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  color: var(--text-secondary);
+  background: var(--surface-action-bg);
+  border: 1px solid transparent;
+}
+
+.settings-environment-tool-icon.is-ready { color: var(--success-text, #15803d); }
+.settings-environment-tool-icon.is-available { color: var(--warning-text, #a16207); }
+
+.settings-environment-tool-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.settings-environment-tool-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  min-width: 0;
+}
+
+.settings-environment-tool-title strong {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.settings-environment-tool-main > span {
+  color: var(--text-tertiary);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.settings-environment-tool-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.45;
+  font-family: var(--font-mono);
+}
+
+.settings-environment-tool-meta > span + span::before {
+  content: "·";
+  margin-right: 10px;
+  color: var(--text-muted);
+}
+
+.settings-environment-tool-meta .is-remote-error {
+  color: var(--text-tertiary);
+  font-family: var(--font-sans);
+}
+
+.settings-environment-download-progress {
+  display: grid;
+  gap: 5px;
+  margin-top: 2px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.35;
+}
+
+.settings-environment-download-track {
+  width: min(260px, 100%);
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--bg-hover);
+}
+
+.settings-environment-download-track > span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent-color);
+  transition: width 120ms linear;
+}
+
+.settings-environment-download-track > span.is-indeterminate {
+  width: 38%;
+  animation: settings-env-download-indeterminate 1.05s ease-in-out infinite;
+}
+
+@keyframes settings-env-download-indeterminate {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(320%); }
+}
+
+.settings-environment-tool code {
+  display: block;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-environment-tool-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  padding-top: 1px;
+  max-width: 290px;
+}
+
+.settings-environment-footnote {
+  margin: -8px 0 0;
+  color: var(--text-muted);
+  font-size: 11.5px;
+  line-height: 1.55;
+}
+
+/* --------------------------------------------------------------------------
+   7. 终端设置面板（外观页）
+   -------------------------------------------------------------------------- */
+
+.terminal-theme-row { flex-wrap: wrap; }
+
+.terminal-theme-preview {
+  flex-basis: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.terminal-theme-dots-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 4px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+}
+
+.terminal-theme-dots-mini i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.terminal-range-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 260px;
+  max-width: 55%;
+}
+
+.terminal-range {
+  flex: 1 1 auto;
+  min-width: 140px;
+  accent-color: var(--accent-primary);
+}
+
+.terminal-range-value {
+  min-width: 58px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+.terminal-palette-control {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+}
+
+.terminal-color-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 6px;
+  width: 100%;
+}
+
+.terminal-color-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.terminal-color-field.overridden { border-color: var(--accent-border); }
+
+.terminal-color-input {
+  width: 24px;
+  height: 20px;
+  flex: 0 0 auto;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+}
+
+.terminal-color-label { color: var(--text-primary); white-space: nowrap; }
+
+.terminal-color-value {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.terminal-settings-preview {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.terminal-settings-preview > div { white-space: pre; }
+
+.terminal-settings-cursor {
+  display: inline-block;
+  width: 7px;
+  height: 1em;
+  margin-left: 4px;
+  vertical-align: text-bottom;
+}
+
+.terminal-settings-swatches { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+
+.terminal-settings-swatch {
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.terminal-settings-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 18px 0 4px;
+}
+
+/* --------------------------------------------------------------------------
+   8. Agent / 模型服务商面板与编辑对话框
+   -------------------------------------------------------------------------- */
+
+.provider-saved-card {
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.provider-saved-list {
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  gap: 8px;
+}
+
+.provider-saved-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.provider-saved-identity {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: 10px;
+}
+
+.provider-saved-details { min-width: 0; overflow-wrap: anywhere; }
+
+.provider-saved-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+}
+
+.provider-saved-actions .provider-icon-action {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.provider-saved-actions .provider-icon-action:hover:not(:disabled),
+.provider-saved-actions .provider-icon-action:focus-visible {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.provider-saved-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.provider-saved-meta {
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+}
+
+.provider-default-model-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 22px;
+  min-width: 0;
+  padding-left: 32px;
+}
+
+.provider-default-model { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.provider-default-model > .badge { flex: 0 0 auto; font-size: 10px; }
+.provider-default-model > code { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-primary); font: 11.5px/1.5 var(--font-mono); }
+.provider-default-model-row > .btn { flex: 0 0 auto; }
+
+.provider-model-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  min-width: 0;
+  margin-top: 2px;
+  padding-left: 32px;
+}
+
+.provider-model-list {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.provider-model-chip.btn {
+  min-width: 0;
+  max-width: 100%;
+  font-family: var(--font-mono);
+  height: auto;
+  min-height: 24px;
+  padding-block: 3px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+.provider-model-expand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.provider-model-expand:hover { color: var(--text-primary); background: var(--bg-hover); }
+
+.provider-config-form { min-width: 0; margin: 0; padding: 0; }
+
+.provider-model-setting { flex-direction: column; align-items: stretch; }
+
+.provider-model-choice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
+}
+
+.provider-editor-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--overlay-bg);
+}
+
+.provider-editor-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(720px, 100%);
+  max-height: min(720px, calc(100dvh - 40px));
+  min-width: 0;
+  background: var(--popover-bg);
+  color: var(--text-primary);
+  border-radius: 12px;
+  box-shadow: var(--popover-shadow);
+  overflow: hidden;
+}
+
+.provider-editor-header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+}
+
+.provider-editor-header h3 { margin: 0; font-size: 14px; font-weight: 600; }
+
+.provider-editor-content {
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+  padding: 0 18px 18px;
+}
+
+.provider-model-catalog { padding: 12px 16px; border-top: 1px solid var(--divider-color); }
+.provider-model-catalog .provider-model-catalog-heading { padding: 0 0 10px; margin: 0; }
+.provider-model-catalog-list { max-height: min(300px, 34dvh); overflow-y: auto; scrollbar-gutter: stable; overscroll-behavior: contain; padding: 10px 12px; }
+.provider-model-catalog-card { padding: 0; }
+.provider-model-catalog-list::-webkit-scrollbar { width: 6px; }
+.provider-model-catalog-list::-webkit-scrollbar-thumb { border-radius: var(--radius-full); background: var(--tool-scrollbar-thumb); }
+.provider-model-catalog-heading { margin-bottom: 10px; font-size: 12px; font-weight: 600; }
+.provider-model-catalog-heading span { margin-left: 6px; color: var(--text-tertiary); font-weight: 400; }
+.provider-model-catalog-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 88px 88px 28px; align-items: center; gap: 8px; margin-top: 8px; }
+.provider-model-catalog-row .input-shell { min-width: 0; width: 100%; }
+.provider-model-catalog-limit .desk-input { text-align: center; font-size: 11.5px; }
+.provider-model-catalog-hint { float: right; color: var(--text-tertiary); font-size: 10.5px; font-weight: 400; }
+.provider-model-catalog-window { flex: 0 0 auto; justify-self: end; min-width: 46px; padding: 2px 7px; border-radius: 6px; background: var(--input-bg-sunken, var(--bg-card)); box-shadow: inset 0 0 0 1px var(--divider-color); color: var(--text-secondary); font-size: 10.5px; font-weight: 500; font-style: normal; line-height: 15px; text-align: center; white-space: nowrap; }
+.provider-model-catalog-window.is-missing { background: color-mix(in srgb, var(--danger-text) 10%, var(--input-bg-sunken, var(--bg-card))); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--danger-text) 28%, transparent); color: var(--danger-text); }
+
+.provider-quota-query-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.provider-quota-values { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--text-secondary); }
+.provider-quota-values b { font-weight: 600; color: var(--text-primary); overflow-wrap: anywhere; }
+
+.model-discovery-dialog { width: min(660px, 100%); }
+.model-discovery-toolbar { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+.model-discovery-toolbar > .input-shell { flex: 1; min-width: 0; }
+.model-discovery-toolbar .checkbox-row { flex: 0 0 auto; white-space: nowrap; }
+.model-discovery-list { max-height: min(380px, 50dvh); overflow-y: auto; scrollbar-gutter: stable; overscroll-behavior: contain; }
+.model-discovery-option { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 8px; border-radius: 6px; }
+.model-discovery-option:hover { background: var(--bg-hover); }
+.model-discovery-toggle { display: flex; flex: 1 1 auto; align-items: center; gap: 10px; min-width: 0; cursor: pointer; }
+.model-discovery-limit { flex: 0 0 88px; }
+.model-discovery-limit .desk-input { text-align: center; font-size: 11px; }
+.model-discovery-name { display: flex; flex: 1; flex-direction: column; gap: 3px; min-width: 0; overflow-wrap: anywhere; }
+.model-discovery-name b { font-size: 12px; font-weight: 500; }
+.model-discovery-name small, .model-discovery-empty { color: var(--text-tertiary); font-size: 11px; }
+.model-discovery-empty { padding: 24px 8px; text-align: center; }
+.model-discovery-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+.model-discovery-actions > span { margin-right: auto; color: var(--text-secondary); font-size: 11px; }
+
+.select-inline-add { display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; }
+.select-inline-add > .input-shell { flex: 1; min-width: 0; }
+.select-inline-add > .btn { flex: 0 0 auto; }
+
+/* 服务商表单的控件槽位略宽 */
+.settings-page-content .provider-config-form .setting-control-block,
+.settings-page-content .provider-config-form .setting-row-item .setting-control-block {
+  width: 320px;
+  max-width: 55%;
+}
+
+.settings-page-content .provider-config-form .setting-row-item:has(.provider-key-control) .setting-control-block {
+  width: 440px;
+}
+
+.settings-page-content .plugins-pane .setting-control-block {
+  width: auto;
+  max-width: none;
+}
+
+/* MCP 列表单项 */
+.mcp-row-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  background: var(--surface-inset-bg);
+  border: 1px solid transparent;
+  border-radius: 8px;
+}
+
+.mcp-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--status-success-text);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--success-text) 15%, transparent);
+  flex-shrink: 0;
+}
+
+/* --------------------------------------------------------------------------
+   9. Skills 面板
+   -------------------------------------------------------------------------- */
+
+.skills-toolbar, .skills-search { display: flex; align-items: center; gap: 10px; }
+.skills-toolbar { flex-wrap: wrap; padding: 8px 0; }
+.skills-toolbar .setting-group-title { margin: 0; margin-right: auto; }
+.skills-search { width: 230px; max-width: 100%; color: var(--text-tertiary); }
+.skills-search input { min-width: 0; }
+.skills-manager { padding: 6px 12px 10px; }
+.skill-source { margin-left: 8px; font-weight: 400; font-size: 11px; color: var(--text-secondary); }
+.skill-status { color: var(--text-secondary); font-size: 11px; }
+.skill-status.is-ready { color: var(--status-success-text); }
+.skill-details { margin: 0; padding: 12px; border-radius: var(--radius-base); box-shadow: none; }
+.skill-details dl { display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 8px; margin: 0 0 12px; font-size: 12px; }
+.skill-details dt { color: var(--text-secondary); }
+.skill-details dd { margin: 0; color: var(--text-primary); overflow-wrap: anywhere; }
+.skill-instructions { margin: 0; max-height: 320px; overflow: auto; scrollbar-gutter: stable; white-space: pre-wrap; overflow-wrap: anywhere; font: 12px/1.7 var(--font-mono); color: var(--text-primary); }
+.skills-import-actions, .skills-import-fields { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.skills-import-actions { margin-bottom: 12px; }
+.skills-import-fields { margin-bottom: 12px; }
+.skills-import-fields .input-wrapper { flex: 1; min-width: 180px; }
+.skills-import-fields .skill-branch-input { flex: 0 1 120px; min-width: 90px; }
+.skills-remote-import, .skills-local-import { padding: 12px 0; border-bottom: var(--divider-subtle); }
+.skill-remote-candidate { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; color: var(--text-primary); cursor: pointer; }
+.skill-remote-candidate .checkbox { flex-shrink: 0; margin-top: 3px; }
+.skill-remote-candidate > span { display: flex; flex-direction: column; gap: 4px; min-width: 0; overflow-wrap: anywhere; }
+.skill-conflict { color: var(--status-warning-text); font-size: 11px; }
+.skill-repositories { padding-top: 14px; }
+.skill-repository { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; }
+.skill-repository > div { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.skill-repository-path { color: var(--text-secondary); font: 11px/1.5 var(--font-mono); overflow-wrap: anywhere; }
+.skill-icon-button { display: inline-flex; align-items: center; justify-content: center; }
+
+@media (max-width: 600px) {
+  .skills-search { width: 180px; }
+}
+
+/* --------------------------------------------------------------------------
+   10. 响应式
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .settings-page-nav { width: 190px; padding: 14px 8px; }
+  .settings-page-content { padding: 24px 24px 40px; }
+
+  .settings-page-content .setting-row-item {
+    align-items: flex-start;
+    padding: 12px 14px;
+    gap: 14px;
+  }
+
+  .settings-page-content .setting-row-item + .setting-row-item::before {
+    left: 14px;
+    right: 14px;
+  }
+
+  .settings-page-content .setting-control-block,
+  .settings-page-content .font-setting-control,
+  .settings-page-content .theme-setting-control,
+  .settings-page-content .terminal-range-control,
+  .settings-page-content .provider-config-form .setting-control-block {
+    width: min(48%, 320px);
+    max-width: 48%;
+  }
+}
+
+@media (max-width: 720px) {
+  .provider-editor-dialog .setting-row-item { padding: 12px 14px; }
+  .provider-model-choice { flex-wrap: wrap; }
+  .provider-model-catalog-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 72px 72px 28px; }
+  .model-discovery-limit { flex-basis: 74px; }
+}
+
+@media (max-width: 760px) {
+  .settings-environment-tool { grid-template-columns: 28px minmax(0, 1fr); }
+  .settings-environment-tool-actions { grid-column: 2; justify-content: flex-start; }
+  .setting-row-item.thinking-copy-style { flex-direction: column; align-items: stretch; gap: 10px; margin: 6px 8px 12px; }
+  .thinking-copy-style .setting-control-block { width: 100%; max-width: none; flex-basis: auto; }
+}

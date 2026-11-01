@@ -12,7 +12,7 @@
  */
 import React from "react";
 import { AlertTriangle, CheckCircle2, Loader2, ShieldAlert, Wrench, X } from "lucide-react";
-import { Button } from "@/components/ui";
+import { Button } from "rain-ui";
 import {
   MAX_REPAIR_ROUNDS,
   repairConfirmToken,
@@ -71,7 +71,6 @@ export const RepairCard: React.FC<RepairCardProps> = ({
           </span>
           <Button
             variant="bare"
-            size="xs"
             icon={<X size={12} />}
             aria-label="关闭修复卡片"
             title="关闭（不会中断已在运行的命令）"
@@ -119,14 +118,13 @@ export const RepairCard: React.FC<RepairCardProps> = ({
             <div className="repair-card-actions">
               <Button
                 variant="secondary"
-                size="sm"
                 disabled={busy || !executable}
                 title={executable ? "把命令写入终端并执行" : `先手打 ${token} 确认`}
                 onClick={onApprove}
               >
                 批准执行
               </Button>
-              <Button variant="bare" size="sm" onClick={onReject} disabled={busy}>
+              <Button variant="bare" onClick={onReject} disabled={busy}>
                 放弃这条
               </Button>
             </div>
@@ -167,7 +165,7 @@ export const RepairCard: React.FC<RepairCardProps> = ({
 
       {inFlight && (
         <div className="repair-card-foot">
-          <Button variant="bare" size="xs" onClick={onAbort}>
+          <Button variant="bare" onClick={onAbort}>
             中断修复
           </Button>
         </div>

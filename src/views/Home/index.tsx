@@ -1,8 +1,9 @@
 import React, { useCallback, useState } from "react";
+import { Button } from "rain-ui";
 import { Terminal, PanelTop, SquareCode, ExternalLink } from "lucide-react";
 import { type SupportedToolKey } from "@/views/ToolWindows";
-import { ContextMenu } from "@/components/ui/ContextMenu";
-import { ToolIcon } from "@/components/ToolIcon/ToolIcon";
+import { ContextMenu } from "rain-ui";
+import { ToolIcon } from "rain-ui";
 export interface HomeTool {
   id: string;
   title: string;
@@ -69,8 +70,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ onOpenTool, onOpenToolWindow
           {group.tools.map((tool) => {
             const status = homeToolStatus(tool);
             return (
-              <button
-                type="button"
+              <Button
+                type="button" variant="bare"
                 key={tool.id}
                 className={`home-tool-row is-${status}`}
                 disabled={status !== "ready"}
@@ -89,7 +90,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onOpenTool, onOpenToolWindow
                   <span className="home-tool-sub">{tool.subtitle}</span>
                 </span>
                 <span className={`home-tool-status is-${status}`} role="img" aria-label={status === "planned" ? "禁用 · 待开发" : homeToolStatusLabel(status)} title={status === "ready" ? "已实现 · 可用" : status === "unavailable" ? "不可用" : "禁用 · 待开发"} />
-              </button>
+              </Button>
             );
           })}
         </div>

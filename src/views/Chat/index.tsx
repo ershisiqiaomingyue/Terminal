@@ -16,7 +16,7 @@ import { ComposerChangedFiles } from "./ComposerChangedFiles";
 import { ComposerNoticeDock } from "./ComposerNoticeDock";
 import { BackgroundTasks } from "./BackgroundTasks";
 import { ContextUsageIndicator } from "./ContextUsageIndicator";
-import { AccessModeMenu } from "@/components/ui/AccessModeMenu";
+import { AccessModeMenu } from "rain-ui";
 import { formatTokenCount } from "./tokenCount";
 import { latestContextUsageDetails, resolveContextUsageScan } from "./contextUsageDetails";
 import {
@@ -85,13 +85,14 @@ import {
   type WorkspaceGitChange,
 } from "@/platform/chatApi";
 import { APP_ACTION_CATALOG } from "@/application/pageActions";
-import { BorderGlow } from "@/components/BorderGlow/BorderGlow";
-import { ConfirmDialog } from "@/components/ConfirmDialog/ConfirmDialog";
+import { BorderGlow } from "rain-ui";
+import { ConfirmDialog } from "rain-ui";
 import { AgentModelPicker } from "@/components/AgentModelPicker/AgentModelPicker";
 import { notify } from "@/platform/notifications";
-import { Button } from "@/components/ui/Button";
-import { Tooltip } from "@/components/ui/Tooltip";
-import { Spinner } from "@/components/ui/Spinner";
+import { Button } from "rain-ui";
+import { Checkbox } from "rain-ui";
+import { Tooltip } from "rain-ui";
+import { Spinner } from "rain-ui";
 import { ChatTerminalPanel } from "./ChatTerminalPanel";
 import { ChatImagePreview } from "./ChatImagePreview";
 import { ComposerInput } from "./ComposerInput";
@@ -175,9 +176,9 @@ import {
   type WorkspaceEntry,
 } from "./chatNavStore";
 import { CollaborationSidePanel } from "@/views/Collaboration/CollaborationSidePanel";
-import { PaneResizeHandle } from "@/components/ResizablePane/PaneResizeHandle";
-import { usePaneWidth } from "@/components/ResizablePane/usePaneWidth";
-import { WORKSPACE_PANE } from "@/components/ResizablePane/paneWidth";
+import { PaneResizeHandle } from "rain-ui";
+import { usePaneWidth } from "rain-ui";
+import { WORKSPACE_PANE } from "rain-ui";
 import {
   cancelTask,
   formatInvokeError,
@@ -190,7 +191,6 @@ import {
   type Task,
 } from "@/platform/runtime";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
-import "@/components/BorderGlow/border-glow.css";
 import "./conversation.css";
 import "./chatAppearance.css";
 import "./styles/conversation-surfaces.css";
@@ -2935,16 +2935,15 @@ export const ChatView: React.FC<ChatViewProps> = React.memo(({ active = true, na
     <section className="conversation-page">
       <div className="conversation-content-area">
         <div className="conversation-toolbar">
-          {onToggleNavigation && <Button type="button" variant="surface" size="sm" className="chat-icon-button conversation-navigation-toggle" title={navigationExpanded ? "收起导航" : "展开导航"} aria-label={navigationExpanded ? "收起导航" : "展开导航"} aria-expanded={navigationExpanded} aria-controls="app-context-navigation" icon={<PanelLeft size={14} strokeWidth={1.7} />} onClick={onToggleNavigation} />}
+          {onToggleNavigation && <Button type="button" variant="outline" className="chat-icon-button conversation-navigation-toggle" title={navigationExpanded ? "收起导航" : "展开导航"} aria-label={navigationExpanded ? "收起导航" : "展开导航"} aria-expanded={navigationExpanded} aria-controls="app-context-navigation" icon={<PanelLeft size={14} strokeWidth={1.7} />} onClick={onToggleNavigation} />}
           <div className="session-header-actions">
-              <Button type="button" variant="surface" size="sm" className={`chat-icon-button${collaborationOpen && collaborationSideView === "agents" ? " active" : ""}`} title={collaborationOpen && collaborationSideView === "agents" ? "隐藏子智能体" : "打开子智能体"} aria-label={collaborationOpen && collaborationSideView === "agents" ? "隐藏子智能体" : "打开子智能体"} aria-pressed={collaborationOpen && collaborationSideView === "agents"} icon={<Bot size={14} />} onClick={() => toggleWorkspaceSidePanel("agents")} />
-              <Button type="button" variant="surface" size="sm" className={`chat-icon-button${collaborationOpen && collaborationSideView === "changes" ? " active" : ""}`} title={collaborationOpen && collaborationSideView === "changes" ? "隐藏文件改动" : "打开文件改动"} aria-label={collaborationOpen && collaborationSideView === "changes" ? "隐藏文件改动" : "打开文件改动"} aria-pressed={collaborationOpen && collaborationSideView === "changes"} icon={<FilePenLine size={14} />} onClick={() => toggleWorkspaceSidePanel("changes")} />
-              <Button type="button" variant="surface" size="sm" className={`chat-icon-button${terminalOpen ? " active" : ""}`} title={terminalOpen ? "隐藏终端" : "打开终端"} aria-label={terminalOpen ? "隐藏终端" : "打开终端"} aria-pressed={terminalOpen} icon={<SquareTerminal size={14} />} onClick={toggleTerminal} />
+              <Button type="button" variant="outline" className={`chat-icon-button${collaborationOpen && collaborationSideView === "agents" ? " active" : ""}`} title={collaborationOpen && collaborationSideView === "agents" ? "隐藏子智能体" : "打开子智能体"} aria-label={collaborationOpen && collaborationSideView === "agents" ? "隐藏子智能体" : "打开子智能体"} aria-pressed={collaborationOpen && collaborationSideView === "agents"} icon={<Bot size={14} />} onClick={() => toggleWorkspaceSidePanel("agents")} />
+              <Button type="button" variant="outline" className={`chat-icon-button${collaborationOpen && collaborationSideView === "changes" ? " active" : ""}`} title={collaborationOpen && collaborationSideView === "changes" ? "隐藏文件改动" : "打开文件改动"} aria-label={collaborationOpen && collaborationSideView === "changes" ? "隐藏文件改动" : "打开文件改动"} aria-pressed={collaborationOpen && collaborationSideView === "changes"} icon={<FilePenLine size={14} />} onClick={() => toggleWorkspaceSidePanel("changes")} />
+              <Button type="button" variant="outline" className={`chat-icon-button${terminalOpen ? " active" : ""}`} title={terminalOpen ? "隐藏终端" : "打开终端"} aria-label={terminalOpen ? "隐藏终端" : "打开终端"} aria-pressed={terminalOpen} icon={<SquareTerminal size={14} />} onClick={toggleTerminal} />
             {debugTargets.chat && <div ref={debugAnchorRef} className="chat-debug-anchor">
             <Button
               type="button"
-              variant="surface"
-              size="sm"
+              variant="outline"
               className={`chat-icon-button${componentsDebugOpen ? " active" : ""}`}
               title={componentsDebugOpen ? "隐藏组件调试" : "选择要显示的调试组件"}
               aria-label={componentsDebugOpen ? "隐藏组件调试" : "选择要显示的调试组件"}
@@ -2961,7 +2960,7 @@ export const ChatView: React.FC<ChatViewProps> = React.memo(({ active = true, na
             />}
             </div>}
             <div ref={environmentAnchorRef} className="environment-anchor">
-              <Button type="button" variant="surface" size="sm" className={`chat-icon-button${environmentOpen ? " active" : ""}`} title="查看当前会话环境" aria-label="查看当前会话环境" aria-expanded={environmentOpen} icon={<Info size={14} />} onClick={() => { const opening = !environmentOpen; setEnvironmentOpen(opening); if (opening) void refreshWorkspaceEnvironment(); }} />
+              <Button type="button" variant="outline" className={`chat-icon-button${environmentOpen ? " active" : ""}`} title="查看当前会话环境" aria-label="查看当前会话环境" aria-expanded={environmentOpen} icon={<Info size={14} />} onClick={() => { const opening = !environmentOpen; setEnvironmentOpen(opening); if (opening) void refreshWorkspaceEnvironment(); }} />
               {environmentOpen && (
                 <aside className="environment-popover">
                   <div className="popover-heading"><span>工作区环境</span><span className="popover-readonly">本地只读</span></div>
@@ -2979,10 +2978,10 @@ export const ChatView: React.FC<ChatViewProps> = React.memo(({ active = true, na
                     </ul>
                   </div>}
                   {workspacePath ? <div className="popover-muted">{workspaceEnvironmentLoading ? "正在读取 Git 状态…" : !workspaceEnvironment?.git.available ? "未安装 Git" : !workspaceEnvironment.git.repository ? "当前目录不是 Git 仓库" : `${workspaceEnvironment.git.branch || "未检测到分支"} · ${workspaceEnvironment.git.dirty ? `${workspaceEnvironment.git.changedFiles} 个文件有变更` : "工作区干净"} · +${workspaceEnvironment.git.addedLines} / -${workspaceEnvironment.git.removedLines} 行${workspaceEnvironment.git.remote ? ` · ${workspaceEnvironment.git.remote}` : ""}`}</div> : <div className="popover-muted">独立对话不会绑定项目目录，也不会自动读取 Git 状态。</div>}
-                  {workspaceEnvironment?.git.repository && workspaceGitChanges.length > 0 && <button type="button" className="workspace-git-change-link" onClick={() => { setEnvironmentOpen(false); showWorkspaceSidePanel("changes"); }}><FileCode2 size={13} />在右侧查看 {workspaceGitChanges.length} 个文件改动</button>}
+                  {workspaceEnvironment?.git.repository && workspaceGitChanges.length > 0 && <Button type="button" variant="bare" className="workspace-git-change-link" onClick={() => { setEnvironmentOpen(false); showWorkspaceSidePanel("changes"); }}><FileCode2 size={13} />在右侧查看 {workspaceGitChanges.length} 个文件改动</Button>}
                   <div className="environment-actions">
-                    <Button type="button" variant="secondary" size="xs" disabled title="Git 提交将在后续版本接入" icon={<Check size={13} />}>提交</Button>
-                    <Button type="button" variant="secondary" size="xs" disabled title="Git 推送将在后续版本接入" icon={<Send size={13} />}>推送</Button>
+                    <Button type="button" variant="secondary" disabled title="Git 提交将在后续版本接入" icon={<Check size={13} />}>提交</Button>
+                    <Button type="button" variant="secondary" disabled title="Git 推送将在后续版本接入" icon={<Send size={13} />}>推送</Button>
                   </div>
                 </aside>
               )}
@@ -3011,7 +3010,7 @@ export const ChatView: React.FC<ChatViewProps> = React.memo(({ active = true, na
               {awaitingHistory ? <div className="chat-empty" role="status">
                 {historyReadState.id === sessionId && historyReadState.status === "error" ? <>
                   <p>对话暂未读取成功。</p>
-                  <Button variant="secondary" size="sm" onClick={() => { historyHydrationAttempts.current.delete(sessionId); setHistoryHydrationEpoch(epoch => epoch + 1); }}>重新加载</Button>
+                  <Button variant="secondary" onClick={() => { historyHydrationAttempts.current.delete(sessionId); setHistoryHydrationEpoch(epoch => epoch + 1); }}>重新加载</Button>
                 </> : <><Spinner size={18} /><p>正在加载对话…</p></>}
               </div> : !messages.length ? (
                 <div className="chat-empty">
@@ -3070,7 +3069,7 @@ export const ChatView: React.FC<ChatViewProps> = React.memo(({ active = true, na
             </div>
             {userMessageMarkers.length > 0 && <ConversationRail key={`rail:${sessionId}`} markers={userMessageMarkers} activeId={activeUserMessageId} onNavigate={scrollToMessage} />}
             {showScrollToBottom && <div className="chat-floating-controls">
-              {showScrollToBottom && <button type="button" className="scroll-to-bottom" title="回到底部" aria-label="回到底部" onClick={() => scrollToLatest(true)}><ArrowDown size={16} /></button>}
+              {showScrollToBottom && <Button type="button" variant="bare" className="scroll-to-bottom" title="回到底部" aria-label="回到底部" onClick={() => scrollToLatest(true)}><ArrowDown size={16} /></Button>}
             </div>}
             </div>
 
@@ -3102,12 +3101,12 @@ export const ChatView: React.FC<ChatViewProps> = React.memo(({ active = true, na
                     {editingMessage && <div className="composer-editing-banner" role="status">
                       <Pencil size={13} />
                       <span>正在编辑此消息，发送后将在当前对话中重新回复</span>
-                      <button type="button" title="取消编辑" aria-label="取消编辑" onClick={() => {
+                      <Button type="button" variant="bare" title="取消编辑" aria-label="取消编辑" onClick={() => {
                         setEditingMessageId("");
                         setDraft("");
                         if (editingSourcesBeforeRef.current) setSources(editingSourcesBeforeRef.current);
                         editingSourcesBeforeRef.current = null;
-                      }}><X size={13} /></button>
+                      }}><X size={13} /></Button>
                     </div>}
                     {sources.length > 0 && (
                       <div className="composer-attachment-strip">
@@ -3120,10 +3119,10 @@ export const ChatView: React.FC<ChatViewProps> = React.memo(({ active = true, na
                     )}
                     {dropNotice && <div className="drop-notice">{dropNotice}</div>}
                     {logPanelOpen && <section className="chat-log-panel">
-                      <div className="chat-log-toolbar"><b>日志证据</b><span>{logStatus}</span><button type="button" title="关闭日志面板" onClick={() => setLogPanelOpen(false)}><X size={13} /></button></div>
-                      <div className="chat-log-search"><input value={logSearch} placeholder="搜索错误码、组件或关键词" onChange={(event) => setLogSearch(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void searchLogs(); }} /><button type="button" onClick={() => void searchLogs()} title="搜索日志"><Search size={13} /></button></div>
+                      <div className="chat-log-toolbar"><b>日志证据</b><span>{logStatus}</span><Button type="button" variant="bare" title="关闭日志面板" onClick={() => setLogPanelOpen(false)}><X size={13} /></Button></div>
+                      <div className="chat-log-search"><input value={logSearch} placeholder="搜索错误码、组件或关键词" onChange={(event) => setLogSearch(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void searchLogs(); }} /><Button type="button" variant="bare" onClick={() => void searchLogs()} title="搜索日志"><Search size={13} /></Button></div>
                       {logTimeline.length > 0 && <div className="chat-log-timeline">{logTimeline.slice(0, 6).map((event, index) => <span key={`${String(event.timestamp || event.time || "")}-${index}`}>{String(event.timestamp || event.time || "")} {String(event.message || event.summary || event.text || "")}</span>)}</div>}
-                      {logHits.length > 0 && <div className="chat-log-hits">{logHits.slice(0, 6).map((hit, index) => <button key={`${String(hit.source || "")}-${index}`} type="button" onClick={() => void openLogHit(hit)}><b>{String(hit.source || hit.path || "日志")}</b><span>{String(hit.excerpt || hit.text || "")}</span></button>)}</div>}
+                      {logHits.length > 0 && <div className="chat-log-hits">{logHits.slice(0, 6).map((hit, index) => <Button key={`${String(hit.source || "")}-${index}`} type="button" variant="bare" onClick={() => void openLogHit(hit)}><b>{String(hit.source || hit.path || "日志")}</b><span>{String(hit.excerpt || hit.text || "")}</span></Button>)}</div>}
                       {logExcerpt && <pre className="chat-log-excerpt">{logExcerpt}</pre>}
                     </section>}
                     {/* Remounted per session: a contentEditable keeps its DOM text — and
@@ -3160,10 +3159,10 @@ export const ChatView: React.FC<ChatViewProps> = React.memo(({ active = true, na
                         void stopAgent();
                       }
                     }} />
-                    {slashOpen && <div ref={slashMenuRef} className="slash-menu" role="listbox">{slashItems.length ? slashItems.map((item, index) => <button key={`${item.kind}-${item.id}`} type="button" className={`slash-menu-row${index === slashIndex ? " selected" : ""}`} onMouseDown={(event) => event.preventDefault()} onMouseEnter={() => setSlashIndex(index)} onClick={() => applySlashItem(item)}>
+                    {slashOpen && <div ref={slashMenuRef} className="slash-menu" role="listbox">{slashItems.length ? slashItems.map((item, index) => <Button key={`${item.kind}-${item.id}`} type="button" variant="bare" className={`slash-menu-row${index === slashIndex ? " selected" : ""}`} onMouseDown={(event) => event.preventDefault()} onMouseEnter={() => setSlashIndex(index)} onClick={() => applySlashItem(item)}>
                       <span className={`slash-menu-icon is-${item.kind}`} aria-label={item.kind === "app" ? "应用工具" : item.kind === "tool" ? "本地工具" : "Skill"}>{item.kind === "app" ? <AppWindow size={13} /> : item.kind === "tool" ? <Wrench size={13} /> : <Sparkles size={13} />}</span>
                       <span className="slash-menu-copy"><b>{item.kind === "app" ? item.label : `/${item.id}`}</b><small>{item.description || item.label}</small></span>
-                    </button>) : <div className="slash-menu-empty">没有匹配的 Skill 或工具</div>}</div>}
+                    </Button>) : <div className="slash-menu-empty">没有匹配的 Skill 或工具</div>}</div>}
                     <div className="composer-toolbar">
                       <div className="composer-left-actions">
                         <ComposerAddMenu open={composerMenuOpen} onOpenChange={setComposerMenu}
@@ -3226,8 +3225,7 @@ export const ChatView: React.FC<ChatViewProps> = React.memo(({ active = true, na
                             因为运行时这个按钮只承担停止。 */}
                         <Button
                           type="button"
-                          variant="primary"
-                          size="sm"
+                          variant="default"
                           className={`composer-send${stopAvailable ? " is-stop" : ""}`}
                           title={stopAvailable ? "停止当前任务" : submissionLocked && !sending && !activePermission ? "正在提交…" : activePermission ? "回答当前询问" : sending ? "加入队列" : "发送消息"}
                           aria-label={stopAvailable ? "停止当前任务" : submissionLocked && !sending && !activePermission ? "正在提交…" : activePermission ? "回答当前询问" : sending ? "加入队列" : "发送消息"}
@@ -3252,7 +3250,7 @@ export const ChatView: React.FC<ChatViewProps> = React.memo(({ active = true, na
           {(filePreviewPath || collaborationOpen) && <>
           <PaneResizeHandle className="chat-side-panel-resizer" side="right" label="调整会话工作区侧栏宽度" controls="chat-workspace-side-panel" width={sidePanelWidth.width} min={sidePanelWidth.bounds.min} max={sidePanelWidth.bounds.max} initial={WORKSPACE_PANE.initial} onResize={sidePanelWidth.resize} onCommit={sidePanelWidth.commit} />
           {filePreviewPath ? <aside id="chat-workspace-side-panel" className="collaboration-side-panel chat-file-preview-pane" style={{ width: sidePanelWidth.width, flexBasis: sidePanelWidth.width }} aria-label="文件改动预览">
-            <ChatFilePreviewBoundary key={`${filePreviewPath}:${filePreviewOrigin?.sessionId}:${filePreviewOrigin?.turnId}`} onClose={closeFilePreview}><Suspense fallback={<aside className="chat-file-preview-panel" aria-label="文件预览"><div className="chat-file-preview-notice" role="status"><Spinner size={16} className="is-inline" />正在加载预览</div><Button variant="subtle" size="xs" icon={<X size={16} />} aria-label="关闭文件预览" onClick={closeFilePreview} /></aside>}><ChatFilePreview path={filePreviewPath} origin={filePreviewOrigin} previewTarget={previewTarget} previewTargets={previewTargets} onSelectPreviewTarget={setPreviewEnvironmentKey} onClose={closeFilePreview} /></Suspense></ChatFilePreviewBoundary>
+            <ChatFilePreviewBoundary key={`${filePreviewPath}:${filePreviewOrigin?.sessionId}:${filePreviewOrigin?.turnId}`} onClose={closeFilePreview}><Suspense fallback={<aside className="chat-file-preview-panel" aria-label="文件预览"><div className="chat-file-preview-notice" role="status"><Spinner size={16} className="is-inline" />正在加载预览</div><Button variant="ghost" icon={<X size={16} />} aria-label="关闭文件预览" onClick={closeFilePreview} /></aside>}><ChatFilePreview path={filePreviewPath} origin={filePreviewOrigin} previewTarget={previewTarget} previewTargets={previewTargets} onSelectPreviewTarget={setPreviewEnvironmentKey} onClose={closeFilePreview} /></Suspense></ChatFilePreviewBoundary>
           </aside> : <CollaborationSidePanel
             active={active}
             width={sidePanelWidth.width}
@@ -3267,9 +3265,9 @@ export const ChatView: React.FC<ChatViewProps> = React.memo(({ active = true, na
       </div>
     </section>
     {pathMenu && <div ref={pathMenuRef} className="local-path-context-menu" style={{ left: pathMenu.x, top: pathMenu.y }}>
-      <button type="button" onClick={() => { void openAttachment(pathMenu.path); setPathMenu(null); }}>打开文件</button>
-      <button type="button" onClick={() => { void copyAttachmentText(pathMenu.path, "已复制文件路径"); setPathMenu(null); }}>复制路径</button>
-      <button type="button" onClick={() => { void copyAttachmentContent(pathMenu.path); setPathMenu(null); }}>复制文件内容</button>
+      <Button type="button" variant="bare" onClick={() => { void openAttachment(pathMenu.path); setPathMenu(null); }}>打开文件</Button>
+      <Button type="button" variant="bare" onClick={() => { void copyAttachmentText(pathMenu.path, "已复制文件路径"); setPathMenu(null); }}>复制路径</Button>
+      <Button type="button" variant="bare" onClick={() => { void copyAttachmentContent(pathMenu.path); setPathMenu(null); }}>复制文件内容</Button>
     </div>}
     <ConfirmDialog
       open={pendingRemoval !== null}
@@ -3314,7 +3312,7 @@ export const ChatView: React.FC<ChatViewProps> = React.memo(({ active = true, na
       }}
     >
       {pendingRemoval?.kind === "workspace" && <label className="confirm-dialog-acknowledge">
-        <input type="checkbox" checked={removeWorkspaceSessions} disabled={removalBusy} onChange={(event) => setRemoveWorkspaceSessions(event.target.checked)} />
+        <Checkbox checked={removeWorkspaceSessions} disabled={removalBusy} onChange={(checked) => setRemoveWorkspaceSessions(checked)} />
         <span>同时删除关联对话（保留工程文件）</span>
       </label>}
     </ConfirmDialog>

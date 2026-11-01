@@ -1,7 +1,8 @@
 import { useCallback, useLayoutEffect, useRef, useState, type MouseEvent } from "react";
+import { Button } from "rain-ui";
 import { X } from "lucide-react";
 import { partitionFileTabs, pathsToClose, type TabCloseAction } from "./fileTabs";
-import { ContextMenu } from "@/components/ui/ContextMenu";
+import { ContextMenu } from "rain-ui";
 import { subscribeAppFont } from "@/platform/font";
 import { ToolbarPopover } from "./ToolbarPopover";
 
@@ -99,7 +100,7 @@ export function FileTabStrip({ tabs, activePath, onSelect, onClose, onCloseMany,
       // 剩余空间不够整个标签时交给 flex 自己收缩，别在右侧留一条空缝。
       const squeezed = Boolean(flexible && flexible.index === index);
       return <div key={tab.path} className={`code-viewer-tab${active ? " is-active" : ""}${tab.dirty ? " is-dirty" : ""}${squeezed ? " is-squeezed" : ""}`}>
-        <button type="button" role="tab" aria-selected={active} tabIndex={active ? 0 : -1}
+        <Button type="button" variant="bare" role="tab" aria-selected={active} tabIndex={active ? 0 : -1}
           className="code-viewer-tab-select" title={tab.path}
           onClick={() => onSelect(tab.path)}
           onContextMenu={(event) => openMenu(tab.path, event)}
@@ -114,9 +115,9 @@ export function FileTabStrip({ tabs, activePath, onSelect, onClose, onCloseMany,
           <span className="code-viewer-tab-name">{tab.title}</span>
           {tab.dirty && <span className="code-viewer-tab-dirty" aria-label="有未保存的修改">*</span>}
           {tab.readOnly && <span className="code-viewer-tab-readonly" title="只读">只读</span>}
-        </button>
-        <button type="button" className="code-viewer-tab-close" aria-label={`关闭 ${tab.title}`} title="关闭标签"
-          onClick={() => onClose(tab.path)}><X size={12} strokeWidth={1.8} /></button>
+        </Button>
+        <Button type="button" variant="bare" className="code-viewer-tab-close" aria-label={`关闭 ${tab.title}`} title="关闭标签"
+          onClick={() => onClose(tab.path)}><X size={12} strokeWidth={1.8} /></Button>
       </div>;
     })}
     {!!hidden.length && <>
@@ -127,15 +128,15 @@ export function FileTabStrip({ tabs, activePath, onSelect, onClose, onCloseMany,
         <div className="code-toolbar-popover-heading"><strong>其他已打开的文件</strong></div>
         <div className="code-viewer-tab-overflow-list" role="list">
           {hidden.map((tab) => <div key={tab.path} className={`code-viewer-tab-overflow-row${tab.path === activePath ? " is-active" : ""}`} role="listitem">
-            <button type="button" className="code-viewer-tab-overflow-select" title={tab.path}
+            <Button type="button" variant="bare" className="code-viewer-tab-overflow-select" title={tab.path}
               onClick={() => { (onSelectFromOverflow || onSelect)(tab.path); setOverflowOpen(false); }}
               onContextMenu={(event) => openMenu(tab.path, event)}>
               <span className="code-viewer-tab-name">{tab.title}</span>
               {tab.dirty && <span className="code-viewer-tab-dirty" aria-label="有未保存的修改">*</span>}
               {tab.readOnly && <span className="code-viewer-tab-readonly" title="只读">只读</span>}
-            </button>
-            <button type="button" className="code-viewer-tab-close" aria-label={`关闭 ${tab.title}`} title="关闭标签"
-              onClick={() => onClose(tab.path)}><X size={12} strokeWidth={1.8} /></button>
+            </Button>
+            <Button type="button" variant="bare" className="code-viewer-tab-close" aria-label={`关闭 ${tab.title}`} title="关闭标签"
+              onClick={() => onClose(tab.path)}><X size={12} strokeWidth={1.8} /></Button>
           </div>)}
         </div>
       </ToolbarPopover>}

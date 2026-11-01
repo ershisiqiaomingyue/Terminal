@@ -1,7 +1,8 @@
 import { createPortal } from "react-dom";
+import { Button } from "rain-ui";
 import React, { memo, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Check, ChevronDown, ChevronRight, CircleHelp, MessageCircle, Wrench, XCircle } from "lucide-react";
-import { Spinner } from "@/components/ui";
+import { Spinner } from "rain-ui";
 import type { AgentEventPayload } from "@/platform/chatApi";
 import { MarkdownMessage } from "./MarkdownMessage";
 import { eventToolName, toolNamesByCallId } from "./activityState";
@@ -502,11 +503,11 @@ function AgentActivityTimelineComponent({ liveStatusHost, liveStatusLabel, event
     const environment = toolEnvironmentLabel(activity.name);
     const detailId = `agent-command-${reactId}-${stateKey.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
     return <div key={stateKey} data-state={status} className={`agent-command ${status}${expanded ? " expanded" : ""}`}>
-      <button type="button" className="agent-command-summary" title={summary} aria-busy={status === "running"} aria-controls={detailId} aria-expanded={expanded} onClick={(event) => { onLayoutChange?.(event.currentTarget); setOpen((previous) => ({ ...previous, [stateKey]: !expanded })); }}>
+      <Button type="button" variant="bare" className="agent-command-summary" title={summary} aria-busy={status === "running"} aria-controls={detailId} aria-expanded={expanded} onClick={(event) => { onLayoutChange?.(event.currentTarget); setOpen((previous) => ({ ...previous, [stateKey]: !expanded })); }}>
         <ToolActivityStatus state={status} />
         <span><b className="agent-execution-label">{summary}</b>{liveStatus && <small className="agent-command-live-status">{liveStatus}</small>}</span>
         <ChevronDown size={14} className="agent-disclosure-chevron" />
-      </button>
+      </Button>
       {expanded && <div id={detailId} className="agent-command-detail" role="region" aria-label={`${summary}详情`}>
         {visibleInput && <><div className="agent-command-shell">{command ? "命令" : "调用参数"}{environment && ` · ${environment}`}</div><pre className="agent-command-input"><code>{command && <span className="agent-command-prompt">$ </span>}{detail}</code></pre></>}
         {((!visibleInput && (status === "running" || status === "pending")) || awaitingPermission) && <div className="agent-command-waiting" role="status">{waitingText}</div>}
@@ -515,7 +516,7 @@ function AgentActivityTimelineComponent({ liveStatusHost, liveStatusLabel, event
           <header className="agent-command-output-card-header"><span>工具输出</span>{activity.output.length > 8_000 && <small>长输出</small>}</header>
           <div className="agent-command-output-card-body">
             <pre className="agent-command-output"><code>{outputPreview(activity.output, outputExpanded)}</code></pre>
-            {activity.output.length > 8_000 && <button type="button" className="agent-command-output-toggle" onClick={() => setFullOutputOpen((previous) => ({ ...previous, [stateKey]: !outputExpanded }))}>{outputExpanded ? "收起完整输出" : "查看完整输出"}</button>}
+            {activity.output.length > 8_000 && <Button type="button" variant="bare" className="agent-command-output-toggle" onClick={() => setFullOutputOpen((previous) => ({ ...previous, [stateKey]: !outputExpanded }))}>{outputExpanded ? "收起完整输出" : "查看完整输出"}</Button>}
           </div>
         </section>}
         {status !== "running" && <div className={`agent-command-result ${status}`}>{status === "pending" ? "等待执行" : status === "error" ? "失败" : status === "cancelled" ? "已取消" : status === "unknown" ? "结果未保存" : status === "interrupted" ? "上次运行中断" : status === "skipped" ? "已跳过" : "成功"}</div>}
@@ -550,14 +551,14 @@ function AgentActivityTimelineComponent({ liveStatusHost, liveStatusLabel, event
           : entry.activities.some(awaitingToolPermission) ? "等待权限批准" : compactToolGroupLabel(entry.activities.map(activity => activity.name), groupState);
         const groupDetailId = `agent-tool-group-${reactId}-${entryKey.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
         return <section key={entryKey} data-state={groupState} className={`agent-tool-group${groupExpanded ? " expanded" : ""}${groupRunning ? " running" : ""}${groupError ? " error" : ""}`}>
-          <button type="button" className="agent-tool-group-summary" title={groupTitle} aria-busy={groupRunning} aria-controls={groupDetailId} aria-expanded={groupExpanded} onClick={(event) => {
+          <Button type="button" variant="bare" className="agent-tool-group-summary" title={groupTitle} aria-busy={groupRunning} aria-controls={groupDetailId} aria-expanded={groupExpanded} onClick={(event) => {
             onLayoutChange?.(event.currentTarget);
             setToolGroupOpen((previous) => ({ ...previous, [disclosureKey]: !groupExpanded }));
           }}>
             <ToolActivityStatus state={groupState} />
             <span><b className="agent-execution-label">{groupTitle}</b></span>
             <ChevronDown size={14} className="agent-disclosure-chevron" />
-          </button>
+          </Button>
           {groupExpanded && <div id={groupDetailId} className="agent-tool-group-detail" role="region" aria-label={`${groupTitle}详情`}>{entry.activities.map((activity) => renderActivity(activity, true, scope))}</div>}
         </section>;
   };

@@ -1,69 +1,145 @@
-/* ==========================================================================
-   LSP 语言服务器面板 - 本地样式
-   - 复用 settings-controls.css 的 .settings-environment-* 卡片外壳
-   - 这里只补「服务器卡片内的编辑器」布局：命令行、参数行、语言映射行
-   ========================================================================== */
+/* LSP：所有布局由 rain-ui / Tailwind 控件负责；这里只保留数据编辑行的布局细节。 */
+.lsp-expanded {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-top: 5px;
+}
 
 .lsp-editors {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 10px;
+  gap: 8px;
   width: 100%;
 }
 
 .lsp-editor {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   min-width: 0;
 }
 
 .lsp-editor-head {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
   min-width: 0;
 }
 
-/* 一行 = 输入框 + 右侧小按钮；.input-shell 自带 width:100%，
-   在弹性行里必须放开收缩，否则会把按钮挤出卡片。 */
+.lsp-expanded-label {
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 550;
+  line-height: 1.5;
+}
+
+.lsp-editor-hint {
+  color: var(--text-tertiary);
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: right;
+}
+
 .lsp-field-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   width: 100%;
+  min-width: 0;
+}
+
+.lsp-field-row > .input-shell,
+.lsp-field-row > * {
   min-width: 0;
 }
 
 .lsp-field-row > .input-shell {
   flex: 1 1 auto;
-  min-width: 0;
 }
 
-/* 语言映射行：扩展名窄、语言 ID 宽 */
 .lsp-language-row > .input-shell:first-child {
-  flex: 0 1 132px;
-  min-width: 96px;
+  flex: 0 1 140px;
 }
 
-.lsp-editor-actions {
+.lsp-editor-actions,
+.lsp-card-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .lsp-card-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
   justify-content: flex-end;
 }
 
-/* 参数/映射全空时的占位提示，避免编辑器看起来是坏的 */
 .lsp-editor-empty {
   color: var(--text-tertiary);
   font-size: 12px;
+  line-height: 1.5;
+}
+
+.lsp-status-icon {
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--text-tertiary) 8%, transparent);
+  color: var(--text-secondary);
+}
+
+.lsp-status-icon.is-ready {
+  background: color-mix(in srgb, var(--color-success, #16a34a) 11%, transparent);
+  color: var(--color-success, #15803d);
+}
+
+.lsp-status-icon.is-invalid,
+.lsp-status-icon.is-missing,
+.lsp-status-icon.is-unlaunchable {
+  background: color-mix(in srgb, var(--color-danger, #dc2626) 9%, transparent);
+  color: var(--color-danger, #b91c1c);
+}
+
+.lsp-resolved-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.lsp-resolved-row code,
+.lsp-expanded-footer code {
+  overflow: hidden;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  line-height: 1.55;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lsp-extra-fields {
+  margin: 0;
+  color: var(--text-tertiary);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.lsp-expanded-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.lsp-expanded-footer > code {
+  min-width: 0;
+  flex: 1;
 }

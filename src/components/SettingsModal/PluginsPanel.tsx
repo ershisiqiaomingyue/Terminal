@@ -1,21 +1,21 @@
 import { PluginItem } from "./PluginItem";
 import { useEffect, useRef, useState } from "react";
 import { ChevronRight, Download, ExternalLink, FolderOpen, Puzzle, RefreshCw, Settings2, Trash2 } from "lucide-react";
-import { Button, Input, Switch } from "@/components/ui";
+import { Button, Input, Switch } from "rain-ui";
 import { ProviderIcon } from "@/components/ProviderIcon";
-import { useConfirmAction } from "@/components/ConfirmDialog/useConfirmAction";
+import { useConfirmAction } from "rain-ui";
 import { configureModelPlugin, installModelPlugin, listModelPlugins, probeModelPlugin, refreshModelPlugin, setModelPluginEnabled, uninstallModelPlugin, type ModelPlugin } from "@/platform/modelPlugins";
 import { checkEnvironmentTool, downloadEnvironmentTool, type EnvironmentToolDownloadProgress } from "@/platform/api";
 import { installWithPluginEnvironments, missingPluginEnvironments } from "@/platform/pluginEnvironments";
 import { formatInvokeError, isTauri, listen, openFile } from "@/platform/runtime";
 import { openExternalLink } from "@/platform/externalLinks";
-import { useSettingsNotification } from "./SettingsNotification";
+import { usePortal } from "rain-ui";
 import "./plugins-panel.css";
 import { HostPluginsPanel } from "./HostPluginsPanel";
 import { checkPluginUpdates, hasPluginUpdate, type PluginUpdate } from "@/platform/pluginUpdates";
 
 export function PluginsPanel() {
-  const notify = useSettingsNotification();
+  const portal = usePortal();
   const { confirmAction, confirmationDialog } = useConfirmAction();
   const [plugins, setPlugins] = useState<ModelPlugin[]>([]);
   const [busy, setBusy] = useState("");
@@ -74,8 +74,8 @@ export function PluginsPanel() {
     executing.current = true; setBusy(key);
     try {
       await operation(); await reload();
-      if (mounted.current) notify(message, "success");
-    } catch (reason) { if (rethrow) throw reason; if (mounted.current) notify(formatInvokeError(reason), "error"); }
+      if (mounted.current) portal(message, "success");
+    } catch (reason) { if (rethrow) throw reason; if (mounted.current) portal(formatInvokeError(reason), "error"); }
     finally { executing.current = false; activeRuntime.current = null; if (mounted.current) { setBusy(""); setInstallProgress(""); } }
   };
   const installPlugin = async (plugin: ModelPlugin, message: string) => {
@@ -86,7 +86,7 @@ export function PluginsPanel() {
     try {
       missing = await missingPluginEnvironments(plugin.requiredEnvironmentTools, checkEnvironmentTool);
     } catch (reason) {
-      if (mounted.current) notify(formatInvokeError(reason), "error");
+      if (mounted.current) portal(formatInvokeError(reason), "error");
       return;
     } finally {
       executing.current = false;
@@ -107,7 +107,7 @@ export function PluginsPanel() {
     }
     confirmAction({
       title: "安装插件运行环境",
-      message: `${plugin.name} 需要安装 ${missing.map((runtime) => runtime.name).join("、")}。将从官方源下载便携包，统一保存在环境与工具中${missing.some((runtime) => runtime.id === "node") ? "；Node.js 下载约 35 MB" : ""}。环境下载或校验失败时，插件不会安装或启动。`,
+      message: `${plugin.name} 需要安装 ${missing.map((runtime) => runtime.name).join("、")}。将从官方源下载便携包，统一保存在设置 → 环境中${missing.some((runtime) => runtime.id === "node") ? "；Node.js 下载约 35 MB" : ""}。环境下载或校验失败时，插件不会安装或启动。`,
       confirmLabel: "下载并安装插件",
       onConfirm: () => install(true, true),
     });
@@ -120,12 +120,12 @@ export function PluginsPanel() {
     {loading && <p className="setting-desc" role="status">正在读取插件…</p>}
     {checkingUpdates && <p className="setting-desc" role="status">正在检查插件更新…</p>}
     {updateError && <p className="setting-desc" role="status" title={updateError}>插件更新检查失败，下次打开时重试。</p>}
-    {error && <p className="setting-desc" role="alert">{error}<Button size="sm" onClick={() => void run("retry", reload, "插件列表已刷新。")}>重试</Button></p>}
+    {error && <p className="setting-desc" role="alert">{error}<Button onClick={() => void run("retry", reload, "插件列表已刷新。")}>重试</Button></p>}
     {isTauri() && <HostPluginsPanel updates={updates} availableModelPlugins={plugins.filter(plugin => !plugin.installedVersion).map(plugin => <PluginItem key={plugin.id} name={plugin.name} icon={<Puzzle size={18} />} status={plugin.status === "installing" ? "正在安装" : "可安装"}>
       <p className="setting-desc">{plugin.description}</p>
-      <div className="plugin-actions"><Button size="sm" variant="primary" loading={busy === `${plugin.id}:install`} disabled={Boolean(busy) || installing} icon={<Download size={14} />} onClick={() => void installPlugin(plugin, "插件已安装并启用。")}>安装</Button></div>
+      <div className="plugin-actions"><Button variant="default" loading={busy === `${plugin.id}:install`} disabled={Boolean(busy) || installing} icon={<Download size={14} />} onClick={() => void installPlugin(plugin, "插件已安装并启用。")}>安装</Button></div>
       {(busy === `${plugin.id}:install` ? installProgress : plugin.message) && <p className="setting-desc" role={plugin.status === "error" ? "alert" : "status"}>{busy === `${plugin.id}:install` ? installProgress : plugin.message}</p>}
-    </PluginItem>)} modelPlugins={plugins.some(plugin => plugin.installedVersion) ? plugins.filter(plugin => plugin.installedVersion).map((plugin) => <PluginEntry key={plugin.id} plugin={plugin} update={updates[plugin.id]} busy={busy} disabled={Boolean(busy) || installing} run={run} notify={notify}
+    </PluginItem>)} modelPlugins={plugins.some(plugin => plugin.installedVersion) ? plugins.filter(plugin => plugin.installedVersion).map((plugin) => <PluginEntry key={plugin.id} plugin={plugin} update={updates[plugin.id]} busy={busy} disabled={Boolean(busy) || installing} run={run} portal={portal}
       installPlugin={installPlugin}
       installProgress={busy.startsWith(`${plugin.id}:`) ? installProgress : ""}
       uninstall={() => confirmAction({ title: `卸载 ${plugin.name} 插件`, message: "停止插件并删除安装文件和插件配置。对话历史与原应用的登录状态保留。", confirmLabel: "卸载", onConfirm: () => run(`${plugin.id}:uninstall`, () => uninstallModelPlugin(plugin.id), "插件已卸载。", true) })} />) : undefined} />}
@@ -141,10 +141,10 @@ type EntryProps = {
   run: (key: string, operation: () => Promise<unknown>, message: string, rethrow?: boolean) => Promise<void>;
   installPlugin: (plugin: ModelPlugin, message: string) => Promise<void>;
   installProgress: string;
-  notify: ReturnType<typeof useSettingsNotification>;
+  portal: ReturnType<typeof usePortal>;
   uninstall: () => void;
 };
-function PluginEntry({ plugin, update, busy, disabled, run, notify, installPlugin, installProgress, uninstall }: EntryProps) {
+function PluginEntry({ plugin, update, busy, disabled, run, portal, installPlugin, installProgress, uninstall }: EntryProps) {
   const settings = useRef<HTMLDetailsElement>(null);
   const { confirmAction: confirmProbe, confirmationDialog: probeDialog } = useConfirmAction();
   const [draft, setDraft] = useState({ authFileCn: plugin.authFileCn, authFileAi: plugin.authFileAi, electronFileCn: plugin.electronFileCn || "", electronFileAi: plugin.electronFileAi || "" });
@@ -154,7 +154,7 @@ function PluginEntry({ plugin, update, busy, disabled, run, notify, installPlugi
   const action = (kind: string, operation: () => Promise<unknown>, message: string) => void run(`${plugin.id}:${kind}`, operation, message);
   const browse = async (key: keyof typeof draft, label: string) => {
     try { const path = await openFile(`选择 ${label}`); if (path) setDraft((value) => ({ ...value, [key]: path })); }
-    catch (reason) { notify(formatInvokeError(reason), "error"); }
+    catch (reason) { portal(formatInvokeError(reason), "error"); }
   };
   const ready = plugin.enabled && plugin.accounts.some((account) => account.state === "signed-in");
   const status = plugin.status === "installing" ? "正在安装" : !plugin.installedVersion ? "未安装" : !plugin.enabled ? "已停用" : ready ? "已连接" : "待连接";
@@ -164,17 +164,17 @@ function PluginEntry({ plugin, update, busy, disabled, run, notify, installPlugi
       {probeDialog}
       <p className="setting-desc">{plugin.description}</p>
       <div className="plugin-controls">
-          <Button size="sm" variant="subtle" icon={<Settings2 size={14} />} onClick={() => { if (settings.current) { settings.current.open = !settings.current.open; if (settings.current.open) settings.current.scrollIntoView({ block: "nearest" }); } }}>插件设置</Button>
+          <Button variant="ghost" icon={<Settings2 size={14} />} onClick={() => { if (settings.current) { settings.current.open = !settings.current.open; if (settings.current.open) settings.current.scrollIntoView({ block: "nearest" }); } }}>插件设置</Button>
           <div className="plugin-control-tools">
-          <Button size="sm" variant="subtle" className="skill-icon-button" aria-label={`刷新 ${plugin.name} 账号与额度`} title="刷新账号与额度" loading={busy === `${plugin.id}:refresh`} disabled={disabled} icon={<RefreshCw size={14} />} onClick={() => action("refresh", () => refreshModelPlugin(plugin.id), "刷新完成，请查看账号与额度状态。")}/>
-          <Button size="sm" variant="subtle" className="skill-icon-button btn-danger-hover" aria-label={`卸载 ${plugin.name} 插件`} title="卸载插件" disabled={disabled} icon={<Trash2 size={14} />} onClick={uninstall}/>
+          <Button variant="ghost" className="skill-icon-button" aria-label={`刷新 ${plugin.name} 账号与额度`} title="刷新账号与额度" loading={busy === `${plugin.id}:refresh`} disabled={disabled} icon={<RefreshCw size={14} />} onClick={() => action("refresh", () => refreshModelPlugin(plugin.id), "刷新完成，请查看账号与额度状态。")}/>
+          <Button variant="ghost" className="skill-icon-button btn-danger-hover" aria-label={`卸载 ${plugin.name} 插件`} title="卸载插件" disabled={disabled} icon={<Trash2 size={14} />} onClick={uninstall}/>
           </div>
-          <Switch className="plugin-control-start" checked={plugin.enabled} disabled={disabled} aria-label={`启用 ${plugin.name} 插件`} onChange={(enabled) => action("toggle", () => setModelPluginEnabled(plugin.id, enabled), enabled ? "插件已启用。" : "插件已停用。")} />
+          <Switch className="plugin-control-start" checked={plugin.enabled} disabled={disabled} aria-label={`启用 ${plugin.name} 插件`} onCheckedChange={(enabled) => action("toggle", () => setModelPluginEnabled(plugin.id, enabled), enabled ? "插件已启用。" : "插件已停用。")} />
       </div>
       <div className="plugin-links">
-          {(hasPluginUpdate(plugin.installedVersion, availableVersion) || plugin.status === "error") && <Button size="sm" variant="secondary" disabled={disabled} loading={busy === `${plugin.id}:install`} onClick={() => void installPlugin(plugin, "插件已更新。")}>{hasPluginUpdate(plugin.installedVersion, availableVersion) ? `更新 v${availableVersion}` : "重新安装"}</Button>}
+          {(hasPluginUpdate(plugin.installedVersion, availableVersion) || plugin.status === "error") && <Button variant="outline" disabled={disabled} loading={busy === `${plugin.id}:install`} onClick={() => void installPlugin(plugin, "插件已更新。")}>{hasPluginUpdate(plugin.installedVersion, availableVersion) ? `更新 v${availableVersion}` : "重新安装"}</Button>}
         {update?.error && <span className="setting-desc" title={update.error}>更新检查失败，下次打开时重试</span>}
-        <Button size="sm" variant="subtle" icon={<ExternalLink size={14} />} onClick={() => void openExternalLink(plugin.source).catch((reason) => notify(formatInvokeError(reason), "error"))}>来源</Button>
+        <Button variant="ghost" icon={<ExternalLink size={14} />} onClick={() => void openExternalLink(plugin.source).catch((reason) => portal(formatInvokeError(reason), "error"))}>来源</Button>
       </div>
       {installProgress ? <p className="setting-desc" role="status">{installProgress}</p> : (plugin.status === "installing" || plugin.status === "error") && <p className="setting-desc" role={plugin.status === "error" ? "alert" : "status"}>{plugin.message}</p>}
       {plugin.accounts.map((account) => <div className="plugin-account" key={account.id}>
@@ -187,7 +187,7 @@ function PluginEntry({ plugin, update, busy, disabled, run, notify, installPlugi
       </div>)}
       {plugin.supportsReasoningProbe && plugin.accounts.some((account) => account.reasoningModels?.length) && <details className="plugin-advanced plugin-reasoning">
         <summary className="plugin-advanced-summary"><Settings2 size={14} /><span>推理档位检测</span><ChevronRight size={14} className="plugin-config-chevron" /></summary>
-        <p className="setting-desc">检测会发送少量真实请求，可能消耗积分。结果按账号缓存 14 天；目录声明的档位优先使用。</p>
+        <p className="setting-desc">会发送少量真实请求，可能消耗积分。</p>
         {plugin.accounts.filter((account) => account.reasoningModels?.length).map((account) => <div key={account.id}>
           {plugin.accounts.filter((item) => item.reasoningModels?.length).length > 1 && <p className="setting-title">{account.name}</p>}
           {account.reasoningModels?.map((model) => {
@@ -204,7 +204,7 @@ function PluginEntry({ plugin, update, busy, disabled, run, notify, installPlugi
               <span className={`plugin-reasoning-result${model.efforts.length ? " has-efforts" : ""}`}>
                 {model.efforts.length ? model.efforts.join(" / ") : !model.supportsReasoning ? "不支持思考" : model.validation === "non-validating" ? "不校验档位 · 无法验证" : model.probedAt && model.validation === "validating" ? "无可用档位" : model.probedAt ? "检测未完成" : "档位未检测"}
               </span>
-              {model.canProbe && providerId && <Button size="xs" variant="secondary" disabled={disabled || model.probing} loading={busy === key || model.probing}
+              {model.canProbe && providerId && <Button variant="outline" disabled={disabled || model.probing} loading={busy === key || model.probing}
                 onClick={() => confirmProbe({ title: `检测 ${model.name} 推理档位`, message: "将发送少量测试请求，可能消耗账号积分。检测结果只用于当前账号。", confirmLabel: "开始检测",
                   onConfirm: () => run(key, () => probeModelPlugin(providerId, model.id), "检测完成，模型思考强度已更新。", true) })}>{model.probedAt ? "重新检测" : "开始检测"}</Button>}
             </div>;
@@ -216,10 +216,11 @@ function PluginEntry({ plugin, update, busy, disabled, run, notify, installPlugi
       <p className="setting-desc">{plugin.advancedHint}</p>
       {fields.map(({ key, label }) => <div className="plugin-config-row" key={key}>
         <label className="setting-desc" htmlFor={`${plugin.id}-${key}`}>{label}</label>
-        <Input id={`${plugin.id}-${key}`} size="sm" value={draft[key]} placeholder="自动检测（留空）" disabled={disabled} onChange={(event) => setDraft((value) => ({ ...value, [key]: event.target.value }))}/>
-        <Button size="sm" variant="subtle" className="skill-icon-button" aria-label={`选择 ${label}`} disabled={disabled} icon={<FolderOpen size={14}/>} onClick={() => void browse(key, label)}/>
+        <Input id={`${plugin.id}-${key}`} value={draft[key]} placeholder="自动检测（留空）" disabled={disabled} onChange={(event) => setDraft((value) => ({ ...value, [key]: event.target.value }))}/>
+        <Button variant="ghost" className="skill-icon-button" aria-label={`选择 ${label}`} disabled={disabled} icon={<FolderOpen size={14}/>} onClick={() => void browse(key, label)}/>
       </div>)}
-      <div className="skills-actions plugin-actions"><Button size="sm" variant="primary" disabled={disabled} loading={busy === `${plugin.id}:save`} onClick={() => action("save", () => configureModelPlugin(plugin.id, draft.authFileCn, draft.authFileAi, draft.electronFileCn, draft.electronFileAi), "插件配置已保存。")}>保存配置</Button></div>
+      <div className="skills-actions plugin-actions"><Button variant="default" disabled={disabled} loading={busy === `${plugin.id}:save`} onClick={() => action("save", () => configureModelPlugin(plugin.id, draft.authFileCn, draft.authFileAi, draft.electronFileCn, draft.electronFileAi), "插件配置已保存。")}>保存配置</Button></div>
       </details>
   </PluginItem>;
 }
+

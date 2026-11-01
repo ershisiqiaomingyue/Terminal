@@ -1,0 +1,108 @@
+/**
+ * ============================================================================
+ * rain-ui 基础原子层 (Base)
+ * ----------------------------------------------------------------------------
+ * 这一层在 tokens / typography 之后、所有组件之前加载。它负责三件事：
+ *   1. 盒模型与根高度 —— 组件库跑在别人的页面里，不能假设宿主做过 reset；
+ *   2. 键盘焦点 —— 全库唯一的可见焦点环；
+ *   3. 滚动条 —— 避免 Windows 默认那根 17px 灰条破坏所有面板的对齐。
+ *
+ * 注意：index.css 是单文件合集，本文件的原文会被 scripts/sync-monolith.mjs
+ * 按 `/* ---- ./base.css ---- *\/` 标记整段抄进去。改这里即可，不要直接改
+ * index.css 里的副本——下次同步会覆盖。
+ * ============================================================================
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* 宿主表单控件默认不继承字体，这一条让它们跟随已选界面字体 */
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+textarea {
+  scrollbar-gutter: stable;
+  resize: vertical;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+/* 焦点：全库只有一个可见焦点环。
+   原应用把 :focus-visible 写成"换一层背景"，结果键盘焦点和"选中态"长得一样，
+   按 Tab 时按钮从实心变白，反而更像失效了。这里统一用 outline，
+   并且用 :where() 把权重压到极低，组件自己的写法可以正常覆盖。 */
+:where(button, [role="button"], a, input, textarea, select, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+/* 鼠标点击不显示焦点环，只有键盘才显示（:focus-visible 本身已保证，
+   这条是给旧浏览器兜底） */
+:where(button, [role="button"], a, [tabindex]):focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* 滚动条：Windows 默认 17px 宽、带箭头按钮，会把所有面板的右边缘顶歪 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-medium, #3a4150) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--border-medium, #3a4150);
+  border-radius: var(--radius-full);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong, #4b5364);
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+/* WebView2 / Edge 会给密码框注入原生显隐按钮。
+   仅在 Rain UI 自带尾部按钮的 InputGroup 中隐藏，避免影响普通密码输入框。 */
+[data-slot="input-group-control"][type="password"]::-ms-reveal,
+[data-slot="input-group-control"][type="password"]::-ms-clear {
+  display: none;
+  width: 0;
+  height: 0;
+}
+

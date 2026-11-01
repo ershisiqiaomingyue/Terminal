@@ -1,4 +1,4 @@
-import { Attachment, attachmentKindOf, type AttachmentKind } from "@/components/ui";
+import { Attachment, attachmentKindOf, type AttachmentKind } from "rain-ui";
 import type { ChatSource } from "./types";
 import { formatBytes } from "./chatSources";
 import { AttachmentImage } from "./AttachmentImage";

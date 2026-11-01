@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { ClipboardList, FolderOpen, ListPlus, LoaderCircle, MessageCircleQuestion, ShieldCheck } from "lucide-react";
-import { NoticePanel, type NoticeTone } from "@/components/ui/NoticePanel";
+import { NoticePanel, type NoticeTone } from "rain-ui";
 import type { ToolGroupPresentationState } from "./timelinePresentation";
 
 type NoticeKind = "plan" | "background" | "queue" | "permission" | "question" | "compaction" | "files";

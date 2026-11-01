@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from "react";
 import { Check, CircleAlert, Copy, Download, Pencil } from "lucide-react";
 import { type AgentEventPayload, type AgentRunSummary } from "@/platform/chatApi";
-import { Button } from "@/components/ui/Button";
-import { Spinner } from "@/components/ui";
+import { Button } from "rain-ui";
+import { Spinner } from "rain-ui";
 import { MarkdownMessage } from "./MarkdownMessage";
 import { AgentActivityTimeline } from "./AgentActivityTimeline";
 import { ToolActivityStatus } from "./ToolActivityStatus";
@@ -137,7 +137,7 @@ export const ChatMessageRow = React.memo(function ChatMessageRow({
     ? <div className="history-process-controls">
       {process.loading && <span role="status"><Spinner size={13} className="is-inline" />正在读取执行过程…</span>}
       {process.error && <span role="alert">执行过程读取失败。</span>}
-      {(process.hasMore || process.error) && <Button type="button" variant="secondary" size="xs" icon={<Download size={13} />} disabled={process.loading} onClick={() => void process.load()}>{process.error ? "重试" : "加载更多执行过程"}</Button>}
+      {(process.hasMore || process.error) && <Button type="button" variant="secondary" icon={<Download size={13} />} disabled={process.loading} onClick={() => void process.load()}>{process.error ? "重试" : "加载更多执行过程"}</Button>}
     </div> : null;
 
   return <article data-index={index} data-message-id={item.id} className={`message-row ${item.role}${item.pending ? " is-streaming" : ""}${item.error ? " is-error" : ""}`}>
@@ -171,20 +171,20 @@ export const ChatMessageRow = React.memo(function ChatMessageRow({
         </div>
       )}
       {!item.pending && copyText && <div className={`message-actions${showPersistentMessageActions ? " persistent" : ""}`}>
-        <button type="button" title={copied ? "已复制" : "复制消息"} onClick={() => onCopy(item.id, copyText)}>
+        <Button type="button" variant="bare" title={copied ? "已复制" : "复制消息"} onClick={() => onCopy(item.id, copyText)}>
           {copied ? <Check size={13} /> : <Copy size={13} />}
-        </button>
+        </Button>
         {item.role === "user" ? (
           /* 用户自己发出去的消息只留「复制 + 编辑」：分叉是从某轮回答往后开一支，时间
              戳对刚敲出去的话也没有信息量，这两样都归助手那侧。 */
-          <button type="button" title="编辑并从此处继续" aria-label="编辑并从此处继续" onClick={() => onEdit(item)}>
+          <Button type="button" variant="bare" title="编辑并从此处继续" aria-label="编辑并从此处继续" onClick={() => onEdit(item)}>
             <Pencil size={13} />
-          </button>
+          </Button>
         ) : (
           <>
-            {onFork && <button type="button" title="分叉对话" aria-label="分叉对话" onClick={onFork}>
+            {onFork && <Button type="button" variant="bare" title="分叉对话" aria-label="分叉对话" onClick={onFork}>
               <BranchIcon size={14} />
-            </button>}
+            </Button>}
             <time className="message-actions-time">{formatHistoryTime(item.createdAt)}</time>
           </>
         )}

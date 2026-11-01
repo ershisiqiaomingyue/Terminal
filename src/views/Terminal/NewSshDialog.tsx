@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Button } from "@/components/ui";
+import { Button } from "rain-ui";
 import { SettingsEditDialog } from "@/components/SettingsModal/SettingsEditDialog";
+import { SettingsActions, SettingsCard } from "@/components/SettingsModal/settingsUI";
 import {
   EMPTY_SSH_VALUES,
   SshConnectionFields,
@@ -8,7 +9,7 @@ import {
   type SshConnectionValues,
 } from "@/components/SettingsModal/SshConnectionFields";
 import { countActiveSshTerminals, saveSshConnection, testSshConnectionConfig, type SshConnection } from "@/platform/api";
-import { useConfirmAction } from "@/components/ConfirmDialog/useConfirmAction";
+import { useConfirmAction } from "rain-ui";
 import { formatInvokeError } from "@/platform/runtime";
 
 /** 编辑现有连接时需要回填的只读字段（其余字段由 `sshValuesFromConnection` 转换）。 */
@@ -130,21 +131,21 @@ export const NewSshDialog: React.FC<NewSshDialogProps> = ({ editing, onCreated, 
   };
 
   return (
-    <SettingsEditDialog title={isEdit ? "编辑 SSH 连接" : "新建 SSH 连接"} busy={busy} onClose={onClose} className="terminal-ssh-dialog">
-      <div className="setting-card-group">
+    <SettingsEditDialog title={isEdit ? "编辑 SSH 连接" : "新建 SSH 连接"} busy={busy} onClose={onClose} className="!max-w-[560px]">
+      <SettingsCard>
         <SshConnectionFields values={values} onChange={patch} disabled={busy} />
-        <div className="setting-row-item" style={{ background: "var(--bg-surface)", justifyContent: "flex-end", gap: 10 }}>
-          <Button size="sm" variant="secondary" disabled={busy} onClick={() => void testDraft()}>
+        <SettingsActions>
+          <Button variant="secondary" disabled={busy} onClick={() => void testDraft()}>
             测试连接
           </Button>
-          <Button size="sm" variant="secondary" disabled={busy} onClick={onClose}>
+          <Button variant="secondary" disabled={busy} onClick={onClose}>
             取消
           </Button>
-          <Button size="sm" variant="primary" disabled={busy || !complete} onClick={() => void save()}>
+          <Button variant="default" disabled={busy || !complete} onClick={() => void save()}>
             {isEdit ? "保存修改" : "保存并连接"}
           </Button>
-        </div>
-      </div>
+        </SettingsActions>
+      </SettingsCard>
       {confirmationDialog}
     </SettingsEditDialog>
   );

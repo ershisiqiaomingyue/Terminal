@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Copy, ExternalLink, FolderOpen } from "lucide-react";
-import { ContextMenu } from "@/components/ui";
-import { FileChangeNotice } from "@/components/ui/FileChangeNotice";
+import { ContextMenu } from "rain-ui";
+import { FileChangeNotice } from "rain-ui";
 import { formatInvokeError, invoke } from "@/platform/runtime";
 import { ComposerNoticeSlot } from "./ComposerNoticeDock";
 import { fileChangeEntries } from "./ChatTaskPanels";

@@ -3,8 +3,8 @@ import { createPortal } from "react-dom";
 import { Check, ChevronDown, Plus, RotateCcw, Search, Settings2 } from "lucide-react";
 import type { AgentModelSettings, AgentProvider } from "@/platform/api";
 import { effectiveReasoningEffort, type ReasoningEffort } from "@/platform/modelCapabilities";
-import { Input } from "@/components/ui/Input";
-import { Button } from "@/components/ui/Button";
+import { Input } from "rain-ui";
+import { Button } from "rain-ui";
 import { ProviderIcon } from "@/components/ProviderIcon";
 import "./agent-model-picker.css";
 
@@ -245,39 +245,38 @@ export const AgentModelPicker: React.FC<AgentModelPickerProps> = ({
       style={{ position: "fixed", top: `${menuPlacement.top}px`, right: `${menuPlacement.right}px`, bottom: "auto", maxHeight: `${menuPlacement.maxHeight}px`, overflow: "visible" }}
     >
       <div className="agent-model-menu-row-wrap">
-        <button type="button" className="agent-model-menu-row" disabled={!providers.length} onClick={() => { setProviderMenuOpen((value) => !value); setModelMenuOpen(false); setInferenceMenuOpen(false); }}>
+        <Button type="button" variant="bare" className="agent-model-menu-row" disabled={!providers.length} onClick={() => { setProviderMenuOpen((value) => !value); setModelMenuOpen(false); setInferenceMenuOpen(false); }}>
           <span>供应商</span>
           <span className="agent-model-menu-value">{provider?.name || "未配置 Provider"}</span>
           <ChevronDown size={14} className={providerMenuOpen ? "rotated" : ""} />
-        </button>
+        </Button>
         {providerMenuOpen && providers.length > 0 && <div ref={optionsRef} className="agent-model-options agent-provider-options" style={{ position: "fixed", top: `${optionsPlacement.top}px`, right: `${optionsPlacement.right}px`, bottom: "auto", maxHeight: `${optionsPlacement.maxHeight}px` }}>
-          {providers.map((item) => <button key={item.id} type="button" className={`agent-model-option agent-provider-option${item.id === provider?.id ? " selected" : ""}`} onClick={() => chooseProvider(item)}>
+          {providers.map((item) => <Button key={item.id} type="button" variant="bare" className={`agent-model-option agent-provider-option${item.id === provider?.id ? " selected" : ""}`} onClick={() => chooseProvider(item)}>
             <ProviderIcon brand={item.brand || "custom"} size={20} />
             <span className="agent-provider-label"><b>{item.name}</b><small>{item.kind.replace(/_/g, " ")} · {providerModels(item).length} 个模型</small></span>
             {item.id === provider?.id && <Check size={14} />}
-          </button>)}
+          </Button>)}
           {!providers.length && <span className="agent-model-option-empty">未配置 Provider</span>}
           <div className="agent-model-menu-divider" />
-          <button type="button" className="agent-model-option agent-add-provider-option" onClick={openSettings}><Settings2 size={13} /><span>添加供应商</span><Plus size={13} /></button>
+          <Button type="button" variant="bare" className="agent-model-option agent-add-provider-option" onClick={openSettings}><Settings2 size={13} /><span>添加供应商</span><Plus size={13} /></Button>
         </div>}
       </div>
       <div className="agent-model-menu-row-wrap">
-        <button type="button" className="agent-model-menu-row" disabled={!models.length} onClick={() => { setModelMenuOpen((value) => !value); setProviderMenuOpen(false); setInferenceMenuOpen(false); setQuery(""); }}>
+        <Button type="button" variant="bare" className="agent-model-menu-row" disabled={!models.length} onClick={() => { setModelMenuOpen((value) => !value); setProviderMenuOpen(false); setInferenceMenuOpen(false); setQuery(""); }}>
           <span>模型</span>
           <span className="agent-model-menu-value">{model?.name || "未配置模型"}</span>
           <ChevronDown size={14} className={modelMenuOpen ? "rotated" : ""} />
-        </button>
+        </Button>
         {modelMenuOpen && models.length > 0 && <div ref={optionsRef} className="agent-model-options agent-model-list-options" style={{ position: "fixed", top: `${optionsPlacement.top}px`, right: `${optionsPlacement.right}px`, bottom: "auto", maxHeight: `${optionsPlacement.maxHeight}px` }}>
           <div className="agent-model-search">
             <Input
-              size="sm"
               prefixIcon={<Search size={13} />}
               value={query}
               placeholder="搜索模型"
               onChange={(event) => setQuery(event.target.value)}
             />
           </div>
-          {visibleModels.map((item) => <button key={item.id} type="button" className={`agent-model-option agent-model-option-with-meta${item.id === model?.id ? " selected" : ""}`} onClick={() => chooseModel(item.id)}>
+          {visibleModels.map((item) => <Button key={item.id} type="button" variant="bare" className={`agent-model-option agent-model-option-with-meta${item.id === model?.id ? " selected" : ""}`} onClick={() => chooseModel(item.id)}>
             <ProviderIcon brand={item.iconBrand || provider?.brand || "custom"} size={16} />
             <span className="agent-model-option-label"><b title={item.name}>{item.name}</b>
               {item.billing?.badges.map((badge) => <span key={badge} className={`agent-model-promotion${item.billing?.free ? " is-free" : ""}`}>{badge}</span>)}
@@ -287,14 +286,14 @@ export const AgentModelPicker: React.FC<AgentModelPickerProps> = ({
               {!item.billing.rateUnknown && item.billing.multiplier != null && Number.isFinite(item.billing.multiplier) ? `${item.billing.multiplier.toFixed(2)}x` : "—"}
             </span>}
             <span className="agent-model-selection-mark">{item.id === model?.id && <Check size={14} />}</span>
-          </button>)}
+          </Button>)}
           {!visibleModels.length && <span className="agent-model-option-empty">{models.length ? "没有匹配的模型" : "该 Provider 未保存模型"}</span>}
           <div className="agent-model-menu-divider" />
-          <button type="button" className="agent-model-option agent-add-provider-option" onClick={openSettings}><Settings2 size={13} /><span>添加供应商</span><Plus size={13} /></button>
+          <Button type="button" variant="bare" className="agent-model-option agent-add-provider-option" onClick={openSettings}><Settings2 size={13} /><span>添加供应商</span><Plus size={13} /></Button>
         </div>}
       </div>
       {inferenceLevel && onInferenceLevelChange && <div className="agent-model-menu-row-wrap">
-        <button type="button" className="agent-model-menu-row" disabled={!inferenceEnabled} aria-expanded={inferenceMenuOpen} onClick={() => {
+        <Button type="button" variant="bare" className="agent-model-menu-row" disabled={!inferenceEnabled} aria-expanded={inferenceMenuOpen} onClick={() => {
           setInferenceMenuOpen((value) => !value);
           setProviderMenuOpen(false);
           setModelMenuOpen(false);
@@ -302,11 +301,11 @@ export const AgentModelPicker: React.FC<AgentModelPickerProps> = ({
           <span>推理强度</span>
           <span className="agent-model-menu-value">{inferenceEnabled ? inferenceLabel : model?.supportsReasoning ? "固定思考模式" : "不可用"}</span>
           <ChevronDown size={14} className={inferenceMenuOpen ? "rotated" : ""} />
-        </button>
+        </Button>
         {inferenceMenuOpen && inferenceEnabled && <div ref={optionsRef} className="agent-model-options agent-inference-options" style={{ position: "fixed", top: `${optionsPlacement.top}px`, right: `${optionsPlacement.right}px`, bottom: "auto", maxHeight: `${optionsPlacement.maxHeight}px` }}>
           <div className="agent-inference-heading">
             <span>推理强度</span>
-            <Button type="button" variant="subtle" size="xs" className="agent-inference-reset" title="恢复默认推理强度" aria-label="恢复默认推理强度" icon={<RotateCcw size={14} />} onClick={() => onInferenceLevelChange(inferenceLevels.find((level) => level.value === "medium")?.value || inferenceLevels[0].value)} />
+            <Button type="button" variant="ghost" className="agent-inference-reset" title="恢复默认推理强度" aria-label="恢复默认推理强度" icon={<RotateCcw size={14} />} onClick={() => onInferenceLevelChange(inferenceLevels.find((level) => level.value === "medium")?.value || inferenceLevels[0].value)} />
           </div>
           <div className="agent-inference-model" title={model?.name}>{model?.name}</div>
           <div className={`agent-inference-track${inferenceIndex === 0 ? " at-minimum" : ""}`} style={{ "--inference-progress": inferenceIndex / Math.max(1, inferenceLevels.length - 1) } as React.CSSProperties}>
@@ -316,11 +315,11 @@ export const AgentModelPicker: React.FC<AgentModelPickerProps> = ({
             <span className="agent-inference-thumb" aria-hidden="true" />
             <input type="range" min={0} max={inferenceLevels.length - 1} step={1} value={inferenceIndex} aria-label="推理强度" aria-valuetext={inferenceLabel} onChange={(event) => onInferenceLevelChange(inferenceLevels[Number(event.target.value)].value)} />
           </div>
-          <div className="agent-inference-labels" role="group" aria-label="推理强度档位">{inferenceLevels.map((level) => <button type="button" key={level.value} aria-pressed={level.value === currentEffort} onClick={() => onInferenceLevelChange(level.value)}>{level.label}</button>)}</div>
+          <div className="agent-inference-labels" role="group" aria-label="推理强度档位">{inferenceLevels.map((level) => <Button type="button" variant="bare" key={level.value} aria-pressed={level.value === currentEffort} onClick={() => onInferenceLevelChange(level.value)}>{level.label}</Button>)}</div>
         </div>}
       </div>}
       <div className="agent-model-menu-divider" />
-      <button type="button" className="agent-model-option agent-add-provider-option" onClick={openSettings}><Settings2 size={13} /><span>添加供应商</span><Plus size={13} /></button>
+      <Button type="button" variant="bare" className="agent-model-option agent-add-provider-option" onClick={openSettings}><Settings2 size={13} /><span>添加供应商</span><Plus size={13} /></Button>
     </div></div>, document.body)}
   </div>;
 };

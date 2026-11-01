@@ -254,6 +254,16 @@ export const checkAgentProvider = (request: AgentProviderCheckInput) =>
 export const discoverAgentModels = (request: Omit<AgentProviderCheckInput, "model" | "inputPricePerMillion" | "outputPricePerMillion">) =>
   invoke<AgentModelSettings[]>("discover_agent_models", { request });
 
+export const testAgentProviderChat = (request: {
+  id: string;
+  name: string;
+  kind: string;
+  baseUrl: string;
+  model: string;
+  apiKey?: string | null;
+  message: string;
+}) => invoke<{ text: string }>("test_agent_provider_chat", { request });
+
 export const listSkills = () => invoke<SkillCatalog>("list_skills");
 
 export const readSkillDetails = (skill: SkillSummary) =>

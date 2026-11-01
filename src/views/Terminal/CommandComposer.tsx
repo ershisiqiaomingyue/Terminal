@@ -12,7 +12,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import { AlertCircle, CornerDownLeft, ShieldAlert, Sparkles, Wand2, X } from "lucide-react";
-import { Button, Spinner } from "@/components/ui";
+import { Button, Spinner } from "rain-ui";
 import { terminalAiDeps } from "@/platform/terminal/ai/terminalAiDeps.ts";
 import { confirmationToken, draftAsMultiline } from "@/platform/terminal/ai/commandComposer.ts";
 import type { ComposerTarget } from "@/platform/terminal/ai/commandComposer.ts";
@@ -202,7 +202,7 @@ export const CommandComposer: React.FC<CommandComposerProps> = ({
           <Wand2 size={14} />
           <span>用一句话描述要做什么</span>
         </div>
-        <Button variant="bare" size="sm" icon={<X size={14} />} aria-label="关闭" title="关闭（Esc）" onClick={onClose} />
+        <Button variant="bare" icon={<X size={14} />} aria-label="关闭" title="关闭（Esc）" onClick={onClose} />
       </header>
 
       {blocked && (
@@ -235,7 +235,6 @@ export const CommandComposer: React.FC<CommandComposerProps> = ({
         />
         <Button
           variant="secondary"
-          size="sm"
           disabled={blocked || busy || !state.nl.trim()}
           onClick={() => void run()}
           title="把需求交给模型生成命令草稿"
@@ -279,8 +278,8 @@ export const CommandComposer: React.FC<CommandComposerProps> = ({
                 }
               }}
             />
-            <button
-              type="button"
+            <Button
+              type="button" variant="bare"
               className="command-composer-risk"
               data-risk={state.risk}
               title={
@@ -291,7 +290,7 @@ export const CommandComposer: React.FC<CommandComposerProps> = ({
             >
               {state.risk !== "read-only" && <ShieldAlert size={12} />}
               {RISK_LABEL[state.risk]}
-            </button>
+            </Button>
           </div>
 
           {state.explanation && <div className="command-composer-explain">{state.explanation}</div>}
@@ -321,7 +320,7 @@ export const CommandComposer: React.FC<CommandComposerProps> = ({
               ) : (
                 <>
                   <span>这条命令会改变设备或系统状态。</span>
-                  <Button variant="secondary" size="sm" onClick={() => dispatch({ type: "confirm" })}>
+                  <Button variant="secondary" onClick={() => dispatch({ type: "confirm" })}>
                     我已确认，允许执行
                   </Button>
                 </>
@@ -332,7 +331,7 @@ export const CommandComposer: React.FC<CommandComposerProps> = ({
           {remainingCount(state) > 0 && (
             <div className="command-composer-more">
               还有 {remainingCount(state)} 条待确认命令，执行完这条后逐条继续。
-              <Button variant="bare" size="xs" onClick={insertAll} title="把剩余命令一次性插入输入框，不执行">
+              <Button variant="bare" onClick={insertAll} title="把剩余命令一次性插入输入框，不执行">
                 全部插入
               </Button>
             </div>
@@ -341,7 +340,6 @@ export const CommandComposer: React.FC<CommandComposerProps> = ({
           <div className="command-composer-actions">
             <Button
               variant="secondary"
-              size="sm"
               icon={<Sparkles size={13} />}
               disabled={!gate.ok}
               onClick={execute}
@@ -349,7 +347,7 @@ export const CommandComposer: React.FC<CommandComposerProps> = ({
             >
               执行
             </Button>
-            <Button variant="bare" size="sm" onClick={insertOnly} title="插入到终端输入框，需你自己回车">
+            <Button variant="bare" onClick={insertOnly} title="插入到终端输入框，需你自己回车">
               只插入
             </Button>
           </div>

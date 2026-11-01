@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ProgressRing, type ProgressRingSegment } from "@/components/ui";
+import { ProgressRing, type ProgressRingSegment } from "rain-ui";
 import { formatTokenCount } from "./tokenCount";
 
 type ContextAnomaly = { system: number; tools: number; total: number };

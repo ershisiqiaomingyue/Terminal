@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ToolActivityStatus } from "./ToolActivityStatus";
-import { NoticeBackgroundTask } from "@/components/ui/NoticeContent";
+import { NoticeBackgroundTask } from "rain-ui";
 import { invoke, isTauri, listen } from "@/platform/runtime";
 import { ComposerNoticeSlot } from "./ComposerNoticeDock";
 import { visibleBackgroundTasks, type BackgroundTaskTurn } from "./backgroundTaskVisibility";

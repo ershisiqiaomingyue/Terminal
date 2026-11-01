@@ -18,9 +18,10 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "rain-ui": ["../rain-ui/components/ui/index.ts"],
-      "rain-ui/*": ["../rain-ui/components/ui/*"]
+      "rain-ui": ["../rain-ui/src/index.ts"],
+      "rain-ui/*": ["../rain-ui/src/*"]
     }
   },
-  "include": ["src", "../rain-ui/components/ui"]
+  "include": ["src", "../rain-ui/src"]
 }
+

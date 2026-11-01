@@ -1,13 +1,13 @@
 import { PluginItem } from './PluginItem';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ArrowRight, ChevronRight, FileArchive, FolderOpen, Package, Plus, Puzzle, RefreshCw, Settings2, Trash2, X } from 'lucide-react';
-import { Button, Input, Switch } from '@/components/ui';
-import { useConfirmAction } from '@/components/ConfirmDialog/useConfirmAction';
+import { Button, Card, Input, Switch } from 'rain-ui';
+import { useConfirmAction } from 'rain-ui';
 import { checkEnvironmentTool, downloadEnvironmentTool, type EnvironmentToolDownloadProgress } from '@/platform/api';
 import { installWithPluginEnvironments, missingPluginEnvironments } from '@/platform/pluginEnvironments';
 import { discoverLocalPlugins, inspectHostPlugin, installHostPlugin, listHostPlugins, openPluginSettings, setHostPluginEnabled, uninstallHostPlugin, type HostPlugin, type LocalPlugin, type PluginInstallProgress } from '@/platform/plugins';
 import { formatInvokeError, isTauri, listen, openDirectory, openFile } from '@/platform/runtime';
-import { useSettingsNotification } from './SettingsNotification';
+import { usePortal } from "rain-ui";
 import { DownloadProgress } from './DownloadProgress';
 import { PluginSettingsFrame } from '@/components/PluginHost/PluginSettingsFrame';
 import { hasPluginUpdate, type PluginUpdate } from '@/platform/pluginUpdates';
@@ -26,7 +26,7 @@ export function HostPluginsPanel({ modelPlugins, availableModelPlugins, updates 
   const [localSource, setLocalSource] = useState<{ path: string; kind: 'archive' | 'directory' }>();
   const [download, setDownload] = useState<PluginInstallProgress>();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const notify = useSettingsNotification(), { confirmAction, confirmationDialog } = useConfirmAction();
+  const portal = usePortal(), { confirmAction, confirmationDialog } = useConfirmAction();
   const mounted = useRef(true), executing = useRef(false), activeEnvironment = useRef('');
   const activeRequest = useRef(''), subscription = useRef<Promise<unknown>>();
   const environmentSample = useRef({ time: 0, bytes: 0 });
@@ -36,8 +36,8 @@ export function HostPluginsPanel({ modelPlugins, availableModelPlugins, updates 
     if (!isTauri()) return;
     let active = true;
     const stops: (() => void)[] = [];
-    void reload().catch(error => notify(formatInvokeError(error), 'error'));
-    void discoverLocalPlugins().then(value => { if (mounted.current) setLocal(value); }).catch(error => notify(formatInvokeError(error), 'error'));
+    void reload().catch(error => portal(formatInvokeError(error), 'error'));
+    void discoverLocalPlugins().then(value => { if (mounted.current) setLocal(value); }).catch(error => portal(formatInvokeError(error), 'error'));
     for (const [event, callback] of [
       ['plugins-changed', () => { void reload().catch(() => {}); }],
       ['environment-tool-download-progress', (value: EnvironmentToolDownloadProgress) => {
@@ -66,14 +66,14 @@ export function HostPluginsPanel({ modelPlugins, availableModelPlugins, updates 
   async function run(operation: () => Promise<unknown>, success: string) {
     if (executing.current) return;
     executing.current = true; setBusy(true); setDownload(undefined);
-    try { await operation(); await reload(); if (mounted.current) notify(success, 'success'); }
-    catch (error) { if (mounted.current) notify(formatInvokeError(error), 'error'); throw error; }
+    try { await operation(); await reload(); if (mounted.current) portal(success, 'success'); }
+    catch (error) { if (mounted.current) portal(formatInvokeError(error), 'error'); throw error; }
     finally { executing.current = false; activeEnvironment.current = ''; activeRequest.current = ''; if (mounted.current) { setBusy(false); setProgress(''); setDownload(undefined); } }
   }
   async function install(value: string, requirements?: string[], successMessage = '插件已安装并加载。') {
     if (!value.trim() || executing.current) return;
     try { requirements ??= (await inspectHostPlugin(value)).requiredEnvironmentTools; }
-    catch (error) { notify(formatInvokeError(error), 'error'); return; }
+    catch (error) { portal(formatInvokeError(error), 'error'); return; }
     const perform = (allowDownload: boolean) => run(() => installWithPluginEnvironments(requirements, {
       check: checkEnvironmentTool, download: downloadEnvironmentTool, allowDownload,
       install: async () => {
@@ -95,7 +95,7 @@ export function HostPluginsPanel({ modelPlugins, availableModelPlugins, updates 
         message: `缺少 ${missing.map(value => value.name).join('、')}。将下载到共享环境；安装或校验失败时不会启动插件。`,
         confirmLabel: '下载并安装', onConfirm: () => perform(true) });
       else await perform(false);
-    } catch (error) { if (!executing.current && mounted.current) notify(formatInvokeError(error), 'error'); }
+    } catch (error) { if (!executing.current && mounted.current) portal(formatInvokeError(error), 'error'); }
   }
   // 没有任何已安装插件时整块（标题 + 卡片组）都不渲染：空白卡片比「暂无」更吵。
   const installedModelCount = Array.isArray(modelPlugins) ? modelPlugins.length : modelPlugins ? 1 : 0;
@@ -113,27 +113,27 @@ export function HostPluginsPanel({ modelPlugins, availableModelPlugins, updates 
           <form className="plugin-source-method plugin-source-npm" onSubmit={event => { event.preventDefault(); if (!busy) void install(source); }}>
             <div className="plugin-source-heading"><Package size={16} aria-hidden="true" /><h4>从 npm 安装</h4><span className="plugin-source-badge">在线</span></div>
             <p className="plugin-source-description">输入插件包名，获取并安装插件。</p>
-            <div className="plugin-add-row"><Input size="sm" aria-label="插件包名或本地路径" placeholder="@scope/plugin-name" value={source} onChange={event => setSource(event.target.value)} disabled={busy} />
-              <Button type="submit" size="sm" variant="primary" disabled={busy || !source.trim()}>安装</Button></div>
+            <div className="plugin-add-row"><Input aria-label="插件包名或本地路径" placeholder="@scope/plugin-name" value={source} onChange={event => setSource(event.target.value)} disabled={busy} />
+              <Button type="submit" variant="default" disabled={busy || !source.trim()}>安装</Button></div>
             <p className="plugin-source-hint">也支持直接粘贴本地路径</p>
           </form>
           <section className="plugin-source-method plugin-source-local" aria-label="从本机导入">
             <div className="plugin-source-heading"><FolderOpen size={16} aria-hidden="true" /><h4>从本机导入</h4><span className="plugin-source-badge">本地</span></div>
             <div className="plugin-source-options">
-              <button type="button" className="plugin-source-option" disabled={busy} onClick={() => { void openFile('选择插件压缩包', [{ name: '插件压缩包', extensions: ['tgz', 'tar.gz', 'zip'] }]).then(path => { if (path) setLocalSource({ path, kind: 'archive' }); }).catch(error => notify(formatInvokeError(error), 'error')); }}>
+              <Button type="button" variant="outline" className="plugin-source-option" disabled={busy} onClick={() => { void openFile('选择插件压缩包', [{ name: '插件压缩包', extensions: ['tgz', 'tar.gz', 'zip'] }]).then(path => { if (path) setLocalSource({ path, kind: 'archive' }); }).catch(error => portal(formatInvokeError(error), 'error')); }}>
                 <span className="plugin-source-option-icon"><FileArchive size={18} aria-hidden="true" /></span><span className="plugin-source-option-copy"><strong>选择压缩包</strong><span>.tgz / .tar.gz / .zip</span></span><ChevronRight size={14} aria-hidden="true" />
-              </button>
-              <button type="button" className="plugin-source-option" disabled={busy} onClick={() => { void openDirectory('选择插件目录').then(path => { if (path) setLocalSource({ path, kind: 'directory' }); }).catch(error => notify(formatInvokeError(error), 'error')); }}>
+              </Button>
+              <Button type="button" variant="outline" className="plugin-source-option" disabled={busy} onClick={() => { void openDirectory('选择插件目录').then(path => { if (path) setLocalSource({ path, kind: 'directory' }); }).catch(error => portal(formatInvokeError(error), 'error')); }}>
                 <span className="plugin-source-option-icon"><FolderOpen size={18} aria-hidden="true" /></span><span className="plugin-source-option-copy"><strong>选择插件目录</strong><span>复制本机已有插件</span></span><ChevronRight size={14} aria-hidden="true" />
-              </button>
+              </Button>
             </div>
           </section>
         </div>
         {localSource && <div className="plugin-source-selection" role="status">
           {localSource.kind === 'archive' ? <FileArchive size={18} aria-hidden="true" /> : <FolderOpen size={18} aria-hidden="true" />}
           <div className="plugin-source-selected-file"><strong>{localSource.path.split(/[\\/]/).filter(Boolean).pop()}</strong><span title={localSource.path}>{localSource.path}</span></div>
-          <Button size="sm" variant="primary" icon={<ArrowRight size={14} />} disabled={busy} onClick={() => { void install(localSource.path); }}>安装</Button>
-          <Button size="sm" variant="subtle" icon={<X size={14} />} aria-label="取消选择本地插件" disabled={busy} onClick={() => setLocalSource(undefined)} />
+          <Button variant="default" icon={<ArrowRight size={14} />} disabled={busy} onClick={() => { void install(localSource.path); }}>安装</Button>
+          <Button variant="ghost" icon={<X size={14} />} aria-label="取消选择本地插件" disabled={busy} onClick={() => setLocalSource(undefined)} />
         </div>}
         {progress && <DownloadProgress label={progress} downloadedBytes={download?.downloadedBytes || 0}
           totalBytes={download?.totalBytes} bytesPerSecond={download?.bytesPerSecond || 0}
@@ -142,30 +142,32 @@ export function HostPluginsPanel({ modelPlugins, availableModelPlugins, updates 
         {local.filter(value => !plugins.some(plugin => plugin.name === value.name)).map(value => <PluginItem key={value.name}
           name={value.name} icon={<Puzzle size={18} />} version={value.version} status="本机已安装">
           <p className="setting-desc">{value.description}</p>
-          <div className="skills-actions plugin-actions"><Button size="sm" variant="secondary" disabled={busy} icon={<FolderOpen size={14} />} onClick={() => { void install(value.source, value.requiredEnvironmentTools); }}>加载</Button></div>
+          <div className="skills-actions plugin-actions"><Button variant="outline" disabled={busy} icon={<FolderOpen size={14} />} onClick={() => { void install(value.source, value.requiredEnvironmentTools); }}>加载</Button></div>
         </PluginItem>)}
       </div>
     </details>
     {hasInstalled && <h3 className="plugin-list-heading">已安装插件</h3>}
-    {hasInstalled && <div className="setting-card-group plugin-items">{modelPlugins}{plugins.map(plugin => <PluginItem key={plugin.id} name={plugin.name} icon={<Puzzle size={18} />} version={plugin.version}
+    {hasInstalled && <Card tone="surface" className="setting-card-group plugin-items">{modelPlugins}{plugins.map(plugin => <PluginItem key={plugin.id} name={plugin.name} icon={<Puzzle size={18} />} version={plugin.version}
       onToggle={open => setExpanded(current => ({ ...current, [plugin.id]: open }))}
       status={plugin.status === 'running' ? '运行中' : plugin.status === 'disabled' ? '已停用' : '启动失败'} variant={plugin.status === 'error' ? 'danger' : plugin.status === 'running' ? 'success' : 'neutral'}>
       <p className="setting-desc">{plugin.description}</p>
         <div className="plugin-controls">
-          {!plugin.settingsInline && <Button size="sm" variant="subtle" icon={<Settings2 size={14} />} disabled={plugin.status !== 'running' || !plugin.frameUrl} onClick={() => openPluginSettings(plugin.id)}>插件设置</Button>}
+          {!plugin.settingsInline && <Button variant="ghost" icon={<Settings2 size={14} />} disabled={plugin.status !== 'running' || !plugin.frameUrl} onClick={() => openPluginSettings(plugin.id)}>插件设置</Button>}
           <div className="plugin-control-tools">
-          <Button size="sm" variant="subtle" className="skill-icon-button" icon={<RefreshCw size={14} />} aria-label={`重新加载 ${plugin.name}`} title="重新加载插件" disabled={busy} onClick={() => { void run(() => setHostPluginEnabled(plugin.id, true), '插件已重新加载。').catch(() => {}); }} />
-          <Button size="sm" variant="subtle" className="skill-icon-button btn-danger-hover" icon={<Trash2 size={14} />} aria-label={`卸载 ${plugin.name}`} title="卸载插件" disabled={busy} onClick={() => confirmAction({ title: `卸载 ${plugin.name}`, message: '停止插件并删除本应用中的插件文件和配置。本机原插件保留。', confirmLabel: '卸载', onConfirm: () => run(() => uninstallHostPlugin(plugin.id), '插件已卸载。') })} />
+          <Button variant="ghost" className="skill-icon-button" icon={<RefreshCw size={14} />} aria-label={`重新加载 ${plugin.name}`} title="重新加载插件" disabled={busy} onClick={() => { void run(() => setHostPluginEnabled(plugin.id, true), '插件已重新加载。').catch(() => {}); }} />
+          <Button variant="ghost" className="skill-icon-button btn-danger-hover" icon={<Trash2 size={14} />} aria-label={`卸载 ${plugin.name}`} title="卸载插件" disabled={busy} onClick={() => confirmAction({ title: `卸载 ${plugin.name}`, message: '停止插件并删除本应用中的插件文件和配置。本机原插件保留。', confirmLabel: '卸载', onConfirm: () => run(() => uninstallHostPlugin(plugin.id), '插件已卸载。') })} />
           </div>
-          <Switch className="plugin-control-start" checked={plugin.enabled} disabled={busy} aria-label={`启用 ${plugin.name}`} onChange={enabled => { void run(() => setHostPluginEnabled(plugin.id, enabled), enabled ? '插件已启用。' : '插件已停用。').catch(() => {}); }} />
+          <Switch className="plugin-control-start" checked={plugin.enabled} disabled={busy} aria-label={`启用 ${plugin.name}`} onCheckedChange={enabled => { void run(() => setHostPluginEnabled(plugin.id, enabled), enabled ? '插件已启用。' : '插件已停用。').catch(() => {}); }} />
         </div>
         {hasPluginUpdate(plugin.version, updates[plugin.id]?.version) && updates[plugin.id]?.source && <div className="plugin-links">
-          <Button size="sm" variant="secondary" disabled={busy} onClick={() => { void install(updates[plugin.id].source!, plugin.requiredEnvironmentTools, '插件已更新。'); }}>更新 v{updates[plugin.id].version}</Button>
+          <Button variant="outline" disabled={busy} onClick={() => { void install(updates[plugin.id].source!, plugin.requiredEnvironmentTools, '插件已更新。'); }}>更新 v{updates[plugin.id].version}</Button>
         </div>}
         {updates[plugin.id]?.error && <p className="setting-desc" title={updates[plugin.id].error!}>更新检查失败，下次打开时重试</p>}
         {plugin.message && <p className="setting-desc" role="alert">{plugin.message}</p>}
         {plugin.settingsInline && plugin.status === 'running' && plugin.frameUrl && expanded[plugin.id]
           && <PluginSettingsFrame key={plugin.bridgeKey} plugin={plugin} />}
-    </PluginItem>)}</div>}
+    </PluginItem>)}</Card>}
   </>;
 }
+
+

@@ -1,4 +1,5 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "rain-ui";
 import { Check, Copy, Download, Maximize2, Minus, Plus, RotateCcw, X } from "lucide-react";
 import { subscribeAppTheme } from "@/platform/theme";
 import { subscribeAppFont } from "@/platform/font";
@@ -82,11 +83,11 @@ export const MarkdownDiagram = memo(function MarkdownDiagram({ source, streaming
     <div className="markdown-diagram-toolbar" data-file-search-ignore>
       <span>Mermaid</span>
       <div className="markdown-diagram-views" role="group" aria-label="图表视图">
-        <button type="button" aria-pressed={view === "diagram"} onClick={() => setView("diagram")}>图形</button>
-        <button type="button" aria-pressed={view === "code"} onClick={() => setView("code")}>代码</button>
+        <Button type="button" variant="bare" aria-pressed={view === "diagram"} onClick={() => setView("diagram")}>图形</Button>
+        <Button type="button" variant="bare" aria-pressed={view === "code"} onClick={() => setView("code")}>代码</Button>
       </div>
-      <button type="button" title={copy || "复制图源"} aria-label={copy || "复制图源"} onClick={() => void copySource()}>{copy === "已复制" ? <Check size={14} /> : <Copy size={14} />}</button>
-      <button type="button" title={downloading ? "正在下载图表…" : "下载 SVG 到下载目录"} aria-label="下载 SVG 到下载目录" aria-busy={downloading} disabled={!svg || downloading} onClick={() => void exportSvg()}><Download size={14} /></button>
+      <Button type="button" variant="bare" title={copy || "复制图源"} aria-label={copy || "复制图源"} onClick={() => void copySource()}>{copy === "已复制" ? <Check size={14} /> : <Copy size={14} />}</Button>
+      <Button type="button" variant="bare" title={downloading ? "正在下载图表…" : "下载 SVG 到下载目录"} aria-label="下载 SVG 到下载目录" aria-busy={downloading} disabled={!svg || downloading} onClick={() => void exportSvg()}><Download size={14} /></Button>
       <button ref={opener} type="button" title="放大图表" aria-label="放大图表" disabled={!svg} onClick={() => { setZoom(1); dialog.current?.showModal(); }}><Maximize2 size={14} /></button>
     </div>
     {error && <p className="markdown-diagram-status error" role="status">{error}</p>}
@@ -95,10 +96,10 @@ export const MarkdownDiagram = memo(function MarkdownDiagram({ source, streaming
     <dialog ref={dialog} className="markdown-diagram-dialog" aria-label="查看图表" onClose={() => opener.current?.focus()}>
       <div className="markdown-diagram-toolbar">
         <span>Mermaid</span>
-        <button type="button" title="缩小图表" aria-label="缩小图表" onClick={() => setZoom((value) => Math.max(.25, value / 1.25))}><Minus size={16} /></button>
-        <button type="button" title="恢复图表大小" aria-label="恢复图表大小" onClick={() => setZoom(1)}><RotateCcw size={14} />{Math.round(zoom * 100)}%</button>
-        <button type="button" title="放大图表内容" aria-label="放大图表内容" onClick={() => setZoom((value) => Math.min(4, value * 1.25))}><Plus size={16} /></button>
-        <button type="button" title="关闭图表" aria-label="关闭图表" onClick={() => dialog.current?.close()}><X size={16} /></button>
+        <Button type="button" variant="bare" title="缩小图表" aria-label="缩小图表" onClick={() => setZoom((value) => Math.max(.25, value / 1.25))}><Minus size={16} /></Button>
+        <Button type="button" variant="bare" title="恢复图表大小" aria-label="恢复图表大小" onClick={() => setZoom(1)}><RotateCcw size={14} />{Math.round(zoom * 100)}%</Button>
+        <Button type="button" variant="bare" title="放大图表内容" aria-label="放大图表内容" onClick={() => setZoom((value) => Math.min(4, value * 1.25))}><Plus size={16} /></Button>
+        <Button type="button" variant="bare" title="关闭图表" aria-label="关闭图表" onClick={() => dialog.current?.close()}><X size={16} /></Button>
       </div>
       <div className="markdown-diagram-viewport"><div className="markdown-diagram-enlarged" style={{ width: `${zoom * 100}%`, minWidth: `${zoom * 100}%` }} dangerouslySetInnerHTML={{ __html: enlargedSvg }} /></div>
     </dialog>

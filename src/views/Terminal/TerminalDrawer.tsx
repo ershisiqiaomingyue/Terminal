@@ -33,9 +33,9 @@ import { formatBytes, formatCpuTime, formatRate, networkRates, readHostStatus, t
 import { invoke, formatInvokeError, isTauri } from "@/platform/runtime";
 import { systemStatusMetrics } from "@/components/Sidebar/systemStatusMetrics";
 import { buildMutationRequest } from "../CodeViewer/mutationRequest";
-import { ContextMenu } from "@/components/ui/ContextMenu";
+import { ContextMenu } from "rain-ui";
 import { notify } from "@/platform/notifications";
-import { Button, StepSpinner } from "@/components/ui";
+import { Button, StepSpinner } from "rain-ui";
 import {
   listLocalDirectory,
   listSshDirectory,
@@ -70,7 +70,7 @@ import { fileName, isMarkdownFile } from "@/views/CodeViewer/fileTabs";
 import { DownloadHistory, UploadHistory } from "@/views/CodeViewer/DownloadHistoryPanel";
 import { useTransferActions } from "@/views/CodeViewer/useTransferActions";
 import { ToolbarPopover } from "@/views/CodeViewer/ToolbarPopover";
-import { Switch } from "@/components/ui/Switch";
+import { Switch } from "rain-ui";
 import { FloatingWindow } from "./FloatingWindow";
 import type { DrawerPane, TerminalTab } from "./types";
 // 右栏 rail 激活态等补充样式；单独文件是为了不碰 terminal-workspace.css 里的禁区。
@@ -141,8 +141,8 @@ const TerminalDrawerImpl: React.FC<TerminalDrawerProps> = ({
           {PANE_TITLE[pane]}
         </span>
         {pane === "git" && (
-          <button
-            type="button"
+          <Button
+            type="button" variant="bare"
             className="terminal-drawer-close"
             aria-label="面板选项"
             title="面板选项"
@@ -153,11 +153,11 @@ const TerminalDrawerImpl: React.FC<TerminalDrawerProps> = ({
             }}
           >
             <MoreVertical size={13} />
-          </button>
+          </Button>
         )}
-        <button type="button" className="terminal-drawer-close" aria-label="收起面板" title="收起" onClick={onClose}>
+        <Button type="button" variant="bare" className="terminal-drawer-close" aria-label="收起面板" title="收起" onClick={onClose}>
           <Minus size={13} />
-        </button>
+        </Button>
       </div>
       {gitMenu && pane === "git" && (
         <ContextMenu
@@ -819,9 +819,9 @@ const GitPane: React.FC<{ activeTab: TerminalTab | null; fallbackRoot: string; c
       <div className="terminal-drawer-list-card terminal-drawer-changes">
         <div className="terminal-drawer-list-head">
           <span>变更文件</span>
-          <button type="button" className="terminal-sidebar-mini-btn" aria-label="刷新" onClick={refresh}>
+          <Button type="button" variant="bare" className="terminal-sidebar-mini-btn" aria-label="刷新" onClick={refresh}>
             <RefreshCw size={11} />
-          </button>
+          </Button>
         </div>
         {changes.length === 0 && <div className="terminal-drawer-empty">没有未提交的改动</div>}
         {changes.map((change) => (
@@ -1383,8 +1383,7 @@ const FilesPane: React.FC<{
               <>
                 <Button
                   className={`code-viewer-pane-toggle${browser.previewing ? " is-active" : ""}`}
-                  variant="subtle"
-                  size="xs"
+                  variant="ghost"
                   icon={<ListTree size={14} strokeWidth={1.6} />}
                   aria-label={outlineOpen ? "隐藏文档目录" : "显示文档目录"}
                   title={outlineOpen ? "隐藏文档目录" : "显示文档目录"}
@@ -1394,8 +1393,7 @@ const FilesPane: React.FC<{
                 />
                 <Button
                   className={`code-viewer-pane-toggle${browser.previewing ? " is-active" : ""}`}
-                  variant="subtle"
-                  size="xs"
+                  variant="ghost"
                   aria-label={browser.previewing ? "编辑 Markdown" : "预览 Markdown"}
                   title={browser.previewing ? "编辑 Markdown" : "预览 Markdown"}
                   aria-pressed={browser.previewing}
@@ -1408,8 +1406,7 @@ const FilesPane: React.FC<{
             {!editorMode && markdownPreview && !previewLoading && !previewError ? (
               <Button
                 className={`code-viewer-pane-toggle${outlineOpen ? " is-active" : ""}`}
-                variant="subtle"
-                size="xs"
+                variant="ghost"
                 icon={<ListTree size={14} strokeWidth={1.6} />}
                 aria-label={outlineOpen ? "隐藏文档目录" : "显示文档目录"}
                 title={outlineOpen ? "隐藏文档目录" : "显示文档目录"}
@@ -1439,8 +1436,7 @@ const FilesPane: React.FC<{
             )}
             {editorMode && (
               <Button
-                variant="primary"
-                size="xs"
+                variant="default"
                 icon={<Save size={12} />}
                 disabled={!editorDirty || browser.loading || browser.externalChanged}
                 style={{ visibility: editorDirty ? "visible" : "hidden" }}
@@ -1453,8 +1449,7 @@ const FilesPane: React.FC<{
               <span ref={uploadAnchor} className="code-transfer-anchor">
                 <Button
                   className="code-viewer-pane-toggle"
-                  variant="subtle"
-                  size="xs"
+                  variant="ghost"
                   icon={<Upload size={14} strokeWidth={1.6} />}
                   aria-label="上传记录"
                   title="上传记录"
@@ -1467,8 +1462,7 @@ const FilesPane: React.FC<{
             {kind === "ssh" && connectionId && (
               <Button
                 className="code-viewer-pane-toggle"
-                variant="subtle"
-                size="xs"
+                variant="ghost"
                 icon={<Download size={14} strokeWidth={1.6} />}
                 aria-label="下载当前文件"
                 title="下载当前文件"
@@ -1479,8 +1473,7 @@ const FilesPane: React.FC<{
             <span ref={transferAnchor} className="code-transfer-anchor">
               <Button
                 className="code-viewer-pane-toggle"
-                variant="subtle"
-                size="xs"
+                variant="ghost"
                 icon={<History size={14} strokeWidth={1.6} />}
                 aria-label="下载历史"
                 title="下载历史"
@@ -1492,8 +1485,7 @@ const FilesPane: React.FC<{
             <span ref={settingsAnchor} className="code-transfer-anchor">
               <Button
                 className="code-viewer-pane-toggle"
-                variant="subtle"
-                size="xs"
+                variant="ghost"
                 icon={<MoreHorizontal size={14} strokeWidth={1.6} />}
                 aria-label="预览设置"
                 title="预览设置"
@@ -1504,8 +1496,7 @@ const FilesPane: React.FC<{
             </span>
             <Button
               className="code-viewer-pane-toggle"
-              variant="subtle"
-              size="xs"
+              variant="ghost"
               icon={<X size={14} strokeWidth={1.6} />}
               aria-label="关闭预览窗口"
               title="关闭预览窗口"
@@ -1587,7 +1578,7 @@ const FilesPane: React.FC<{
               <Switch
                 checked={browser.autoRefresh}
                 aria-label="自动刷新当前文件"
-                onChange={(checked) => browser.setAutoRefresh(checked)}
+                onCheckedChange={(checked) => browser.setAutoRefresh(checked)}
               />
             </div>
           </div>
@@ -1847,8 +1838,8 @@ export const TerminalDrawerRail: React.FC<{
   onToggle: (pane: DrawerPane) => void;
 }> = ({ pane, onToggle }) => (
   <nav className="terminal-drawer-rail" aria-label="终端辅助面板">
-    <button
-      type="button"
+    <Button
+      type="button" variant="bare"
       className={"terminal-rail-btn" + (pane === "host" ? " active" : "")}
       aria-label="主机状态"
       aria-pressed={pane === "host"}
@@ -1856,9 +1847,9 @@ export const TerminalDrawerRail: React.FC<{
       onClick={() => onToggle("host")}
     >
       <Gauge size={16} />
-    </button>
-    <button
-      type="button"
+    </Button>
+    <Button
+      type="button" variant="bare"
       className={"terminal-rail-btn" + (pane === "git" ? " active" : "")}
       aria-label="版本控制"
       aria-pressed={pane === "git"}
@@ -1866,9 +1857,9 @@ export const TerminalDrawerRail: React.FC<{
       onClick={() => onToggle("git")}
     >
       <GitBranch size={16} />
-    </button>
-    <button
-      type="button"
+    </Button>
+    <Button
+      type="button" variant="bare"
       className={"terminal-rail-btn" + (pane === "files" ? " active" : "")}
       aria-label="文件浏览"
       aria-pressed={pane === "files"}
@@ -1877,6 +1868,6 @@ export const TerminalDrawerRail: React.FC<{
     >
       {/* 用户明确要求 rail 上用普通文件夹图标（不要 FolderTree）。 */}
       <Folder size={16} />
-    </button>
+    </Button>
   </nav>
 );

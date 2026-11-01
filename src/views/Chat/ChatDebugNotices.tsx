@@ -1,5 +1,5 @@
 import { createPortal } from "react-dom";
-import { Checkbox } from "@/components/ui/Checkbox";
+import { Checkbox } from "rain-ui";
 import { useEffect, useRef, useState, type Ref } from "react";
 import { BackgroundTaskNotices } from "./BackgroundTasks";
 import { ChatPermissionBar } from "./ChatPermissionBar";
@@ -7,12 +7,12 @@ import { ChatQueuePanel } from "./ChatQueuePanel";
 import { ComposerChangedFiles } from "./ComposerChangedFiles";
 import { ComposerTaskList } from "./ChatTaskPanels";
 import { ComposerNoticePreview } from "./ComposerNoticeDock";
-import { Button } from "@/components/ui/Button";
-import type { FileChangeEntry } from "@/components/ui/FileChangeCard";
+import { Button } from "rain-ui";
+import type { FileChangeEntry } from "rain-ui";
 import { MessageFileChanges } from "./ChatFileChanges";
-import { FileDiffView } from "@/components/ui/FileDiffView";
-import { parseFileDiff } from "@/components/ui/fileDiff";
-import { FilePreviewPanel } from "@/components/ui/FilePreviewPanel";
+import { FileDiffView } from "rain-ui";
+import { parseFileDiff } from "rain-ui";
+import { FilePreviewPanel } from "rain-ui";
 
 /** Debug injects fixture data into production adapters, including background tasks. */
 export type ChatDebugKey =
@@ -51,7 +51,7 @@ export function ChatDebugFileChanges({ workspacePath }: { workspacePath?: string
   const [preview, setPreview] = useState("");
   useEffect(() => { root.current?.scrollIntoView({ block: "center" }); }, []);
   return <section ref={root} className="chat-debug-reply" aria-label="AI 回复后文件改动调试">
-    {undone ? <Button size="sm" variant="subtle" onClick={() => setUndone(false)}>恢复演示文件</Button> : <MessageFileChanges
+    {undone ? <Button variant="ghost" onClick={() => setUndone(false)}>恢复演示文件</Button> : <MessageFileChanges
       event={{ type: "file_changes", entries: REPLY_FILES }} workspacePath={workspacePath} onOpen={setPreview}
       onUndo={() => { setUndone(true); setPreview(""); }} />}
     {preview && <FilePreviewPanel path={preview} mode="diff" onClose={() => setPreview("")} footerNote="调试示例">

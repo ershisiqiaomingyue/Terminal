@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "rain-ui";
 import { chooseDirectory } from "@/platform/api";
 import { readHostStatus } from "@/platform/hostStatus";
-import { ContextMenu, type ContextMenuItem } from "@/components/ui/ContextMenu";
-import { RenameDialog } from "@/components/RenameDialog/RenameDialog";
+import { ContextMenu, type ContextMenuItem } from "rain-ui";
+import { RenameDialog } from "rain-ui";
 import { ArchivedSessionsDialog } from "@/components/ArchivedSessionsDialog/ArchivedSessionsDialog";
 import {
   ArchiveIcon,
@@ -149,8 +150,8 @@ function SessionRow({
     <span className="ws-nav-time">{trailing}</span>
     {session.pinned && <span className="ws-nav-pin" role="img" aria-label="已置顶" title="已置顶"><PinFillIcon size={14} /></span>}
     <span className="ws-nav-row-actions" onClick={(event) => event.stopPropagation()} onDoubleClick={(event) => event.stopPropagation()}>
-      <button
-        type="button"
+      <Button
+        type="button" variant="bare"
         className="ws-nav-row-icon-button"
         title="更多操作"
         aria-label="更多操作"
@@ -159,20 +160,20 @@ function SessionRow({
         onClick={(event) => onOpenMenu(event.currentTarget)}
       >
         <EllipsisIcon size={16} />
-      </button>
+      </Button>
       {/* 归档与置顶是仅次于打开的第二、第三动作，悬停直接给出来，省一次开菜单。
           归档会改变这条对话的去处，悬停用仓库统一的淡红 danger 底色提示后果。 */}
-      <button
-        type="button"
+      <Button
+        type="button" variant="bare"
         className="ws-nav-row-icon-button ws-nav-row-icon-button-danger"
         title="归档会话"
         aria-label="归档会话"
         onClick={onArchive}
       >
         <ArchiveIcon size={16} />
-      </button>
-      <button
-        type="button"
+      </Button>
+      <Button
+        type="button" variant="bare"
         className="ws-nav-row-icon-button"
         title={session.pinned ? "取消置顶" : "置顶会话"}
         aria-label={session.pinned ? "取消置顶" : "置顶会话"}
@@ -180,7 +181,7 @@ function SessionRow({
         onClick={onTogglePin}
       >
         <PinFillIcon size={16} />
-      </button>
+      </Button>
     </span>
   </div>;
 }
@@ -226,12 +227,12 @@ function ProjectRow({ label, title, expanded, active, menuOpen, onToggle, onNewS
     </span>
     <span className="ws-nav-project-text"><span className="ws-nav-title">{label}</span></span>
     <span className="ws-nav-row-actions" onClick={(event) => event.stopPropagation()}>
-      {onOpenMenu && <button type="button" className="ws-nav-row-icon-button" title="工作区操作" aria-label="工作区操作" aria-haspopup="menu" aria-expanded={menuOpen} onClick={(event) => onOpenMenu(event.currentTarget)}>
+      {onOpenMenu && <Button type="button" variant="bare" className="ws-nav-row-icon-button" title="工作区操作" aria-label="工作区操作" aria-haspopup="menu" aria-expanded={menuOpen} onClick={(event) => onOpenMenu(event.currentTarget)}>
         <EllipsisIcon size={16} />
-      </button>}
-      <button type="button" className="ws-nav-row-icon-button" title="在此工作区新建对话" aria-label="在此工作区新建对话" onClick={onNewSession}>
+      </Button>}
+      <Button type="button" variant="bare" className="ws-nav-row-icon-button" title="在此工作区新建对话" aria-label="在此工作区新建对话" onClick={onNewSession}>
         <NewChatIcon size={16} />
-      </button>
+      </Button>
     </span>
   </div>;
 }
@@ -406,8 +407,8 @@ export function ConversationNav({ onOpenChat }: ConversationNavProps) {
       <span className={cx("ws-nav-section-label", searchOpen && "ws-nav-section-label-hidden")}>工作区</span>
       {/* 归档的对话不在侧栏里，得有个常驻入口：紧挨着搜索左侧，和它同属右侧动作区。
           它自己的 margin-left:auto 负责把整串动作推到右边（原来这个 auto 在搜索槽上）。 */}
-      <button
-        type="button"
+      <Button
+        type="button" variant="bare"
         className={cx("ws-nav-icon-button", "ws-nav-archive-button", searchOpen && "ws-nav-archive-button-hidden")}
         title="归档对话"
         aria-label="归档对话"
@@ -415,11 +416,11 @@ export function ConversationNav({ onOpenChat }: ConversationNavProps) {
         onClick={() => setArchivedOpen(true)}
       >
         <ArchiveIcon size={16} />
-      </button>
+      </Button>
       <div className={cx("ws-nav-search-slot", searchOpen && "ws-nav-search-slot-expanded")}>
         <div ref={searchRootRef} className={cx("ws-nav-search", searchOpen && "ws-nav-search-expanded")} onClick={() => { if (!searchOpen) setSearchOpen(true); }}>
-          <button
-            type="button"
+          <Button
+            type="button" variant="bare"
             className="ws-nav-search-button"
             title="搜索对话"
             aria-label="搜索对话"
@@ -427,7 +428,7 @@ export function ConversationNav({ onOpenChat }: ConversationNavProps) {
             onClick={(event) => { event.stopPropagation(); setSearchOpen(true); searchRef.current?.focus(); }}
           >
             <SearchIcon size={searchOpen ? 11 : 14} />
-          </button>
+          </Button>
           <input
             ref={searchRef}
             className="ws-nav-search-input"
@@ -438,18 +439,18 @@ export function ConversationNav({ onOpenChat }: ConversationNavProps) {
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={(event) => { if (event.key === "Escape") { setQuery(""); setSearchOpen(false); } }}
           />
-          {searchOpen && <button type="button" className="ws-nav-clear-button" title="关闭搜索" aria-label="关闭搜索" onClick={(event) => { event.stopPropagation(); setQuery(""); setSearchOpen(false); }}>
+          {searchOpen && <Button type="button" variant="bare" className="ws-nav-clear-button" title="关闭搜索" aria-label="关闭搜索" onClick={(event) => { event.stopPropagation(); setQuery(""); setSearchOpen(false); }}>
             <CloseIcon size={14} />
-          </button>}
+          </Button>}
         </div>
       </div>
       <div className={cx("ws-nav-header-actions", searchOpen && "ws-nav-header-actions-hidden")}>
-        <button type="button" className="ws-nav-icon-button" title="新建独立对话" aria-label="新建独立对话" onClick={() => send({ type: "new-standalone" })}>
+        <Button type="button" variant="bare" className="ws-nav-icon-button" title="新建独立对话" aria-label="新建独立对话" onClick={() => send({ type: "new-standalone" })}>
           <NewChatIcon size={16} />
-        </button>
-        <button type="button" className="ws-nav-icon-button" title="添加工作区" aria-label="添加工作区" onClick={() => void addWorkspace()}>
+        </Button>
+        <Button type="button" variant="bare" className="ws-nav-icon-button" title="添加工作区" aria-label="添加工作区" onClick={() => void addWorkspace()}>
           <ProjectAddIcon size={16} />
-        </button>
+        </Button>
       </div>
     </div>
     <div className="ws-nav-body">
@@ -496,8 +497,8 @@ export function ConversationNav({ onOpenChat }: ConversationNavProps) {
                 onArchive={() => mutate({ type: "archive-session", id: session.id })}
                 onTogglePin={() => mutate({ type: "pin-session", id: session.id, next: !session.pinned })}
               />)}
-              {overflow > 0 && <button
-                type="button"
+              {overflow > 0 && <Button
+                type="button" variant="bare"
                 className="ws-nav-overflow"
                 aria-expanded={hidden === 0}
                 onClick={() => setRevealedProjects((previous) => {
@@ -511,7 +512,7 @@ export function ConversationNav({ onOpenChat }: ConversationNavProps) {
                 })}
               >
                 {hidden === 0 ? "收起" : `展开其余 ${hidden} 个会话`}
-              </button>}
+              </Button>}
             </div>}
           </div>;
         })}

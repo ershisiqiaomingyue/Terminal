@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, Download, LoaderCircle, Upload, X } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { Button } from "rain-ui";
+import { Card } from "rain-ui";
 import { invoke, formatInvokeError } from "@/platform/runtime";
 import { useFileTransfers, formatTransferBytes, type FileTransfer } from "./fileTransfers";
 import "./file-transfers.css";
@@ -50,7 +50,7 @@ export function TransferProgressRows({ jobs }: { jobs: FileTransfer[] }) {
           {job.outputPath && <small title={job.filePath || job.outputPath} className="code-transfer-path">{job.filePath || job.outputPath}</small>}
           {job.error && <small className="code-download-error">{downloadErrorMessage(job.error)}</small>}
         </span>
-        <span className="code-transfer-card-actions">{running ? <><LoaderCircle size={14} className="inline-spin" aria-label="正在传输" /><Button variant="subtle" size="xs" icon={<X size={14} />} aria-label={`取消${job.direction === "upload" ? "上传" : "下载"} ${job.name}`} disabled={cancelling.includes(job.id)} onClick={() => void cancel(job.id)} /></> : job.status === "completed" ? <Check size={14} className="code-download-success" aria-label="已完成" /> : <X size={14} aria-label={status} />}</span>
+        <span className="code-transfer-card-actions">{running ? <><LoaderCircle size={14} className="inline-spin" aria-label="正在传输" /><Button variant="ghost" icon={<X size={14} />} aria-label={`取消${job.direction === "upload" ? "上传" : "下载"} ${job.name}`} disabled={cancelling.includes(job.id)} onClick={() => void cancel(job.id)} /></> : job.status === "completed" ? <Check size={14} className="code-download-success" aria-label="已完成" /> : <X size={14} aria-label={status} />}</span>
       </Card>;
     })}
     {error && <p className="code-download-error" role="alert">{error}</p>}

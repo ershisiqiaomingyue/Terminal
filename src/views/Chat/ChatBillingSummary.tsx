@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "rain-ui";
 import type { AgentQuota } from "@/platform/chatApi";
 import { quotaBalancePresentation } from "@/platform/providerQuota";
 import { type TurnPricing } from "./chatUsage";
@@ -21,9 +22,9 @@ export function ChatBillingSummary({ quota, phase, onRefresh, usage, pricing, qu
   const costText = retainedCost ?? turnCostForDisplay(usage, pricing, quotaChange);
   const balance = quotaBalancePresentation(quota, phase, quotaError, quotaCheckedAt);
   return <>
-    <button type="button" aria-label="刷新账户余额" aria-busy={phase === "checking"} title={balance.detail} disabled={phase === "checking"} onClick={onRefresh}>
+    <Button type="button" variant="bare" aria-label="刷新账户余额" aria-busy={phase === "checking"} title={balance.detail} disabled={phase === "checking"} onClick={onRefresh}>
       余额 <b>{balance.text}</b>
-    </button>
+    </Button>
     <span>本轮消费 <b>{costText ?? "—"}</b></span>
   </>;
 }

@@ -1,13 +1,14 @@
 import { readToolWindowState } from "@/platform/toolWindowState";
+import { Button } from "rain-ui";
 import { useTerminalWindowState, type TerminalWindowSnapshot } from "@/platform/useTerminalWindowState";
 import type { TerminalOutputEvent } from "@/platform/terminalHandoff";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useConfirmAction } from "@/components/ConfirmDialog/useConfirmAction";
-import { PaneHeightResizeHandle } from "@/components/ResizablePane/PaneHeightResizeHandle";
-import { usePaneHeight } from "@/components/ResizablePane/usePaneHeight";
-import { TERMINAL_PANE } from "@/components/ResizablePane/paneWidth";
-import { ContextMenu } from "@/components/ui/ContextMenu";
-import { SessionTabs } from "@/components/ui/SessionTabs";
+import { useConfirmAction } from "rain-ui";
+import { PaneHeightResizeHandle } from "rain-ui";
+import { usePaneHeight } from "rain-ui";
+import { TERMINAL_PANE } from "rain-ui";
+import { ContextMenu } from "rain-ui";
+import { SessionTabs } from "rain-ui";
 import "@xterm/xterm/css/xterm.css";
 import { ChevronDown, Minus, Monitor, Plus, Server, TerminalSquare, X } from "lucide-react";
 import { formatInvokeError, invoke, isTauri, listen } from "@/platform/runtime";
@@ -357,19 +358,19 @@ export function ChatTerminalPanel({ visible, target, workspacePath, sshConnectio
       { label: "清屏", onSelect: () => activeHandle()?.clear() },
     ]} />}
     <header>
-      {showTargetControl && <button type="button" title={`在当前环境新建终端：${target.label} · ${workspacePath || target.root || "~"}`} aria-label="在当前环境新建终端" onClick={() => void openTab(defaultTerminalTarget(target, workspacePath))}><TerminalSquare size={15} /></button>}
+      {showTargetControl && <Button type="button" variant="bare" title={`在当前环境新建终端：${target.label} · ${workspacePath || target.root || "~"}`} aria-label="在当前环境新建终端" onClick={() => void openTab(defaultTerminalTarget(target, workspacePath))}><TerminalSquare size={15} /></Button>}
       <SessionTabs className="chat-terminal-tabs" label="终端会话" tabs={tabs.map((tab) => ({ id: tab.id, label: tab.title, closeLabel: `关闭 ${tab.title}` }))} activeId={activeId} onSelect={(id) => { activeIdRef.current = id; setActiveId(id); }} onClose={(id) => { const tab = tabs.find((item) => item.id === id); if (tab) confirmAction({ title: "结束终端", message: `确认关闭「${tab.title}」？运行中的进程会被中断，输出记录将清除。`, confirmLabel: "确认结束", onConfirm: () => closeTab(id) }); }} />
       <div ref={addMenuRef} className="chat-terminal-add-anchor">
-        <button type="button" title="新建终端" aria-label="新建终端" aria-expanded={addMenuOpen} onClick={() => setAddMenuOpen((value) => !value)}><Plus size={15} /><ChevronDown size={12} /></button>
+        <Button type="button" variant="bare" title="新建终端" aria-label="新建终端" aria-expanded={addMenuOpen} onClick={() => setAddMenuOpen((value) => !value)}><Plus size={15} /><ChevronDown size={12} /></Button>
         {addMenuOpen && <div className="chat-terminal-add-menu" role="menu">
           <span>本机终端</span>
-          {addTargets.filter((item) => item.kind === "local").map((item) => <button key={`${item.kind}-${item.shell}`} type="button" role="menuitem" onClick={() => { setAddMenuOpen(false); void openTab(item); }}><TerminalSquare size={14} />{item.label}</button>)}
-          {addTargets.some((item) => item.kind === "ssh") && <><span>全局 SSH</span>{addTargets.filter((item) => item.kind === "ssh").map((item) => <button key={`${item.kind}-${item.id}`} type="button" role="menuitem" onClick={() => { setAddMenuOpen(false); void openTab(item); }}><Server size={14} />{item.label}</button>)}</>}
-          {addTargets.some((item) => item.kind === "wsl") && <><span>WSL</span>{addTargets.filter((item) => item.kind === "wsl").map((item) => <button key={`${item.kind}-${item.id}`} type="button" role="menuitem" onClick={() => { setAddMenuOpen(false); void openTab(item); }}><Monitor size={14} />{item.label}</button>)}</>}
+          {addTargets.filter((item) => item.kind === "local").map((item) => <Button key={`${item.kind}-${item.shell}`} type="button" variant="bare" role="menuitem" onClick={() => { setAddMenuOpen(false); void openTab(item); }}><TerminalSquare size={14} />{item.label}</Button>)}
+          {addTargets.some((item) => item.kind === "ssh") && <><span>全局 SSH</span>{addTargets.filter((item) => item.kind === "ssh").map((item) => <Button key={`${item.kind}-${item.id}`} type="button" variant="bare" role="menuitem" onClick={() => { setAddMenuOpen(false); void openTab(item); }}><Server size={14} />{item.label}</Button>)}</>}
+          {addTargets.some((item) => item.kind === "wsl") && <><span>WSL</span>{addTargets.filter((item) => item.kind === "wsl").map((item) => <Button key={`${item.kind}-${item.id}`} type="button" variant="bare" role="menuitem" onClick={() => { setAddMenuOpen(false); void openTab(item); }}><Monitor size={14} />{item.label}</Button>)}</>}
         </div>}
       </div>
-      {showHideControl && <button type="button" title="隐藏终端，保留会话和历史" aria-label="隐藏终端，保留会话和历史" onClick={hideTerminal}><Minus size={15} /></button>}
-      <button type="button" title="关闭并结束全部终端" aria-label="关闭并结束全部终端" onClick={() => confirmAction({ title: "结束全部终端", message: "确认关闭全部终端会话？运行中的进程会被中断，终端输出记录将清除。", confirmLabel: "确认结束", onConfirm: disposeAll })}><X size={15} /></button>
+      {showHideControl && <Button type="button" variant="bare" title="隐藏终端，保留会话和历史" aria-label="隐藏终端，保留会话和历史" onClick={hideTerminal}><Minus size={15} /></Button>}
+      <Button type="button" variant="bare" title="关闭并结束全部终端" aria-label="关闭并结束全部终端" onClick={() => confirmAction({ title: "结束全部终端", message: "确认关闭全部终端会话？运行中的进程会被中断，终端输出记录将清除。", confirmLabel: "确认结束", onConfirm: disposeAll })}><X size={15} /></Button>
     </header>
     <div className="chat-terminal-host">
       <TerminalPane
@@ -413,9 +414,9 @@ export function ChatTerminalPanel({ visible, target, workspacePath, sshConnectio
         slot={0}
         chromeless
         emptyContent={
-          <button type="button" className="chat-terminal-empty" onClick={() => { void openTab(defaultTerminalTarget(target, workspacePath)); }}>
+          <Button type="button" variant="bare" className="chat-terminal-empty" onClick={() => { void openTab(defaultTerminalTarget(target, workspacePath)); }}>
             <TerminalSquare size={16} />新建终端
-          </button>
+          </Button>
         }
       />
     </div>

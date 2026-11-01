@@ -1,4 +1,4 @@
-import { CompactionProgress } from "@/components/ui";
+import { CompactionProgress } from "rain-ui";
 import type { ContextCompaction } from "./contextCompaction";
 
 /**

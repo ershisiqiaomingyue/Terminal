@@ -1,6 +1,6 @@
 import React, { lazy, Suspense, useEffect, useState } from "react";
 import { FileCode2 } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "rain-ui";
 import type { WorkspaceEnvironment, WorkspaceGitChange } from "@/platform/chatApi";
 
 const ChatFilePreview = lazy(() => import("@/views/Chat/ChatFilePreview"));
@@ -36,8 +36,8 @@ export function WorkspaceChangesPanel({ workspacePath, workspaceEnvironment, cha
         const name = path.slice(separator + 1);
         const directory = separator >= 0 ? path.slice(0, separator) : "";
         const selected = selectedPath === change.path;
-        return <Button key={`${change.status}-${change.path}`} className="workspace-changes-row" type="button" size="sm"
-          variant={selected ? "secondary" : "subtle"} aria-pressed={selected}
+        return <Button key={`${change.status}-${change.path}`} className="workspace-changes-row" type="button"
+          variant={selected ? "secondary" : "ghost"} aria-pressed={selected}
           aria-label={`查看 ${change.path} 的差异（${statusLabel(change.status)}）`} title={`查看 ${change.path} 的差异`}
           icon={<FileCode2 size={14} aria-hidden="true" />} onClick={() => setSelectedPath(change.path)}>
           <span className={`workspace-change-path is-${change.status}`}>

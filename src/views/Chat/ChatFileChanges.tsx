@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Copy, ExternalLink, FileDiff, FolderOpen } from "lucide-react";
-import { FileChangeCard } from "@/components/ui/FileChangeCard";
-import { ContextMenu } from "@/components/ui/ContextMenu";
-import { useConfirmAction } from "@/components/ConfirmDialog/useConfirmAction";
+import { FileChangeCard } from "rain-ui";
+import { ContextMenu } from "rain-ui";
+import { useConfirmAction } from "rain-ui";
 import { formatInvokeError, invoke } from "@/platform/runtime";
 import type { AgentEventPayload } from "@/platform/chatApi";
 import { composerFileChanges, fileChangeEntries } from "./ChatTaskPanels";

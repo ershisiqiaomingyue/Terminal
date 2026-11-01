@@ -9,8 +9,8 @@ import {
   Sparkles,
   Wrench,
 } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { Spinner } from "@/components/ui/Spinner";
+import { Button } from "rain-ui";
+import { Spinner } from "rain-ui";
 import { reportFrontendError } from "@/platform/frontendHealth";
 import {
   acknowledgeUpgrade,
@@ -138,8 +138,7 @@ export function UpgradeWelcome({ onDone }: { onDone: () => void }) {
           <div className="upgrade-welcome-actions">
             {needsMigration && phase !== "done" ? (
               <Button
-                variant="primary"
-                size="md"
+                variant="default"
                 loading={phase === "running"}
                 disabled={busy && phase !== "running"}
                 icon={phase === "running" ? undefined : <Sparkles size={14} />}
@@ -148,7 +147,7 @@ export function UpgradeWelcome({ onDone }: { onDone: () => void }) {
                 {phase === "running" ? "正在迁移…" : error ? "重试迁移" : "开始迁移"}
               </Button>
             ) : (
-              <Button variant="primary" size="md" icon={<ArrowRight size={14} />} onClick={() => void finish()}>
+              <Button variant="default" icon={<ArrowRight size={14} />} onClick={() => void finish()}>
                 开始使用
               </Button>
             )}

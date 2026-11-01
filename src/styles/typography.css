@@ -5,9 +5,30 @@
  * ============================================================================
  */
 
+/* ---- 字号阶梯 ----------------------------------------------------------
+   旧的组件样式散着 10 / 10.5 / 11 / 11.5 / 12 / 12.5 / 13 / 13.5 / 14 / 15
+   十档字号，其中 61 处落在 11.5px 以下——一屏里所有文字都挤在同一档，
+   读者分不出「标题 / 正文 / 辅助说明」的层级，这就是看起来「层级乱」的
+   底层原因。这里收敛成五档，新样式只许引用这五档：
+
+     --text-display 20  页面标题（一屏一个，不要两个）
+     --text-title   16  卡片/弹层标题、空状态主句
+     --text-body    13  正文、按钮文字、表单值
+     --text-label   12  表单标签、表头、次要说明
+     --text-meta    11  时间戳、计数、脚注——最低一档，不再往下
+
+   按钮/输入框的 24/28/32/38 是命中区域高度，不是字号，不受这条约束。 */
+:root {
+  --text-display: 20px;
+  --text-title: 16px;
+  --text-body: 13px;
+  --text-label: 12px;
+  --text-meta: 11px;
+}
+
 body {
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: var(--text-body);
   line-height: 1.5;
   font-weight: 400;
   letter-spacing: 0;
@@ -37,6 +58,6 @@ code, kbd, samp, pre, .text-mono {
 .text-primary { color: var(--text-primary); }
 .text-secondary { color: var(--text-secondary); }
 .text-muted { color: var(--text-muted); }
-.text-accent { color: var(--accent-primary); }
+.text-accent { color: var(--accent-ink); }
 .text-success { color: var(--status-success-text); }
 .text-danger { color: var(--status-danger-text); }

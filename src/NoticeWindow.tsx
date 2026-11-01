@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke, isTauri } from "@/platform/runtime";
+import { Button } from "rain-ui";
+import { X } from "lucide-react";
 import "./notice-window.css";
 
 /** 后端 CompletionNoticeInfo 的镜像（见 src-tauri/src/agent/completion_notice.rs）。 */
@@ -103,16 +105,14 @@ export function NoticeWindow() {
     <div className="notice-head">
       <span className="notice-dot" aria-hidden="true" />
       <span className="notice-title">{info?.title || "新会话"}&nbsp;完成</span>
-      <button
+      <Button
         type="button"
+        variant="bare"
         className="notice-close"
         aria-label="关闭"
+        icon={<X size={12} strokeWidth={1.5} />}
         onClick={(event) => { event.stopPropagation(); dismiss(); }}
-      >
-        <svg viewBox="0 0 16 16" width="12" height="12" fill="none" aria-hidden="true">
-          <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-        </svg>
-      </button>
+      />
     </div>
     <p className="notice-summary">{info?.summary || "本轮已完成，点击查看。"}</p>
   </div>;

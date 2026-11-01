@@ -98,3 +98,8 @@
   letter-spacing: 0.04em;
   color: var(--text-tertiary);
 }
+
+/* 关于弹窗（rain-ui Modal 内容排版） */
+.about-modal-body { display: flex; flex-direction: column; gap: 6px; }
+.about-modal-body .setting-title { margin: 0; }
+.about-modal-body .setting-desc { margin: 0; }

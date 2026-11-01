@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { ChevronRight } from "lucide-react";
-import { Badge, type BadgeProps } from "@/components/ui/Badge";
+import { Badge, type BadgeProps } from "rain-ui";
 
 interface PluginItemProps {
   name: string;

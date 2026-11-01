@@ -1,4 +1,4 @@
-/* 自定义标题栏：左侧 100px 留白 → 菜单 → 右侧窗口按钮。 */
+/* 自定义标题栏：左箭头 → 菜单 → 右侧窗口按钮（贴右缘）。 */
 .titlebar {
   position: relative;
   z-index: 20;
@@ -14,9 +14,19 @@
   -webkit-user-select: none;
 }
 
-.titlebar-gutter {
-  flex: 0 0 auto;
+.titlebar-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
   height: 100%;
+  padding-left: 8px;
+  -webkit-app-region: no-drag;
+}
+
+.titlebar-nav .titlebar-btn:disabled {
+  opacity: 0.35;
+  background: transparent;
+  color: var(--text-secondary);
 }
 
 .titlebar-menu {
@@ -37,7 +47,7 @@
   align-items: center;
   gap: 2px;
   height: 100%;
-  margin-right: 40px;
+  padding-right: 2px;
   -webkit-app-region: no-drag;
 }
 
@@ -63,3 +73,4 @@
   background: #e81123;
   color: #ffffff;
 }
+

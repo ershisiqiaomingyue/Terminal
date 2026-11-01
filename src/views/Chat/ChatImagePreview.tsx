@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Maximize, Minus, Plus, X } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "rain-ui";
 import "./chat-image-preview.css";
 
 export function ChatImagePreview({ name, dataUrl, onClose }: { name: string; dataUrl: string; onClose: () => void }) {
@@ -32,11 +32,11 @@ export function ChatImagePreview({ name, dataUrl, onClose }: { name: string; dat
       <header className="chat-image-preview-header">
         <span className="chat-image-preview-name" title={name}>{name}</span>
         <div className="chat-image-preview-controls">
-          <Button variant="subtle" size="sm" title="缩小" aria-label="缩小" icon={<Minus size={16} />} disabled={zoom <= 0.5 || failed} onClick={() => setZoom((value) => Math.max(0.5, value / 1.25))} />
+          <Button variant="ghost" title="缩小" aria-label="缩小" icon={<Minus size={16} />} disabled={zoom <= 0.5 || failed} onClick={() => setZoom((value) => Math.max(0.5, value / 1.25))} />
           <span className="chat-image-preview-scale">{Math.round(scale * 100)}%</span>
-          <Button variant="subtle" size="sm" title="放大" aria-label="放大" icon={<Plus size={16} />} disabled={zoom >= 8 || failed} onClick={() => setZoom((value) => Math.min(8, value * 1.25))} />
-          <Button variant="subtle" size="sm" title="适应窗口" aria-label="适应窗口" icon={<Maximize size={16} />} onClick={() => { setZoom(1); stageRef.current?.scrollTo(0, 0); }} />
-          <Button variant="subtle" size="sm" title="关闭预览" aria-label="关闭预览" icon={<X size={18} />} onClick={onClose} />
+          <Button variant="ghost" title="放大" aria-label="放大" icon={<Plus size={16} />} disabled={zoom >= 8 || failed} onClick={() => setZoom((value) => Math.min(8, value * 1.25))} />
+          <Button variant="ghost" title="适应窗口" aria-label="适应窗口" icon={<Maximize size={16} />} onClick={() => { setZoom(1); stageRef.current?.scrollTo(0, 0); }} />
+          <Button variant="ghost" title="关闭预览" aria-label="关闭预览" icon={<X size={18} />} onClick={onClose} />
         </div>
       </header>
       <div ref={stageRef} className="chat-image-preview-stage">

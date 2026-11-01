@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Bot, BrainCircuit, Check, ChevronRight, Circle, CircleDot, CornerDownLeft, GripHorizontal, History, MapPin, Minus, Play, Route, Search, Send, ShieldCheck, Sparkles, Trash2, X } from "lucide-react";
-import { Badge, Button, Input } from "@/components/ui";
-import { useConfirmAction } from "@/components/ConfirmDialog/useConfirmAction";
+import { Badge, Button, Input } from "rain-ui";
+import { useConfirmAction } from "rain-ui";
 import { AgentModelPicker } from "@/components/AgentModelPicker/AgentModelPicker";
-import { ToolIcon } from "@/components/ToolIcon/ToolIcon";
+import { ToolIcon } from "rain-ui";
 import {
   applicationActionCatalogForPrompt,
   normalizeActionParameters,
@@ -906,16 +906,16 @@ export const QuickToolPalette: React.FC<QuickToolPaletteProps> = ({ open, tools,
       {mode === "tools" ? (
         <section ref={dialogRef} className="quick-tool-palette quick-tool-search-dialog" role="dialog" aria-modal="true" aria-label="快捷工具">
           <header className="quick-tool-palette-header">
-            <Input ref={inputRef} size="sm" aria-label="筛选工具" prefixIcon={<Search size={16} />} value={query} placeholder="搜索主页工具或快捷操作..." wrapperClassName="quick-tool-palette-search" suffixAction={<kbd>Esc</kbd>} onChange={(event) => { setQuery(event.target.value); setActiveIndex(0); }} />
+            <Input ref={inputRef} aria-label="筛选工具" prefixIcon={<Search size={16} />} value={query} placeholder="搜索主页工具或快捷操作..." wrapperClassName="quick-tool-palette-search" suffixAction={<kbd>Esc</kbd>} onChange={(event) => { setQuery(event.target.value); setActiveIndex(0); }} />
           </header>
 
           <div ref={listRef} className="quick-tool-palette-list" role="listbox" aria-label="快捷工具">
             {aiActionVisible && (
-              <button type="button" className={`quick-tool-palette-row quick-tool-palette-ai-action${activeIndex === 0 ? " active" : ""}`} role="option" aria-selected={activeIndex === 0} onMouseMove={() => setActiveIndex(0)} onClick={openAiQuestion}>
+              <Button type="button" variant="bare" className={`quick-tool-palette-row quick-tool-palette-ai-action${activeIndex === 0 ? " active" : ""}`} role="option" aria-selected={activeIndex === 0} onMouseMove={() => setActiveIndex(0)} onClick={openAiQuestion}>
                 <span className="quick-tool-palette-ai-icon"><Sparkles size={18} /></span>
                 <span className="quick-tool-palette-copy"><b>AI 提问</b><small>先分析目标和调度方式，再决定是否继续执行</small></span>
                 <span className="quick-tool-palette-action"><Badge variant="neutral">规划</Badge><CornerDownLeft size={14} aria-hidden="true" /></span>
-              </button>
+              </Button>
             )}
 
             {unusedTools.length > 0 && <div className="quick-tool-palette-section-label">工具</div>}
@@ -939,9 +939,9 @@ export const QuickToolPalette: React.FC<QuickToolPaletteProps> = ({ open, tools,
               <span className="quick-tool-drag-handle" aria-hidden="true"><GripHorizontal size={16} /></span>
               <span className="quick-tool-ai-title"><Bot size={18} />AI 提问</span>
               <div className="quick-tool-window-actions">
-                <button type="button" className={`quick-tool-history-button${historyOpen ? " active" : ""}`} title="任务历史" aria-label="任务历史" onClick={() => setHistoryOpen((value) => !value)}><History size={15} /></button>
-                <button type="button" className="quick-tool-window-minimize" title="收起到侧栏" aria-label="收起到侧栏" onClick={onMinimize}><Minus size={16} /></button>
-                <button type="button" className="quick-tool-ai-close" title={analyzing || runtimeActivity.status === "running" ? "收起并持续跟踪任务" : "关闭 AI 提问"} aria-label={analyzing || runtimeActivity.status === "running" ? "收起并持续跟踪任务" : "关闭 AI 提问"} onClick={dismissAiDialog}><X size={16} /></button>
+                <Button type="button" variant="bare" className={`quick-tool-history-button${historyOpen ? " active" : ""}`} title="任务历史" aria-label="任务历史" onClick={() => setHistoryOpen((value) => !value)}><History size={15} /></Button>
+                <Button type="button" variant="bare" className="quick-tool-window-minimize" title="收起到侧栏" aria-label="收起到侧栏" onClick={onMinimize}><Minus size={16} /></Button>
+                <Button type="button" variant="bare" className="quick-tool-ai-close" title={analyzing || runtimeActivity.status === "running" ? "收起并持续跟踪任务" : "关闭 AI 提问"} aria-label={analyzing || runtimeActivity.status === "running" ? "收起并持续跟踪任务" : "关闭 AI 提问"} onClick={dismissAiDialog}><X size={16} /></Button>
               </div>
           </header>
           <div className="quick-tool-ai-body">
@@ -971,19 +971,19 @@ export const QuickToolPalette: React.FC<QuickToolPaletteProps> = ({ open, tools,
                 <span>继续与 AI 对话</span>
                 <textarea rows={2} value={followUpTask} placeholder="补充条件、追问分析结果，或要求调整执行计划" disabled={analyzing} onChange={(event) => setFollowUpTask(event.target.value)} />
               </div>
-              <Button type="button" variant="secondary" size="sm" icon={<Send size={14} />} disabled={analyzing || !followUpTask.trim()} onClick={continueTaskConversation}>继续分析</Button>
+              <Button type="button" variant="secondary" icon={<Send size={14} />} disabled={analyzing || !followUpTask.trim()} onClick={continueTaskConversation}>继续分析</Button>
             </section>}
             {historyOpen && <section className="quick-tool-ai-history" aria-label="任务历史">
               <div className="quick-tool-ai-history-heading"><span>任务历史</span><small>最近 {taskHistory.length} 条</small></div>
               {taskHistory.length ? taskHistory.slice(0, 8).map((entry) => <div className="quick-tool-ai-history-row" key={entry.id}>
-                <button type="button" className="quick-tool-ai-history-main" onClick={() => restoreTaskHistory(entry)}><span><b>{entry.task}</b><small>{entry.destination} · {entry.status === "executed" ? "已进入" : "已分析"}{entry.plan ? " · 含完整进度" : ""}</small></span><time>{new Date(entry.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time></button>
-                <button type="button" className="quick-tool-ai-history-delete" title="删除任务记录" aria-label={`删除任务记录：${entry.task}`} onClick={() => deleteTaskHistory(entry.id)}><Trash2 size={13} /></button>
+                <Button type="button" variant="bare" className="quick-tool-ai-history-main" onClick={() => restoreTaskHistory(entry)}><span><b>{entry.task}</b><small>{entry.destination} · {entry.status === "executed" ? "已进入" : "已分析"}{entry.plan ? " · 含完整进度" : ""}</small></span><time>{new Date(entry.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time></Button>
+                <Button type="button" variant="bare" className="quick-tool-ai-history-delete" title="删除任务记录" aria-label={`删除任务记录：${entry.task}`} onClick={() => deleteTaskHistory(entry.id)}><Trash2 size={13} /></Button>
               </div>) : <p className="quick-tool-ai-history-empty">还没有任务记录</p>}
             </section>}
             </div>
           </div>
           <footer className="quick-tool-ai-footer">
-            <Button type="button" variant="subtle" size="sm" onClick={dismissAiDialog}>{analyzing || runtimeActivity.status === "running" ? "收起" : "关闭"}</Button>
+            <Button type="button" variant="ghost" onClick={dismissAiDialog}>{analyzing || runtimeActivity.status === "running" ? "收起" : "关闭"}</Button>
             <div className="quick-tool-ai-footer-actions">
               <AgentModelPicker
                 className="quick-tool-ai-model-picker"
@@ -996,7 +996,7 @@ export const QuickToolPalette: React.FC<QuickToolPaletteProps> = ({ open, tools,
                 }}
                 onOpenSettings={() => window.dispatchEvent(new CustomEvent("android-tool-open-settings", { detail: { section: "agent" } }))}
               />
-              {taskPlan ? <Button type="button" variant="primary" size="sm" icon={<Play size={15} />} disabled={!taskPlan.execution || analyzing} onClick={() => { void executeTaskPlan(); }}>执行</Button> : <Button type="button" variant="primary" size="sm" icon={<Sparkles size={15} />} loading={analyzing} onClick={() => { void analyzeTask(); }}>分析任务</Button>}
+              {taskPlan ? <Button type="button" variant="default" icon={<Play size={15} />} disabled={!taskPlan.execution || analyzing} onClick={() => { void executeTaskPlan(); }}>执行</Button> : <Button type="button" variant="default" icon={<Sparkles size={15} />} loading={analyzing} onClick={() => { void analyzeTask(); }}>分析任务</Button>}
             </div>
           </footer>
         </section>
@@ -1017,11 +1017,11 @@ interface ToolRowProps {
 const ToolRow: React.FC<ToolRowProps> = React.memo(({ tool, index, active, useCount, onHighlight, onActivate }) => {
   const status = homeToolStatus(tool);
   return (
-    <button type="button" className={`quick-tool-palette-row${active ? " active" : ""}${status === "ready" ? "" : " unavailable"}`} role="option" aria-selected={active} aria-disabled={status !== "ready"} onFocus={() => onHighlight(index)} onMouseMove={() => onHighlight(index)} onClick={() => onActivate(tool)}>
+    <Button type="button" variant="bare" className={`quick-tool-palette-row${active ? " active" : ""}${status === "ready" ? "" : " unavailable"}`} role="option" aria-selected={active} aria-disabled={status !== "ready"} onFocus={() => onHighlight(index)} onMouseMove={() => onHighlight(index)} onClick={() => onActivate(tool)}>
       <ToolIcon className="home-tool-icon-box">{tool.icon}</ToolIcon>
       <span className="quick-tool-palette-copy"><b>{tool.title}</b><small>{tool.subtitle}</small></span>
       <span className="quick-tool-palette-action"><Badge variant={homeToolStatusVariant(status)}>{homeToolStatusLabel(status)}</Badge>{useCount ? <small className="quick-tool-usage-count">{useCount} 次</small> : null}{status === "ready" && <CornerDownLeft size={14} aria-hidden="true" />}</span>
-    </button>
+    </Button>
   );
 });
 

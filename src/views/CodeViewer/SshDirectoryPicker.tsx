@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowUp, ChevronRight, Folder, LoaderCircle, RefreshCw, Server } from "lucide-react";
-import { Button, Input } from "@/components/ui";
+import { Button, Input } from "rain-ui";
 import { SettingsEditDialog } from "@/components/SettingsModal/SettingsEditDialog";
 import { formatInvokeError, invoke } from "@/platform/runtime";
 import type { BrowserEntry } from "./useCodeBrowser";
@@ -44,18 +44,18 @@ export function SshDirectoryPicker({ connectionId, server, initialPath, onClose,
   return <SettingsEditDialog title="选择 SSH 文件夹" onClose={onClose} className="code-ssh-directory-picker">
     <div className="code-ssh-picker-server"><Server size={14} /><span>{server} · 全局 SSH 已连接</span></div>
     <form className="code-ssh-picker-location" onSubmit={(event) => { event.preventDefault(); void browse(path); }}>
-      <Button className="code-ssh-picker-icon" variant="subtle" size="sm" icon={<ArrowUp size={14} />} disabled={busy || !current || current === "/"} aria-label="上一级目录" onClick={() => void browse(parent)} />
-      <Input size="sm" aria-label="SSH 目录位置" value={path} placeholder="~/project 或 /home/user/project" onChange={(event) => setPath(event.target.value)} />
-      <Button type="submit" size="sm" variant="secondary" disabled={busy || !path.trim()}>前往</Button>
-      <Button className="code-ssh-picker-icon" variant="subtle" size="sm" icon={<RefreshCw size={14} />} disabled={busy} aria-label="刷新候选目录" onClick={() => void browse(current || path, true)} />
+      <Button className="code-ssh-picker-icon" variant="ghost" icon={<ArrowUp size={14} />} disabled={busy || !current || current === "/"} aria-label="上一级目录" onClick={() => void browse(parent)} />
+      <Input aria-label="SSH 目录位置" value={path} placeholder="~/project 或 /home/user/project" onChange={(event) => setPath(event.target.value)} />
+      <Button type="submit" variant="secondary" disabled={busy || !path.trim()}>前往</Button>
+      <Button className="code-ssh-picker-icon" variant="ghost" icon={<RefreshCw size={14} />} disabled={busy} aria-label="刷新候选目录" onClick={() => void browse(current || path, true)} />
     </form>
     {error && <div className="code-download-error" role="alert">{error}</div>}
     <div className="code-ssh-picker-list custom-scrollbar" aria-label="SSH 候选文件夹" aria-busy={busy}>
       {busy ? <div className="code-ssh-picker-empty"><LoaderCircle size={18} className="inline-spin" />正在加载目录…</div> : directories.length ? directories.map((entry) => <div key={entry.path} className="code-ssh-picker-folder">
-        <button type="button" className="code-ssh-picker-select" aria-label={`进入文件夹 ${entry.name}`} onClick={() => void browse(entry.path)}><Folder size={16} /><span><strong>{entry.name}</strong>{entry.symlinkTarget && <small>→ {entry.symlinkTarget}</small>}</span></button>
-        <Button className="code-ssh-picker-icon" size="xs" variant="subtle" icon={<ChevronRight size={15} />} aria-label={`浏览文件夹 ${entry.name}`} title="浏览子目录" onClick={() => void browse(entry.path)} />
+        <Button type="button" variant="bare" className="code-ssh-picker-select" aria-label={`进入文件夹 ${entry.name}`} onClick={() => void browse(entry.path)}><Folder size={16} /><span><strong>{entry.name}</strong>{entry.symlinkTarget && <small>→ {entry.symlinkTarget}</small>}</span></Button>
+        <Button className="code-ssh-picker-icon" variant="ghost" icon={<ChevronRight size={15} />} aria-label={`浏览文件夹 ${entry.name}`} title="浏览子目录" onClick={() => void browse(entry.path)} />
       </div>) : !error && <div className="code-ssh-picker-empty">此目录没有子文件夹</div>}
     </div>
-    <footer className="code-ssh-picker-actions"><Button variant="secondary" size="sm" onClick={onClose}>取消</Button><Button variant="primary" size="sm" disabled={!current || busy} onClick={() => onSelect(current)}>选择当前目录</Button></footer>
+    <footer className="code-ssh-picker-actions"><Button variant="secondary" onClick={onClose}>取消</Button><Button variant="default" disabled={!current || busy} onClick={() => onSelect(current)}>选择当前目录</Button></footer>
   </SettingsEditDialog>;
 }

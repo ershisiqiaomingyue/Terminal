@@ -33,7 +33,7 @@ import {
   type TerminalEngine,
 } from "@/platform/terminalAdapter";
 import { acquireTerminal, type TerminalLease } from "@/platform/terminalPool";
-import { Button } from "@/components/ui";
+import { Button } from "rain-ui";
 import { decidePassthrough, modeProbe } from "@/platform/terminal/blocks/promptDetect";
 import { clearTerminalContent, resetTerminalContent } from "@/platform/terminalReset";
 import { scrollbackLinesForSession } from "@/platform/scrollbackBudget";
@@ -751,7 +751,6 @@ export const TerminalPane: React.FC<TerminalPaneProps> = ({
         {hasTab && tab && onDetach && (
           <Button
             variant="bare"
-            size="xs"
             icon={<X size={11} />}
             aria-label={`从面板移除 ${tab.title}`}
             title="从这个面板移除（会话仍在左栏，可再拖回来）"

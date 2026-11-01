@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { NoticePermissionContent, NoticeQuestionContent } from "@/components/ui/NoticeContent";
+import { NoticePermissionContent, NoticeQuestionContent } from "rain-ui";
 import { ComposerNoticeSlot } from "./ComposerNoticeDock";
 interface ChatPermissionBarProps {
   requestKey: string;

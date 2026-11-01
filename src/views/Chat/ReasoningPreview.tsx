@@ -1,6 +1,7 @@
 import { memo, useId, useRef, type KeyboardEvent, type RefObject, type UIEvent, type WheelEvent } from "react";
+import { Button } from "rain-ui";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { Card } from "@/components/ui/Card";
+import { Card } from "rain-ui";
 import { reasoningPreviewText } from "./reasoningPresentation";
 import { MarkdownMessage } from "./MarkdownMessage";
 import { useStreamingScrollFollow } from "./useStreamingScrollFollow";
@@ -58,17 +59,17 @@ export const ReasoningPreview = memo(function ReasoningPreview({ content, active
   const Chevron = expanded ? ChevronDown : ChevronRight;
   const caughtUp = !active || follow.following;
   return <div className="agent-reasoning-entry">
-    <button type="button" className={`agent-reasoning-preview${active ? " is-active" : ""}`}
+    <Button type="button" variant="bare" className={`agent-reasoning-preview${active ? " is-active" : ""}`}
       aria-label={expanded ? "收起思考过程" : "展开思考过程"} aria-expanded={expanded} aria-controls={detailId} onClick={(event) => onToggle(event.currentTarget)}>
       <span>{reasoningPreviewText(content, active, label)}</span><Chevron size={13} aria-hidden="true" />
-    </button>
+    </Button>
     {expanded && <Card tone="muted" className="agent-reasoning-card">
       <ReasoningDetail detailId={detailId} content={content} active={active}
         detailRef={detailRef} following={follow.following} onScroll={follow.onScroll}
         onWheel={follow.onWheel} onKeyDown={follow.onKeyDown} />
-      {!caughtUp && <button type="button" className="agent-reasoning-jump" onClick={follow.resume}>
+      {!caughtUp && <Button type="button" variant="bare" className="agent-reasoning-jump" onClick={follow.resume}>
         回到最新
-      </button>}
+      </Button>}
     </Card>}
   </div>;
 });

@@ -1,5 +1,6 @@
 import React from "react";
-import { Input, Select, Switch } from "@/components/ui";
+import { Input, Select, Switch } from "rain-ui";
+import { SettingRow } from "./settingsUI";
 
 /**
  * SSH 连接的字段集合（新建与编辑共用一份）。
@@ -59,132 +60,89 @@ interface SshConnectionFieldsProps {
   disabled?: boolean;
 }
 
-/** 六个 `setting-row-item`：主机/用户名/认证方式/凭据/默认目录/严格 Host Key。 */
+/** 六个设置行：主机/用户名/认证方式/凭据/默认目录/严格 Host Key。 */
 export const SshConnectionFields: React.FC<SshConnectionFieldsProps> = ({ values, onChange, disabled }) => (
   <>
-    <div className="setting-row-item">
-      <div className="setting-label-block">
-        <span className="setting-title">主机地址 (Host)</span>
-        <span className="setting-desc">IP 地址与端口号</span>
-      </div>
-      <div className="setting-control-block">
-        <Input
-          size="sm"
-          value={values.host}
-          disabled={disabled}
-          onChange={(e) => onChange({ host: e.target.value })}
-          placeholder="192.168.1.100"
-          style={{ flex: 1 }}
-        />
-        <Input
-          size="sm"
-          value={values.port}
-          disabled={disabled}
-          onChange={(e) => onChange({ port: e.target.value })}
-          placeholder="22"
-          style={{ width: 62 }}
-        />
-      </div>
-    </div>
+    <SettingRow title="主机地址 (Host)" desc="IP 地址与端口号" controlClassName="w-72 justify-end gap-2">
+      <Input
+        size="md"
+        value={values.host}
+        disabled={disabled}
+        onChange={(e) => onChange({ host: e.target.value })}
+        placeholder="192.168.1.100"
+        className="min-w-0 flex-1"
+      />
+      <Input
+        size="md"
+        value={values.port}
+        disabled={disabled}
+        onChange={(e) => onChange({ port: e.target.value })}
+        placeholder="22"
+        className="w-16 shrink-0"
+      />
+    </SettingRow>
 
-    <div className="setting-row-item">
-      <div className="setting-label-block">
-        <span className="setting-title">登录用户名</span>
-        <span className="setting-desc">远程机器系统账户</span>
-      </div>
-      <div className="setting-control-block">
-        <Input
-          size="sm"
-          value={values.username}
-          disabled={disabled}
-          onChange={(e) => onChange({ username: e.target.value })}
-          placeholder="root / ubuntu / android"
-          style={{ width: "100%" }}
-        />
-      </div>
-    </div>
+    <SettingRow title="登录用户名" desc="远程机器系统账户" controlClassName="w-72">
+      <Input
+        size="md"
+        value={values.username}
+        disabled={disabled}
+        onChange={(e) => onChange({ username: e.target.value })}
+        placeholder="root / ubuntu / android"
+        className="w-full"
+      />
+    </SettingRow>
 
-    <div className="setting-row-item">
-      <div className="setting-label-block">
-        <span className="setting-title">认证方式</span>
-        <span className="setting-desc">密码或私钥文件</span>
-      </div>
-      <div className="setting-control-block">
-        <Select
-          size="sm"
-          value={values.authType}
-          onChange={(val) => onChange({ authType: val as "password" | "key" })}
-          options={[
-            { label: "密码认证", value: "password" },
-            { label: "私钥文件 (~/.ssh/id_rsa)", value: "key" },
-          ]}
-          style={{ width: "100%" }}
-        />
-      </div>
-    </div>
+    <SettingRow title="认证方式" desc="密码或私钥文件">
+      <Select
+        size="md"
+        value={values.authType}
+        onChange={(val) => onChange({ authType: val as "password" | "key" })}
+        options={[
+          { label: "密码认证", value: "password" },
+          { label: "私钥文件 (~/.ssh/id_rsa)", value: "key" },
+        ]}
+      />
+    </SettingRow>
 
     {values.authType === "password" ? (
-      <div className="setting-row-item">
-        <div className="setting-label-block">
-          <span className="setting-title">登录密码</span>
-          <span className="setting-desc">保存到系统安全凭据库</span>
-        </div>
-        <div className="setting-control-block">
-          <Input
-            size="sm"
-            type="password"
-            value={values.password}
-            disabled={disabled}
-            onChange={(e) => onChange({ password: e.target.value })}
-            placeholder="••••••••"
-            style={{ width: "100%" }}
-          />
-        </div>
-      </div>
+      <SettingRow title="登录密码" desc="保存到系统安全凭据库" controlClassName="w-72">
+        <Input
+          size="md"
+          type="password"
+          value={values.password}
+          disabled={disabled}
+          onChange={(e) => onChange({ password: e.target.value })}
+          placeholder="••••••••"
+          className="w-full"
+        />
+      </SettingRow>
     ) : (
-      <div className="setting-row-item">
-        <div className="setting-label-block">
-          <span className="setting-title">私钥文件路径</span>
-          <span className="setting-desc">OpenSSH 格式私钥路径</span>
-        </div>
-        <div className="setting-control-block">
-          <Input
-            size="sm"
-            value={values.keyPath}
-            disabled={disabled}
-            onChange={(e) => onChange({ keyPath: e.target.value })}
-            placeholder="~/.ssh/id_rsa"
-            style={{ width: "100%" }}
-          />
-        </div>
-      </div>
+      <SettingRow title="私钥文件路径" desc="OpenSSH 格式私钥路径" controlClassName="w-72">
+        <Input
+          size="md"
+          value={values.keyPath}
+          disabled={disabled}
+          onChange={(e) => onChange({ keyPath: e.target.value })}
+          placeholder="C:\Users\you\.ssh\id_rsa"
+          className="w-full"
+        />
+      </SettingRow>
     )}
 
-    <div className="setting-row-item">
-      <div className="setting-label-block">
-        <span className="setting-title">默认工作目录 (Default Root)</span>
-        <span className="setting-desc">远程会话初始主目录</span>
-      </div>
-      <div className="setting-control-block">
-        <Input
-          size="sm"
-          value={values.defaultRoot}
-          disabled={disabled}
-          onChange={(e) => onChange({ defaultRoot: e.target.value })}
-          placeholder="/home/android"
-          style={{ width: "100%" }}
-        />
-      </div>
-    </div>
+    <SettingRow title="默认工作目录 (Default Root)" desc="远程会话初始主目录" controlClassName="w-72">
+      <Input
+        size="md"
+        value={values.defaultRoot}
+        disabled={disabled}
+        onChange={(e) => onChange({ defaultRoot: e.target.value })}
+        placeholder="/home/android"
+        className="w-full"
+      />
+    </SettingRow>
 
-    <div className="setting-row-item">
-      <div className="setting-label-block">
-        <span className="setting-title">严格 Host Key 检查</span>
-        <span className="setting-desc">校对 known_hosts 避免中间人伪造</span>
-      </div>
-      <div className="setting-control-block" style={{ justifyContent: "flex-end" }}>
-        <Switch checked={values.strictHostKey} onChange={(checked) => onChange({ strictHostKey: checked })} />
-      </div>
-    </div>
+    <SettingRow title="严格 Host Key 检查" desc="校对 known_hosts 避免中间人伪造">
+      <Switch checked={values.strictHostKey} onCheckedChange={(checked) => onChange({ strictHostKey: checked })} />
+    </SettingRow>
   </>
 );

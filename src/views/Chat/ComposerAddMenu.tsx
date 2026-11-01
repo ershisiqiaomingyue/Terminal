@@ -1,7 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Button } from "rain-ui";
 import { createPortal } from "react-dom";
 import { Boxes, ChevronDown, FolderOpen, Paperclip, Plus, Settings2 } from "lucide-react";
-import { Checkbox } from "@/components/ui/Checkbox";
+import { Checkbox } from "rain-ui";
 import { notify } from "@/platform/notifications";
 import { readAutomationProjects, selectedAutomationProjectIds } from "./projectSelection";
 import "./composer-project-menu.css";
@@ -69,11 +70,11 @@ export function ComposerAddMenu({ open, onOpenChange, onFile, onDirectory, proje
   };
 
   return <div ref={root} className="composer-pop">
-    <button type="button" className="composer-icon" title="添加文件、工作目录或项目配置" aria-label="添加文件、工作目录或项目配置" aria-expanded={open} onClick={() => onOpenChange(!open)}><Plus size={18} /></button>
+    <Button type="button" variant="bare" className="composer-icon" title="添加文件、工作目录或项目配置" aria-label="添加文件、工作目录或项目配置" aria-expanded={open} onClick={() => onOpenChange(!open)}><Plus size={18} /></Button>
     {open && <div className="composer-menu">
       <div className="composer-menu-heading">添加</div>
-      <button type="button" className="composer-menu-row" onClick={() => { onOpenChange(false); onFile(); }}><Paperclip size={15} /><span>文件和文件夹</span><small>本地</small></button>
-      <button type="button" className="composer-menu-row" onClick={() => { onOpenChange(false); onDirectory(); }}><FolderOpen size={15} /><span>工作目录</span><small>本地</small></button>
+      <Button type="button" variant="bare" className="composer-menu-row" onClick={() => { onOpenChange(false); onFile(); }}><Paperclip size={15} /><span>文件和文件夹</span><small>本地</small></Button>
+      <Button type="button" variant="bare" className="composer-menu-row" onClick={() => { onOpenChange(false); onDirectory(); }}><FolderOpen size={15} /><span>工作目录</span><small>本地</small></Button>
       <button ref={projectTrigger} type="button" className="composer-menu-row" aria-label="选择项目" aria-expanded={projectsOpen} aria-controls="composer-project-options" onClick={() => setProjectsOpen((value) => !value)}><Boxes size={15} /><span>选择项目</span><small>{selected.length ? `${selected.length} 个` : "通用"}</small><ChevronDown size={13} /></button>
       <div className="composer-menu-divider" />
       <div className="composer-menu-heading secondary">接入范围</div>
@@ -90,7 +91,7 @@ export function ComposerAddMenu({ open, onOpenChange, onFile, onDirectory, proje
         {!choices.length && <p className="composer-project-empty">暂无项目，可在下方添加。</p>}
       </div>
       <div className="composer-project-divider" role="separator" />
-      <button type="button" className="composer-project-settings" onClick={openSettings}><Settings2 size={14} /><span>添加项目与自动化配置</span><Plus size={13} /></button>
+      <Button type="button" variant="bare" className="composer-project-settings" onClick={openSettings}><Settings2 size={14} /><span>添加项目与自动化配置</span><Plus size={13} /></Button>
     </div>, document.body)}
   </div>;
 }

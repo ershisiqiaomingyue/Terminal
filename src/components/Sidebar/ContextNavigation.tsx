@@ -1,4 +1,5 @@
 import { HOME_TOOL_GROUPS, homeToolStatus } from "@/views/Home";
+import { Button } from "rain-ui";
 import type { SupportedToolKey } from "@/views/ToolWindows";
 
 interface ContextNavigationProps {
@@ -36,10 +37,10 @@ export function ContextNavigation({ pageType, activeTool, tabs, activeId, onSele
     <nav className="context-nav-scroll" aria-label={`${title}列表`}>
       {pageType === "code" ? <section className="context-nav-section">
         <h3 className="context-nav-section-label">已打开</h3>
-        {tabs.filter((tab) => tab.type === "code").map((tab) => <button key={tab.id} type="button" className={`context-nav-row${tab.id === activeId ? " is-active" : ""}`} aria-current={tab.id === activeId ? "page" : undefined} onClick={() => onSelect(tab.id)}><span>{tab.title}</span></button>)}
+        {tabs.filter((tab) => tab.type === "code").map((tab) => <Button key={tab.id} type="button" variant="bare" className={`context-nav-row${tab.id === activeId ? " is-active" : ""}`} aria-current={tab.id === activeId ? "page" : undefined} onClick={() => onSelect(tab.id)}><span>{tab.title}</span></Button>)}
       </section> : pageType === "components" ? <section className="context-nav-section">
         <h3 className="context-nav-section-label">组件</h3>
-        {COMPONENT_SECTIONS.map((section) => <button key={section.id} type="button" className="context-nav-row" onClick={() => {
+        {COMPONENT_SECTIONS.map((section) => <Button key={section.id} type="button" variant="bare" className="context-nav-row" onClick={() => {
           // Every Section renders id={`component-section-<NN>`}, so no heading-text
           // matching is involved. scrollIntoView is avoided on purpose: it walks
           // every scrollable ancestor, and .app-main clips with overflow:hidden,
@@ -55,10 +56,10 @@ export function ContextNavigation({ pageType, activeTool, tabs, activeId, onSele
             scroller.scrollTo({ top, behavior: "smooth" });
           }
           onNavigate();
-        }}><span>{section.label}</span></button>)}
+        }}><span>{section.label}</span></Button>)}
       </section> : HOME_TOOL_GROUPS.map((group) => <section className="context-nav-section context-nav-tool-group" key={group.title} aria-label={group.title}>
         <h3 className="context-nav-section-label">{group.title}</h3>
-        {group.tools.filter((tool) => tool.toolKey && homeToolStatus(tool) === "ready").map((tool) => <button key={tool.id} type="button" className={`context-nav-row${tool.toolKey === activeTool ? " is-active" : ""}`} title={tool.title} aria-current={tool.toolKey === activeTool ? "page" : undefined} onClick={() => tool.toolKey && onOpenTool(tool.toolKey)}><span className="context-nav-tool-icon" aria-hidden="true">{tool.icon}</span><span>{tool.title}</span></button>)}
+        {group.tools.filter((tool) => tool.toolKey && homeToolStatus(tool) === "ready").map((tool) => <Button key={tool.id} type="button" variant="bare" className={`context-nav-row${tool.toolKey === activeTool ? " is-active" : ""}`} title={tool.title} aria-current={tool.toolKey === activeTool ? "page" : undefined} onClick={() => tool.toolKey && onOpenTool(tool.toolKey)}><span className="context-nav-tool-icon" aria-hidden="true">{tool.icon}</span><span>{tool.title}</span></Button>)}
       </section>)}
     </nav>
   </>;

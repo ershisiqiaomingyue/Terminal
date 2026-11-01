@@ -3,10 +3,10 @@ import { marked } from "marked";
 import { Check, Copy } from "lucide-react";
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Button } from "@/components/ui";
-import { PaneResizeHandle } from "./PaneResizeHandle";
-import { OUTLINE_PANE } from "./paneWidth";
-import { usePaneWidth } from "./usePaneWidth";
+import { Button } from "rain-ui";
+import { PaneResizeHandle } from "rain-ui";
+import { OUTLINE_PANE } from "rain-ui";
+import { usePaneWidth } from "rain-ui";
 import { attachDiagramHost } from "@/components/MarkdownDiagram/diagramSource";
 import { useDiagramPortals } from "@/components/MarkdownDiagram/useDiagramPortals";
 
@@ -68,7 +68,7 @@ export const MarkdownFilePreview = memo(function MarkdownFilePreview({ source, s
   return <div ref={layoutElement} className={`code-viewer-markdown-layout${showOutline && headings.length ? " has-outline" : ""}`} style={{ "--outline-pane-width": `${outlinePane.width}px` } as React.CSSProperties}>
     {showOutline && headings.length > 0 && <nav id={outlineId} className="code-viewer-outline custom-scrollbar" aria-label="文档目录">
       <span>目录</span>
-      {headings.map((heading) => <button type="button" key={heading.id} style={{ paddingLeft: 8 + (heading.level - 1) * 10 }} onClick={() => documentElement.current?.querySelector(`#${heading.id}`)?.scrollIntoView({ block: "start" })}>{heading.label}</button>)}
+      {headings.map((heading) => <Button type="button" variant="bare" key={heading.id} style={{ paddingLeft: 8 + (heading.level - 1) * 10 }} onClick={() => documentElement.current?.querySelector(`#${heading.id}`)?.scrollIntoView({ block: "start" })}>{heading.label}</Button>)}
     </nav>}
     {showOutline && headings.length > 0 && <PaneResizeHandle label="调整文档目录宽度" controls={outlineId} width={outlinePane.width} min={outlinePane.bounds.min} max={outlinePane.bounds.max} initial={OUTLINE_PANE.initial} onResize={outlinePane.resize} onCommit={outlinePane.commit} />}
     <div ref={documentElement} className="code-viewer-markdown custom-scrollbar" aria-label="Markdown 预览">
@@ -76,6 +76,6 @@ export const MarkdownFilePreview = memo(function MarkdownFilePreview({ source, s
         : <div data-file-search-root dangerouslySetInnerHTML={{ __html: html }} />}
     </div>
     {diagrams}
-    {copyHosts.map((host, index) => createPortal(<Button type="button" variant="subtle" size="xs" icon={copyState?.index === index && copyState.status === "copied" ? <Check size={13} /> : <Copy size={13} />} title={copyState?.index === index ? copyState.status === "copied" ? "已复制" : "复制失败" : "复制代码"} aria-label={copyState?.index === index ? copyState.status === "copied" ? "已复制" : "复制失败" : "复制代码"} onClick={() => void copyCode(host, index)} />, host, String(index)))}
+    {copyHosts.map((host, index) => createPortal(<Button type="button" variant="ghost" icon={copyState?.index === index && copyState.status === "copied" ? <Check size={13} /> : <Copy size={13} />} title={copyState?.index === index ? copyState.status === "copied" ? "已复制" : "复制失败" : "复制代码"} aria-label={copyState?.index === index ? copyState.status === "copied" ? "已复制" : "复制失败" : "复制代码"} onClick={() => void copyCode(host, index)} />, host, String(index)))}
   </div>;
 });

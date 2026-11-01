@@ -17,23 +17,46 @@
   /* Component outlines stay transparent in every theme; keep their reserved
      width so theme changes and removing decoration do not resize the layout.
      Content dividers and keyboard focus use their own tokens. */
-  --card-radius: 18px;
+  --card-radius: var(--radius-panel);
   /* Only form fields use a thin halo; actions respond with background fills. */
   --input-hover-ring: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 16%, transparent);
   --input-hover-shadow: var(--input-hover-ring), var(--input-inner-shadow);
-  --card-hover-shadow: var(--shadow-lg);
+  --card-hover-shadow: none;
   --card-footer-bg: transparent;
   --markdown-code-surface: var(--ambient-glow), var(--markdown-code-bg);
-  --control-radius: 10px;
   --control-height: 32px;
   --control-height-sm: 28px;
   --control-height-md: 32px;
   --control-height-lg: 38px;
 
-  --radius-sm: 8px;
-  --radius-base: 10px;
-  --radius-lg: 18px;
+  /* ---- 圆角阶梯 ----------------------------------------------------------
+     之前散着 4/6/7/8/9/10/12/14/18/999/50% 十几种取值，同一个弹层里
+     7px 和 9px 会同时出现，层级感全靠运气。现在只有四档：
+       控件（按钮/输入/选择器）6 · 面板（卡片/表格/菜单项）10
+       浮层（弹窗/气泡/右键菜单）14 · 胶囊 9999
+     新增样式只许引用这四档，不许再写裸数字。 */
+  --radius-control: 7px;
+  --radius-panel: 11px;
+  --radius-overlay: 14px;
   --radius-full: 9999px;
+
+  /* 兼容旧名，全部指向新阶梯。 */
+  --control-radius: var(--radius-control);
+  --radius-sm: var(--radius-control);
+  --radius-base: var(--radius-panel);
+  --radius-lg: var(--radius-overlay);
+
+  /* ---- 层叠阶梯 ----------------------------------------------------------
+     以前每个弹层自己写数字：access-mode 25、toast 90、tooltip 10000、
+     modal/confirm 100000、select/context-menu 999999。数字互不相干，于是同一
+     层级的两个浮层谁盖谁全靠运气，调一个就撞另一个。这里只留一条阶梯，所有
+     浮层引用它，不再出现裸数字。 */
+  --z-raised: 10;      /* 卡片内部抬升的装饰层 */
+  --z-sticky: 40;      /* 吸顶/吸底工具条、进度环 */
+  --z-menu: 60;        /* 下拉菜单、审批方式菜单、右键菜单 */
+  --z-overlay: 70;     /* 模态/确认框遮罩 */
+  --z-popover: 80;     /* 气泡提示——必须高过菜单和模态 */
+  --z-portal: 90;      /* 全局提示永远在最上 */
 
   --transition-fast: 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   --transition-base: 0.22s cubic-bezier(0.16, 1, 0.3, 1);
@@ -42,10 +65,12 @@
   --segmented-bg: var(--input-bg-sunken);
   --segmented-text: var(--control-text);
   --segmented-hover-bg: color-mix(in srgb, var(--segmented-bg) 94%, var(--text-primary));
-  --segmented-active-bg: var(--btn-secondary-bg);
-  --segmented-active-hover-bg: var(--btn-secondary-hover);
-  --segmented-active-text: var(--accent-primary);
-  --segmented-active-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  /* 选中段是「抬起来」的，不是「染上主色」的：底比轨道亮一档，字用正文色。
+     用 accent 上色会把每个分段控件都变成彩色控件，一屏全是色点。 */
+  --segmented-active-bg: color-mix(in srgb, var(--segmented-bg) 76%, var(--text-primary));
+  --segmented-active-hover-bg: color-mix(in srgb, var(--segmented-bg) 70%, var(--text-primary));
+  --segmented-active-text: var(--text-primary);
+  --segmented-active-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
   --btn-primary-rim: inset 0 1px 1px 0 rgba(255, 255, 255, 0.25);
 
   --btn-danger-active-bg: color-mix(in srgb, var(--danger-text) 18%, var(--bg-canvas));
@@ -72,10 +97,10 @@
   --overlay-bg: color-mix(in srgb, #000000 36%, transparent);
   --tooltip-bg: var(--text-primary);
   --tooltip-text: var(--bg-canvas);
-  --toast-bg: var(--popover-bg);
-  --toast-text: var(--text-primary);
-  --toast-shadow: var(--popover-shadow);
-  --progress-track-bg: color-mix(in srgb, var(--text-primary) 10%, var(--bg-canvas));
+  --portal-neutral-bg: var(--popover-bg);
+  --portal-neutral-text: var(--text-primary);
+  --portal-neutral-border: var(--divider-color);
+  --portal-neutral-shadow: var(--popover-shadow);
   --terminal-foreground: var(--text-primary);
   --badge-bg: var(--status-neutral-bg);
   --badge-text: var(--status-neutral-text);
@@ -110,10 +135,10 @@
   --composer-permission-hover: color-mix(in srgb, var(--composer-bg) 86%, var(--composer-danger));
   --table-bg: var(--bg-surface);
   --table-text: var(--text-primary);
-  --table-header-bg: color-mix(in srgb, var(--table-bg) 92%, var(--accent-primary));
+  --table-header-bg: color-mix(in srgb, var(--table-bg) 96%, var(--text-primary));
   --table-header-text: var(--table-text);
   --table-stripe-bg: color-mix(in srgb, var(--table-bg) 97.5%, var(--accent-primary));
-  --table-hover-bg: color-mix(in srgb, var(--table-bg) 93%, var(--accent-primary));
+  --table-hover-bg: color-mix(in srgb, var(--table-bg) 95%, var(--text-primary));
   --table-divider: color-mix(in srgb, var(--table-bg) 92%, var(--table-text));
   --terminal-tabs-bg: color-mix(in srgb, var(--bg-surface) 94%, var(--text-primary));
   --terminal-surround-bg: color-mix(in srgb, var(--bg-canvas) 94%, var(--text-primary));
@@ -176,7 +201,8 @@
   --page-header-bg: var(--bg-canvas);
   --page-pane-bg: var(--bg-canvas);
   --switch-thumb-bg: var(--control-checked-mark);
-  --switch-thumb-shadow: 0 2px 5px color-mix(in srgb, #000000 25%, transparent);
+  --switch-thumb-shadow: 0 2px 5px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.12);
+  --switch-active-bg: #34c759;
 }
 
 /* ============================================================================
@@ -197,7 +223,9 @@
   --input-text: var(--text-primary);
   --input-hover-text: var(--text-primary);
   --rail-hover-bg: rgba(255, 255, 255, 0.08);
-  --rail-active-bg: rgba(99, 102, 241, 0.22);
+  --rail-active-bg: rgba(255, 255, 255, 0.10);
+  /* 可点击卡片悬停时叠加的一档中性底：只用透明度，不引入第二个色相。 */
+  --card-interactive-hover: rgba(255, 255, 255, 0.045);
   --topbar-bg: var(--bg-ambient);
   --bg-base: transparent;
   --bg-canvas: #0b0e13;
@@ -208,30 +236,36 @@
   --chrome-muted: #94a3b8;
   --chrome-hover: rgba(255, 255, 255, 0.08);
   --ambient-glow: radial-gradient(circle, rgba(139, 92, 246, 0.08) 0%, rgba(99, 102, 241, 0.03) 30%, transparent 60%);
-  --card-bg: linear-gradient(145deg, rgba(31, 36, 46, 0.98) 0%, rgba(22, 26, 35, 0.98) 100%);
+  --card-bg: var(--bg-surface);
   --bg-card: var(--card-bg);
   --chat-user-message-bg: color-mix(in srgb, var(--accent-primary) 13%, var(--bg-canvas));
   --bg-panel: #12151e;
   --bg-card-hover: var(--bg-card);
   --card-blur: 28px;
   --bg-surface: #171c28;
+  /* 卡片四级色调：surface 是页面主面板，往下逐级「下沉」，越深表示离用户越远。
+     深色主题里下沉 = 变暗（更靠近画布），亮色主题里下沉 = 变灰（离开白纸）。
+     两个主题必须同向，否则同一组件在亮/暗下表达的层级含义正好相反。 */
+  --card-tone-muted: #141922;
+  --card-tone-subtle: #10141c;
+  --card-tone-deep: #0c1017;
   --bg-muted: var(--bg-surface);
   --bg-hover: rgba(255, 255, 255, 0.06);
   --bg-selected: rgba(99, 102, 241, 0.22);
   --bg-input: rgba(255, 255, 255, 0.05);
-  --card-rim: inset 0 1px 1px 0 rgba(255, 255, 255, 0.16);
+  --card-rim: 0 0 0 0 transparent;
   --accent-color: var(--accent-primary);
-  --btn-primary-bg: #6366f1;
+  --btn-primary-bg: #5b5ee2;
   --btn-primary-hover: #4f46e5;
   --btn-primary-text: #ffffff;
-  --btn-confirm-bg: #6366f1;
+  --btn-confirm-bg: #5b5ee2;
   --btn-confirm-hover: #4f46e5;
   --btn-confirm-text: #ffffff;
 
-  /* 下拉浮层面板专属：实心深蓝黑防穿透 */
-  --popover-bg: rgba(18, 21, 28, 0.98);
-  --popover-border: 1px solid transparent;
-  --popover-shadow: 0 24px 50px rgba(0, 0, 0, 0.65), 0 4px 16px rgba(0, 0, 0, 0.35);
+  /* 下拉浮层面板专属：精工悬浮岛 (深色) */
+  --popover-bg: rgba(22, 26, 35, 0.96);
+  --popover-border: 1px solid rgba(255, 255, 255, 0.1);
+  --popover-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.55), 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   --popover-item-hover: rgba(255, 255, 255, 0.08);
   --popover-item-active-bg: rgba(99, 102, 241, 0.22);
   --popover-item-active-text: #a5b4fc;
@@ -242,25 +276,25 @@
        #12151e -> #1a2030 -> #202839 -> #232b3d
      配合 --bg-canvas #0b0e13 / --bg-surface #171c28，每一档都能立住边界。
      focus 继续抬升而不是回落，因为暗色下"浮起"要靠变亮来表达。 */
-  --input-bg-sunken: #1a2030;
-  --input-bg-hover: #202839;
-  --input-bg-focus: #232b3d;
+  --input-bg-sunken: #10141c;
+  --input-bg-hover: #141a24;
+  --input-bg-focus: #171e2a;
   --input-bg: var(--input-bg-sunken);
-  --input-surface-bg: #1a2030;
-  --input-surface-hover-bg: #202839;
+  --input-surface-bg: #1b2130;
+  --input-surface-hover-bg: #202738;
   --input-surface-focus-bg: #232b3d;
   --control-unchecked-bg: rgba(255, 255, 255, 0.14);
   --control-checked-bg: var(--accent-primary);
   --control-checked-mark: #ffffff;
   --input-placeholder: var(--input-muted);
-  --input-focus-border: color-mix(in srgb, var(--input-bg-sunken) 84%, var(--text-primary));
-  --input-focus-ring: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 32%, transparent);
-  --input-border: 1px solid color-mix(in srgb, var(--input-bg-sunken) 86%, var(--text-primary));
-  --input-lift: 0 1px 2px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.22);
-  --input-lift-hover: 0 2px 5px rgba(0, 0, 0, 0.42), 0 5px 14px rgba(0, 0, 0, 0.28);
-  --input-rim: inset 0 1px 0 rgba(255, 255, 255, 0.10);
-  --input-glass: var(--input-lift), var(--input-rim);
-  --input-inner-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.24);
+  --input-focus-border: 1px solid transparent;
+  --input-focus-ring: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+  --input-border: 1px solid transparent;
+  --input-lift: inset 0 1px 2px rgba(0, 0, 0, 0.32);
+  --input-lift-hover: inset 0 1px 2px rgba(0, 0, 0, 0.42);
+  --input-rim: 0 0 0 0 transparent;
+  --input-glass: var(--input-lift);
+  --input-inner-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.32);
 
   --terminal-canvas-bg: #202020;
   --terminal-cursor: #ededed;
@@ -289,12 +323,14 @@
   --terminal-bright-white: #ffffff;
   --code-background: var(--bg-canvas);
   --code-foreground: var(--text-primary);
-  --code-line-number: var(--text-tertiary);
   --code-selection: #494949;
   --code-find-match: #35516d;
   --code-find-current: #436c94;
   --code-diff-added-bg: #17392b;
   --code-diff-removed-bg: #412529;
+  /* 行号只有 12px：在 added/removed 底色上 #7c8ba1 只有 3.66 / 3.99，读不清。
+     行号单独用 --text-secondary(#94a3b8)，两种底色上分别是 4.94 / 5.38。 */
+  --code-line-number: var(--text-secondary);
   --code-diff-added-text: #7dd3a4;
   --code-diff-removed-text: #f5a1a8;
   --code-syntax-comment: var(--text-tertiary);
@@ -314,6 +350,7 @@
   --btn-secondary-bg: rgba(255, 255, 255, 0.06);
   --btn-secondary-hover: rgba(255, 255, 255, 0.12);
   --btn-secondary-border: rgba(255, 255, 255, 0.10);
+  --btn-secondary-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
   --btn-secondary-text: var(--text-primary);
   --btn-subtle-bg: transparent;
   --btn-subtle-hover: rgba(255, 255, 255, 0.08);
@@ -337,14 +374,24 @@
   --accent-gradient: linear-gradient(135deg, #6366f1, #4f46e5);
   --accent-primary: #6366f1;
   --accent-hover: #4f46e5;
+  --accent-ink: #818cf8;
+  /* 主色当文字用时的专用值：深底用浅一档，浅底用深一档，否则 13px 强调文字不足 4.5:1；主色本身（背景/描边/焦点环）不变。 */
   --accent-glow: 0 4px 16px rgba(99, 102, 241, 0.35);
   --accent-subtle: rgba(99, 102, 241, 0.12);
   --accent-border: rgba(99, 102, 241, 0.35);
   --accent-text: #ffffff;
+  /* 分类色板：只给图表/占比这类同层级并列的分段用，不参与状态语义。
+     两两可区分，且随主题换深浅，深色底上不会糊成一片。 */
+  --series-1: #818cf8;
+  --series-2: #2dd4bf;
+  --series-3: #fbbf24;
+  --series-4: #f9a8d4;
+  --series-5: #94a3b8;
+
 
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
-  --text-tertiary: #64748b;
+  --text-tertiary: #7c8ba1;
   --text-muted: #a0a0a0;
   --text-quaternary: #939393;
   --success-text: #71d2a6;
@@ -358,14 +405,16 @@
   --danger: var(--danger-text);
 
   --glass-blur: blur(28px) saturate(185%);
-  --card-border: 1px solid transparent;
+  --card-border: 1px solid var(--divider-color);
   --border-subtle: rgba(255, 255, 255, 0.1);
-  --border-hover: rgba(255, 255, 255, 0.09);
+  --border-medium: rgba(255, 255, 255, 0.2);
+  --border-strong: rgba(255, 255, 255, 0.32);
+  --border-hover: rgba(255, 255, 255, 0.18);
   --divider-color: rgba(255, 255, 255, 0.1);
   --divider-subtle: 1px solid var(--divider-color);
   --table-border-subtle: 1px solid var(--divider-color);
-  --card-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.65), 0 6px 18px rgba(0, 0, 0, 0.4);
-  --card-rim: inset 0 1px 1px 0 rgba(255, 255, 255, 0.16);
+  --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.3);
+  --card-rim: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
   --focus-glow: 0 0 0 3px rgba(99, 102, 241, 0.25);
   --markdown-code-bg: rgba(18, 22, 30, 0.92);
 
@@ -412,28 +461,31 @@ html[data-theme="light"] {
   --session-tab-active-bg: #ffffff;
   --session-tab-active-hover-bg: #ffffff;
   --ambient-glow: radial-gradient(circle, rgba(139, 92, 246, 0.08) 0%, rgba(99, 102, 241, 0.03) 30%, transparent 60%);
-  --card-bg: rgba(255, 255, 255, 0.85);
+  --card-bg: #ffffff;
   --bg-card: var(--card-bg);
   --bg-panel: rgba(255, 255, 255, 0.88);
   --bg-card-hover: var(--bg-card);
-  --segmented-active-shadow: 0 2px 8px rgba(30, 41, 59, 0.08);
+  --segmented-active-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 1px rgba(0, 0, 0, 0.04);
   --card-blur: 28px;
-  --card-rim: inset 0 1px 1px 0 #ffffff;
+  --card-rim: 0 0 0 0 transparent;
   --bg-surface: #ffffff;
+  --card-tone-muted: #fafbfd;
+  --card-tone-subtle: #f2f5f9;
+  --card-tone-deep: #e9eef5;
   --bg-muted: rgba(240, 245, 255, 0.7);
   --bg-hover: rgba(99, 102, 241, 0.06);
   --bg-selected: rgba(99, 102, 241, 0.12);
-  --btn-primary-bg: #6366f1;
+  --btn-primary-bg: #5b5ee2;
   --btn-primary-hover: #4f46e5;
   --btn-primary-text: #ffffff;
-  --btn-confirm-bg: #6366f1;
+  --btn-confirm-bg: #5b5ee2;
   --btn-confirm-hover: #4f46e5;
   --btn-confirm-text: #ffffff;
 
-  /* 下拉浮层面板专属 (亮色)：纯白高反差悬浮岛 + 双层高光 */
-  --popover-bg: rgba(255, 255, 255, 0.98);
-  --popover-border: 1px solid transparent;
-  --popover-shadow: 0 20px 45px rgba(30, 41, 59, 0.12), 0 4px 16px rgba(30, 41, 59, 0.04), inset 0 1px 1px 0 #ffffff;
+  /* 下拉浮层面板专属 (亮色)：苹果质感悬浮岛 (发丝边 + 细腻双层光影) */
+  --popover-bg: rgba(255, 255, 255, 0.96);
+  --popover-border: 1px solid rgba(0, 0, 0, 0.08);
+  --popover-shadow: 0 12px 32px -4px rgba(15, 23, 42, 0.12), 0 4px 12px rgba(15, 23, 42, 0.04), inset 0 1px 0 #ffffff;
   --popover-item-hover: rgba(99, 102, 241, 0.06);
   --popover-item-active-bg: rgba(99, 102, 241, 0.12);
   --popover-item-active-text: #4f46e5;
@@ -454,8 +506,8 @@ html[data-theme="light"] {
   --input-bg-hover: #e7ebf2;
   --input-bg-focus: #ffffff;
   --input-bg: var(--input-bg-sunken);
-  --input-surface-bg: #eef1f6;
-  --input-surface-hover-bg: #e7ebf2;
+  --input-surface-bg: #ffffff;
+  --input-surface-hover-bg: #f7f9fc;
   --input-surface-focus-bg: #ffffff;
   /* 对话输入区保留白色底，内部控件使用独立的 composer 配色。 */
   --composer-bg: #ffffff;
@@ -470,16 +522,16 @@ html[data-theme="light"] {
      frame rather than a focus halo. Buttons mark focus with a single 2px
      outline, so the field now does the same: the border stays neutral and
      only the halo carries the accent. */
-  --input-focus-border: color-mix(in srgb, var(--bg-surface) 82%, var(--text-tertiary));
-  --input-focus-ring: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  --input-focus-border: 1px solid transparent;
+  --input-focus-ring: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 22%, transparent);
   /* 玻璃感与按钮同族：向外浮起，不是向内凹陷。
      - --input-lift    外投影，给控件一层脱离页面的高度
      - --input-rim     内高光，顶部一道亮边表达"玻璃厚度"
      - --input-border  近乎透明的细边，只在深色背景上兜住轮廓 */
-  --input-border: 1px solid color-mix(in srgb, var(--bg-surface) 90%, var(--text-tertiary));
-  --input-lift: 0 1px 2px rgba(15, 23, 42, 0.06), 0 2px 6px rgba(15, 23, 42, 0.04);
-  --input-lift-hover: 0 2px 4px rgba(15, 23, 42, 0.08), 0 4px 10px rgba(15, 23, 42, 0.06);
-  --input-rim: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --input-border: 1px solid transparent;
+  --input-lift: inset 0 1px 2px rgba(15, 23, 42, 0.06);
+  --input-lift-hover: inset 0 1px 2px rgba(15, 23, 42, 0.10);
+  --input-rim: 0 0 0 0 transparent;
   /* --input-glass is the outward recipe used by form controls.
      --input-inner-shadow stays inset-only: switches, tables and list rows also
      consume it and must not be lifted off the page. */
@@ -520,7 +572,7 @@ html[data-theme="light"] {
   --code-find-current: #9dcaff;
   --code-diff-added-bg: #eaf7ee;
   --code-diff-removed-bg: #fff0f0;
-  --code-diff-added-text: #16834e;
+  --code-diff-added-text: #0f7a47;
   --code-diff-removed-text: #c23d48;
   --code-syntax-keyword: #a64b39;
   --code-syntax-literal: #bd6b23;
@@ -542,9 +594,11 @@ html[data-theme="light"] {
   --button-hover-text: #151e32;
   --rail-hover-bg: rgba(255, 255, 255, 0.7);
   --rail-active-bg: rgba(255, 255, 255, 0.95);
+  --card-interactive-hover: rgba(15, 23, 42, 0.035);
   --btn-secondary-bg: var(--bg-surface);
   --btn-secondary-hover: #f8fafc;
-  --btn-secondary-border: rgba(203, 213, 225, 0.85);
+  --btn-secondary-border: rgba(0, 0, 0, 0.08);
+  --btn-secondary-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   --btn-secondary-text: var(--text-primary);
   --btn-subtle-bg: transparent;
   --btn-subtle-hover: rgba(0, 0, 0, 0.05);
@@ -572,29 +626,43 @@ html[data-theme="light"] {
   --accent-gradient: linear-gradient(135deg, #6366f1, #4f46e5);
   --accent-primary: #6366f1;
   --accent-hover: #4f46e5;
+  --accent-ink: #4f46e5;
+  /* 主色当文字用时的专用值：深底用浅一档，浅底用深一档，否则 13px 强调文字不足 4.5:1；主色本身（背景/描边/焦点环）不变。 */
   --accent-glow: 0 4px 16px rgba(99, 102, 241, 0.35);
   --accent-subtle: rgba(99, 102, 241, 0.12);
   --accent-border: rgba(99, 102, 241, 0.25);
   --accent-text: #ffffff;
+  /* 分类色板：只给图表/占比这类同层级并列的分段用，不参与状态语义。
+     两两可区分，且随主题换深浅，深色底上不会糊成一片。 */
+  --series-1: #4f46e5;
+  --series-2: #0f766e;
+  --series-3: #b45309;
+  --series-4: #be185d;
+  --series-5: #475569;
+
 
   --text-primary: #0f172a;
   --text-secondary: #475569;
-  --text-tertiary: #64748b;
-  --text-muted: #6b7a94;
+  --text-tertiary: #5b6b80;
+  --text-muted: #5f7086;
   --text-quaternary: #9aa7be;
-  --success-text: #059669;
-  --warning-text: #d97706;
-  --danger-text: #e11d48;
+  /* 浅色主题下这三色同时充当 12–13px 的文字色，取值必须过 AA(#ffffff 上 ≥4.5:1)，
+     不能直接抄 Tailwind 的 600 档。深色主题那三个值本来就是亮色，不需要改。 */
+  --success-text: #047857;
+  --warning-text: #b45309;
+  --danger-text: #be123c;
 
   --glass-blur: blur(28px) saturate(185%);
-  --card-border: 1px solid transparent;
+  --card-border: 1px solid var(--divider-color);
   --border-subtle: rgba(226, 232, 240, 0.9);
-  --border-hover: rgba(255, 255, 255, 0.95);
+  --border-medium: rgba(148, 163, 184, 0.75);
+  --border-strong: rgba(100, 116, 139, 0.7);
+  --border-hover: rgba(148, 163, 184, 0.85);
   --divider-color: rgba(226, 234, 248, 0.8);
   --divider-subtle: 1px solid var(--divider-color);
   --table-border-subtle: 1px solid var(--divider-color);
-  --card-shadow: 0 20px 44px -8px rgba(30, 41, 59, 0.1), 0 4px 16px rgba(30, 41, 59, 0.03);
-  --card-rim: inset 0 1px 1px 0 #ffffff;
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 6px 18px -2px rgba(15, 23, 42, 0.06);
+  --card-rim: inset 0 1px 0 0 rgba(255, 255, 255, 0.95);
   --focus-glow: 0 0 0 3px rgba(99, 102, 241, 0.25);
   --markdown-code-bg: rgba(255, 255, 255, 0.95);
 
@@ -636,8 +704,9 @@ html[data-custom-theme] {
   --accent-text: var(--btn-primary-text);
   --border-hover: var(--divider-color);
   --card-border: 1px solid transparent;
-  --popover-border: 1px solid transparent;
-  --btn-secondary-border: rgba(203, 213, 225, 0.85);
+  --popover-border: 1px solid rgba(0, 0, 0, 0.08);
+  --btn-secondary-border: rgba(0, 0, 0, 0.08);
+  --btn-secondary-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   --btn-subtle-border: transparent;
   --terminal-scrollbar-thumb: var(--scrollbar-thumb);
   --terminal-scrollbar-thumb-hover: var(--scrollbar-thumb-hover);
@@ -702,38 +771,4 @@ html[data-theme] {
 
 html[data-theme="light"] {
   --status-pending-border: 1.5px solid rgba(15, 23, 42, 0.35);
-}
-
-/* ==========================================================================
-   rain-ui 兼容 token（vendored tokens 缺口补齐）
-   - D:\workspace\rain-ui 组件源码经 alias 直接引入，其 css 依赖以下变量；
-     本文件补齐缺失项，值与 rain-ui/assets/styles/tokens.css 保持一致。
-   - 字号 token 来自 rain-ui typography.css。
-   ========================================================================== */
-:root {
-  --accent-ink: #818cf8;
-  --btn-secondary-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
-  --card-interactive-hover: rgba(255, 255, 255, 0.045);
-  --card-tone-muted: #141922;
-  --card-tone-subtle: #10141c;
-  --card-tone-deep: #0c1017;
-  --radius-control: 7px;
-  --radius-overlay: 14px;
-  --radius-panel: 11px;
-  --switch-active-bg: #34c759;
-  --text-title: 16px;
-  --text-body: 13px;
-  --text-label: 12px;
-  --text-meta: 11px;
-  --z-menu: 60;
-  --z-raised: 10;
-}
-
-html[data-theme="light"] {
-  --accent-ink: #4f46e5;
-  --btn-secondary-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --card-interactive-hover: rgba(15, 23, 42, 0.035);
-  --card-tone-muted: #fafbfd;
-  --card-tone-subtle: #f2f5f9;
-  --card-tone-deep: #e9eef5;
 }

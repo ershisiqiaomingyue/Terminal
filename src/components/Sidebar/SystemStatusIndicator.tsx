@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Activity, Check, Monitor, RefreshCw, Server, Terminal, Unplug } from "lucide-react";
-import { Button } from "@/components/ui";
+import { Button } from "rain-ui";
 import type { SshConnection, WslProfile } from "@/platform/api";
 import { getSshStatus } from "@/platform/chatApi";
 import { formatInvokeError, isTauri } from "@/platform/runtime";
@@ -218,15 +218,15 @@ export function SystemStatusIndicator({ placement = "sidebar" }: { placement?: "
   const canDisconnect = hasTarget && displayedStatus === "connected" && (!viewingWsl || selectedWsl);
 
   return <div className={`sidebar-system-status ${placement === "topbar" ? "is-topbar" : ""}`} onMouseEnter={keepOpen} onMouseLeave={scheduleClose}>
-    <button type="button" className={`sidebar-system-status-trigger ${tone}`} aria-label={`全局执行环境：${label}`} aria-expanded={open} title={`全局执行环境：${label}`} onClick={keepOpen} onFocus={keepOpen} onKeyDown={(event) => { if (event.key === "Escape") setOpen(false); }}>
+    <Button type="button" variant="bare" className={`sidebar-system-status-trigger ${tone}`} aria-label={`全局执行环境：${label}`} aria-expanded={open} title={`全局执行环境：${label}`} onClick={keepOpen} onFocus={keepOpen} onKeyDown={(event) => { if (event.key === "Escape") setOpen(false); }}>
       <span className="sidebar-system-status-dot" aria-hidden="true" />
-    </button>
+    </Button>
     {open && <aside ref={popoverRef} className="sidebar-system-status-popover" aria-label="全局执行环境" onKeyDown={(event) => { if (event.key === "Escape") setOpen(false); }}>
       <div className="sidebar-system-status-heading">
         <span><Activity size={14} />全局执行环境</span>
-        <Button type="button" size="xs" variant="subtle" className="sidebar-system-status-refresh" title="刷新状态" aria-label="刷新状态" icon={<RefreshCw size={14} className={refreshing ? "is-spinning" : ""} />} onClick={() => void refreshRef.current()} disabled={refreshing || acting} />
+        <Button type="button" variant="ghost" className="sidebar-system-status-refresh" title="刷新状态" aria-label="刷新状态" icon={<RefreshCw size={14} className={refreshing ? "is-spinning" : ""} />} onClick={() => void refreshRef.current()} disabled={refreshing || acting} />
       </div>
-      <Button size="xs" variant="surface" icon={<Monitor size={14} />} onClick={selectGlobalLocal} disabled={acting} aria-pressed={!selectedSsh && !selectedWsl} className="sidebar-system-status-local">本机工作区{!selectedSsh && !selectedWsl && <Check size={13} />}</Button>
+      <Button variant="outline" icon={<Monitor size={14} />} onClick={selectGlobalLocal} disabled={acting} aria-pressed={!selectedSsh && !selectedWsl} className="sidebar-system-status-local">本机工作区{!selectedSsh && !selectedWsl && <Check size={13} />}</Button>
       <div className="segmented-glass sidebar-system-status-tabs" role="tablist" aria-label="远程环境类型" onKeyDown={(event) => {
         if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
         event.preventDefault();
@@ -234,8 +234,8 @@ export function SystemStatusIndicator({ placement = "sidebar" }: { placement?: "
         setTab(next);
         event.currentTarget.querySelector<HTMLButtonElement>(`[data-environment="${next}"]`)?.focus();
       }}>
-        <Button size="xs" variant="subtle" icon={<Server size={13} />} className={`seg-btn${tab === "ssh" ? " active" : ""}`} role="tab" data-environment="ssh" aria-selected={tab === "ssh"} tabIndex={tab === "ssh" ? 0 : -1} onClick={() => setTab("ssh")}>SSH</Button>
-        <Button size="xs" variant="subtle" icon={<Terminal size={13} />} className={`seg-btn${tab === "wsl" ? " active" : ""}`} role="tab" data-environment="wsl" aria-selected={tab === "wsl"} tabIndex={tab === "wsl" ? 0 : -1} onClick={() => setTab("wsl")}>WSL</Button>
+        <Button variant="ghost" icon={<Server size={13} />} className={`seg-btn${tab === "ssh" ? " active" : ""}`} role="tab" data-environment="ssh" aria-selected={tab === "ssh"} tabIndex={tab === "ssh" ? 0 : -1} onClick={() => setTab("ssh")}>SSH</Button>
+        <Button variant="ghost" icon={<Terminal size={13} />} className={`seg-btn${tab === "wsl" ? " active" : ""}`} role="tab" data-environment="wsl" aria-selected={tab === "wsl"} tabIndex={tab === "wsl" ? 0 : -1} onClick={() => setTab("wsl")}>WSL</Button>
       </div>
       <div className="sidebar-system-status-options">
         {viewingWsl ? environment.profiles.map((profile) => <SystemStatusTarget key={profile.id} title={profile.name}
@@ -264,8 +264,8 @@ export function SystemStatusIndicator({ placement = "sidebar" }: { placement?: "
         {displayError && <p className="sidebar-system-status-message error" role="status">{displayError}</p>}
       </div>
       <div className="sidebar-system-status-actions">
-        {canDisconnect && <Button size="xs" variant="surface" icon={<Unplug size={13} />} onClick={() => void disconnect()} disabled={acting}>{viewingWsl ? "取消选择" : "断开连接"}</Button>}
-        <Button size="xs" variant="surface" icon={viewingWsl ? <Terminal size={13} /> : <Server size={13} />} onClick={() => window.dispatchEvent(new CustomEvent("android-tool-open-settings", { detail: { section: tab } }))}>{viewingWsl ? "配置 WSL" : "配置 SSH"}</Button>
+        {canDisconnect && <Button variant="outline" icon={<Unplug size={13} />} onClick={() => void disconnect()} disabled={acting}>{viewingWsl ? "取消选择" : "断开连接"}</Button>}
+        <Button variant="outline" icon={viewingWsl ? <Terminal size={13} /> : <Server size={13} />} onClick={() => window.dispatchEvent(new CustomEvent("android-tool-open-settings", { detail: { section: tab } }))}>{viewingWsl ? "配置 WSL" : "配置 SSH"}</Button>
       </div>
     </aside>}
   </div>;

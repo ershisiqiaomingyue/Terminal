@@ -1,8 +1,8 @@
 import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
-import { Spinner } from "@/components/ui/Spinner";
-import { FilePreviewPanel } from "@/components/ui/FilePreviewPanel";
-import { FileDiffView } from "@/components/ui/FileDiffView";
-import { Select } from "@/components/ui/Select";
+import { Spinner } from "rain-ui";
+import { FilePreviewPanel } from "rain-ui";
+import { FileDiffView } from "rain-ui";
+import { Select } from "rain-ui";
 import { getWorkspaceGitFileDiff } from "@/platform/chatApi";
 import { formatInvokeError, invoke } from "@/platform/runtime";
 import { ensureSshHostConnected } from "@/platform/sshHostConnection";
@@ -196,7 +196,6 @@ export default function ChatFilePreview({ path, origin, workspacePath, gitPath, 
         <>
           {previewTarget && (previewTargets?.length || 0) > 1 && onSelectPreviewTarget && (
             <Select
-              size="sm"
               aria-label="预览环境"
               className="chat-file-preview-env"
               value={previewTarget.key}

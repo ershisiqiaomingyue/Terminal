@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Download, FolderOpen, HardDrive, History, MoreHorizontal, Plus, RefreshCw, Search, Server } from "lucide-react";
-import { Button, SegmentedControl, Switch } from "@/components/ui";
+import { Button, SegmentedControl, Switch } from "rain-ui";
 import type { BrowserTarget } from "./useCodeBrowser";
 import { ToolbarPopover } from "./ToolbarPopover";
 import { DownloadHistory } from "./DownloadHistoryPanel";
@@ -48,16 +48,16 @@ export function CodeViewerToolbar(props: Props) {
     ]} onChange={props.onSource} />
     {breadcrumb}
     <div className="code-viewer-toolbar-actions">
-      {props.hasFile && <Button variant="subtle" size="sm" icon={<Search size={15} />} aria-label="搜索文件内容" title="搜索文件内容" aria-pressed={props.searchOpen} onClick={() => { close(); closeSettings(); props.onSearch(); }} />}
-      <Button className="code-viewer-open-button" variant="subtle" size="sm" icon={<FolderOpen size={15} />} aria-label="打开文件夹" title="打开文件夹" aria-expanded={props.directoryOpen} aria-haspopup={target.kind === "ssh" ? "dialog" : undefined} onClick={() => {
+      {props.hasFile && <Button variant="ghost" icon={<Search size={15} />} aria-label="搜索文件内容" title="搜索文件内容" aria-pressed={props.searchOpen} onClick={() => { close(); closeSettings(); props.onSearch(); }} />}
+      <Button className="code-viewer-open-button" variant="ghost" icon={<FolderOpen size={15} />} aria-label="打开文件夹" title="打开文件夹" aria-expanded={props.directoryOpen} aria-haspopup={target.kind === "ssh" ? "dialog" : undefined} onClick={() => {
         close(); closeSettings(); if (target.kind === "local") props.onLocalOpen(); else if (!sshConnected) props.onSshMenu(); else props.onRemoteOpen();
       }} />
-      {!!root && <Button variant="subtle" size="sm" disabled={loading || !connected} icon={<RefreshCw size={15} className={loading ? "inline-spin" : undefined} />} aria-label="刷新目录" title="刷新目录" onClick={props.onRefresh} />}
+      {!!root && <Button variant="ghost" disabled={loading || !connected} icon={<RefreshCw size={15} className={loading ? "inline-spin" : undefined} />} aria-label="刷新目录" title="刷新目录" onClick={props.onRefresh} />}
       <span className="code-viewer-toolbar-divider" />
-      <Button variant="subtle" size="sm" icon={<Plus size={15} />} aria-label="新标签打开" title="新标签打开当前目录" onClick={props.onNewTab} />
-      <Button variant="subtle" size="sm" icon={<History size={15} />} aria-label="历史记录" title="最近打开的目录" onClick={() => { close(); closeSettings(); props.onHistory(); }} />
-      <span className="code-transfer-anchor" ref={downloadAnchor}><Button className="code-viewer-download-button" variant="subtle" size="sm" icon={<Download size={15} />} aria-label="下载历史" title="下载历史" aria-expanded={props.downloadOpen} aria-haspopup="dialog" onClick={() => { closeSettings(); props.onDownloadToggle(); }}>{downloading && <i className="code-viewer-download-dot" />}</Button></span>
-      <span className="code-transfer-anchor" ref={settingsAnchor}><Button variant="subtle" size="sm" icon={<MoreHorizontal size={15} />} aria-label="查看器设置" title="查看器设置" aria-expanded={props.settingsOpen} aria-haspopup="dialog" onClick={() => { close(); props.onSettingsToggle(); }} /></span>
+      <Button variant="ghost" icon={<Plus size={15} />} aria-label="新标签打开" title="新标签打开当前目录" onClick={props.onNewTab} />
+      <Button variant="ghost" icon={<History size={15} />} aria-label="历史记录" title="最近打开的目录" onClick={() => { close(); closeSettings(); props.onHistory(); }} />
+      <span className="code-transfer-anchor" ref={downloadAnchor}><Button className="code-viewer-download-button" variant="ghost" icon={<Download size={15} />} aria-label="下载历史" title="下载历史" aria-expanded={props.downloadOpen} aria-haspopup="dialog" onClick={() => { closeSettings(); props.onDownloadToggle(); }}>{downloading && <i className="code-viewer-download-dot" />}</Button></span>
+      <span className="code-transfer-anchor" ref={settingsAnchor}><Button variant="ghost" icon={<MoreHorizontal size={15} />} aria-label="查看器设置" title="查看器设置" aria-expanded={props.settingsOpen} aria-haspopup="dialog" onClick={() => { close(); props.onSettingsToggle(); }} /></span>
     </div>
     {props.downloadOpen && downloadAnchor.current && <ToolbarPopover anchor={downloadAnchor.current} label="下载历史" onClose={close}><DownloadHistory {...props.transferPanel} onClose={close} /></ToolbarPopover>}
     {props.settingsOpen && settingsAnchor.current && <ToolbarPopover anchor={settingsAnchor.current} label="查看器设置" onClose={closeSettings}>
@@ -65,11 +65,11 @@ export function CodeViewerToolbar(props: Props) {
         <div className="code-toolbar-popover-heading"><strong>查看器设置</strong></div>
         <div className="code-viewer-setting-row">
           <span><b>自动刷新</b><small>每 5 秒检查磁盘上的当前文件</small></span>
-          <Switch checked={props.autoRefresh} disabled={!connected} aria-label="自动刷新当前文件" onChange={props.onAutoRefresh} />
+          <Switch checked={props.autoRefresh} disabled={!connected} aria-label="自动刷新当前文件" onCheckedChange={props.onAutoRefresh} />
         </div>
         <div className="code-viewer-setting-row">
           <span><b>自动保存</b><small>停止输入 1.2 秒后写入磁盘</small></span>
-          <Switch checked={props.autoSave} disabled={!connected} aria-label="自动保存当前文件" onChange={props.onAutoSave} />
+          <Switch checked={props.autoSave} disabled={!connected} aria-label="自动保存当前文件" onCheckedChange={props.onAutoSave} />
         </div>
       </div>
     </ToolbarPopover>}

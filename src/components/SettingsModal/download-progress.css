@@ -1,51 +1,110 @@
-.plugin-download-progress {
-  display: grid;
-  gap: 12px;
-  padding: 18px 22px;
-  box-sizing: border-box;
-  border: 1px solid var(--border-subtle);
-  border-radius: 12px;
-  background: var(--surface-inset-bg);
-  min-width: 0;
-  color: var(--text-secondary);
-  font-size: 12px;
-}
-.plugin-download-heading, .plugin-download-details {
+/* 环境工具：只补 Accordion 展开后的信息层级，外壳与交互全部复用 rain-ui。 */
+.environment-expanded {
   display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 5px;
+}
+
+.environment-expanded > p {
+  margin: 0;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.environment-status-icon {
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  flex: none;
   align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
-  gap: 12px;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--text-tertiary) 8%, transparent);
+  color: var(--text-secondary);
+}
+
+.environment-status-icon.is-ready {
+  background: color-mix(in srgb, var(--color-success, #16a34a) 11%, transparent);
+  color: var(--color-success, #15803d);
+}
+
+.environment-status-icon.is-available {
+  background: color-mix(in srgb, var(--color-warning, #d97706) 11%, transparent);
+  color: var(--color-warning, #b45309);
+}
+
+.environment-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.environment-detail {
+  display: flex;
   min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+  padding: 11px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
 }
-.plugin-download-label { overflow-wrap: anywhere; text-align: center; font-weight: 500; color: var(--text-primary); }
-.plugin-download-speed, .plugin-download-details {
-  font-variant-numeric: tabular-nums;
+
+.environment-detail span,
+.environment-path > span {
+  color: var(--text-tertiary);
+  font-size: 11px;
+  line-height: 1.4;
 }
-.plugin-download-speed { flex-shrink: 0; color: var(--accent-primary); }
-.plugin-download-details { color: var(--text-secondary); }
-.plugin-download-track {
-  height: 5px;
+
+.environment-detail strong {
   overflow: hidden;
-  border-radius: 4px;
-  background: var(--progress-track-bg);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.plugin-download-track > span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--accent-primary);
-  transition: width 200ms ease;
+
+.environment-path {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
 }
-.plugin-download-track > .is-indeterminate {
-  width: 35%;
-  animation: plugin-download-slide 1.5s ease-in-out infinite;
+
+.environment-path code {
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  line-height: 1.55;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-@keyframes plugin-download-slide {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(290%); }
+
+.environment-download {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
 }
-@media (prefers-reduced-motion: reduce) {
-  .plugin-download-track > .is-indeterminate { animation: none; transform: translateX(90%); }
-  .plugin-download-track > span { transition: none; }
+
+.environment-download-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--text-tertiary);
+  font-size: 11px;
+}
+
+.environment-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-subtle);
 }

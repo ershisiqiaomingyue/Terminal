@@ -1,4 +1,5 @@
 import DOMPurify from "dompurify";
+import { Button } from "rain-ui";
 import React, { memo, useMemo, useRef } from "react";
 import { Check, Copy } from "lucide-react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -231,5 +232,5 @@ export const MarkdownMessage = memo(MarkdownMessageComponent);
 
 /** Kept separately so message toolbars can use the same copy affordance. */
 export function CodeCopyButton({ onCopy, copied }: { onCopy: () => void; copied: boolean }) {
-  return <button type="button" className="code-copy-button" data-copy-code data-copied={copied} onClick={onCopy} title="复制代码">{copied ? <Check size={13} /> : <Copy size={13} />}</button>;
+  return <Button type="button" variant="bare" className="code-copy-button" data-copy-code data-copied={copied} onClick={onCopy} title="复制代码">{copied ? <Check size={13} /> : <Copy size={13} />}</Button>;
 }

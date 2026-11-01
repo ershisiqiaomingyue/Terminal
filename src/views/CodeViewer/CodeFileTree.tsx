@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Button } from "rain-ui";
 import { createPortal } from "react-dom";
 import { ChevronDown, ChevronRight, FileCode2, Folder, FolderOpen, Link2, LoaderCircle } from "lucide-react";
 import type { BrowserEntry } from "./useCodeBrowser";
@@ -103,7 +104,7 @@ export function CodeFileTree(props: Props) {
       const title = linked ? `${entry.path} → ${entry.symlinkTarget}${entry.kind === "symlink" ? "（链接失效或无法访问）" : ""}` : entry.path;
       return <div key={entry.path}>
         <div className={`code-viewer-tree-row${drag.draggedEntry?.path === entry.path ? " is-dragging" : ""}`} onPointerDown={(event) => { if (!event.currentTarget.contains(event.target as Node)) return; drag.begin(entry, event); }} onPointerEnter={(event) => enterFile(entry, event.currentTarget)} onPointerLeave={leaveFile} onFocus={() => enterFile(entry, document.activeElement instanceof HTMLElement ? document.activeElement : document.body)} onBlur={leaveFile}>
-        <button type="button" className={`archive-tree-item code-viewer-tree-item${props.activeFile === entry.path ? " selected" : ""}${props.dropDirectory === entry.path ? " is-upload-target" : ""}${moveTarget === entry.path ? " is-move-target" : ""}${linked ? " is-linked" : ""}${entry.kind === "symlink" ? " is-broken-link" : ""}`}
+        <Button type="button" variant="bare" className={`archive-tree-item code-viewer-tree-item${props.activeFile === entry.path ? " selected" : ""}${props.dropDirectory === entry.path ? " is-upload-target" : ""}${moveTarget === entry.path ? " is-move-target" : ""}${linked ? " is-linked" : ""}${entry.kind === "symlink" ? " is-broken-link" : ""}`}
           data-code-directory={entry.isDirectory ? entry.path : path}
           style={{ paddingLeft: `${10 + depth * 14}px` }} disabled={!props.connected} title={linked ? title : undefined}
           aria-expanded={entry.isDirectory ? expanded : undefined} aria-busy={loading || undefined}
@@ -122,7 +123,7 @@ export function CodeFileTree(props: Props) {
             <b>{file?.status.trim() || "M"}</b>
           </span>}
           {entry.isDirectory && (loading ? <LoaderCircle size={13} className="inline-spin" /> : expanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />)}
-        </button>
+        </Button>
         </div>
         {entry.isDirectory && expanded && renderEntries(entry.path, depth + 1)}
       </div>;

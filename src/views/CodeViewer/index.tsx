@@ -1,7 +1,7 @@
 import { Check, Circle, LoaderCircle, AlertCircle, Download, Upload, ArrowDown, ArrowUp, Clock3, Code2, Copy, Eye, EyeOff, FolderOpen, Link2, ListTree, LockKeyhole, PanelLeft, RefreshCw, Save, Plus, X, GitBranch, GitCompareArrows } from "lucide-react";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { Button, Input } from "@/components/ui";
-import { TaskStepStatusIcon } from "@/components/ui/TaskStepList";
+import { Button, Input } from "rain-ui";
+import { TaskStepStatusIcon } from "rain-ui";
 import { notify } from "@/platform/notifications";
 import { openDirectory, formatInvokeError, invoke } from "@/platform/runtime";
 import { readToolWindowState, useToolWindowState } from "@/platform/toolWindowState";
@@ -9,7 +9,7 @@ import { useGlobalSshConnection } from "@/platform/globalSsh";
 import { openGlobalSshMenu } from "@/platform/globalEnvironment";
 import { isToolWindow, openToolWindowWithState } from "@/platform/toolWindows";
 import { useCodeBrowser, type BrowserEntry as Entry, type BrowserSnapshot } from "./useCodeBrowser";
-import { ContextMenu } from "@/components/ui/ContextMenu";
+import { ContextMenu } from "rain-ui";
 import { useGitBrowser } from "./useGitBrowser";
 import { canMoveEntry, CodeFileTree } from "./CodeFileTree";
 import { useTransferActions } from "./useTransferActions";
@@ -22,12 +22,12 @@ import type { FileTransfer } from "./fileTransfers";
 import { CODE_VIEWER_OPEN_TAB_EVENT, CODE_VIEWER_FOLDER_DROP_EVENT } from "./events";
 import { MarkdownFilePreview } from "./MarkdownFilePreview";
 import { findFileMatches, highlightFileMatches, type FileSearchOptions } from "./fileSearch";
-import { PaneResizeHandle } from "./PaneResizeHandle";
+import { PaneResizeHandle } from "rain-ui";
 import { useFileMutations } from "./useFileMutations";
 import { Pencil, Trash2 } from "lucide-react";
 import { pathInMutation } from "./mutationState";
-import { PROJECT_PANE } from "./paneWidth";
-import { usePaneWidth } from "./usePaneWidth";
+import { PROJECT_PANE } from "rain-ui";
+import { usePaneWidth } from "rain-ui";
 import { FileTabStrip, type FileTabItem } from "./FileTabStrip";
 import { CodeHighlightEditor } from "./CodeHighlightEditor";
 import { isMarkdownFile, projectFilePath, projectName as projectNameOf, tabTitles, fileName, type TabCloseAction } from "./fileTabs";
@@ -276,7 +276,7 @@ export function CodeViewerView({ initialState, active = true }: { initialState?:
       onRefresh={refreshDirectory} onNewTab={() => openNewTab()} onHistory={() => setHistoryOpen((value) => !value)}
       downloadOpen={transferPopup === "download"} onDownloadToggle={() => setTransferPopup((current) => current === "download" ? null : "download")} onDownloadClose={closeTransferPopup}
       transferPanel={{ ...transferPanel, preparationError: transfers.error?.direction === "download" ? transfers.error.message : undefined }} />
-    {!root ? <button className="archive-empty-workbench code-viewer-dropzone code-viewer-pane-card glass-card-surface" type="button" onClick={() => target.kind === "ssh" ? openRemotePicker() : void chooseFolder()}><span className="archive-empty-icon-box"><FolderOpen size={28} /></span><h3>{target.kind === "ssh" ? "浏览 SSH 目录树" : "拖入代码文件夹"}</h3><p>{target.kind === "ssh" ? "使用全局 SSH 连接，在悬浮窗中选择文件夹。" : "目录按需加载，文本文件可编辑保存。"}</p></button> : <div ref={bodyElement} className={`archive-body-split code-viewer-body glass-card-surface${projectOpen ? "" : " is-project-hidden"}`} style={{ "--project-pane-width": `${projectPane.width}px` } as React.CSSProperties}>
+    {!root ? <Button className="archive-empty-workbench code-viewer-dropzone code-viewer-pane-card glass-card-surface" type="button" variant="bare" onClick={() => target.kind === "ssh" ? openRemotePicker() : void chooseFolder()}><span className="archive-empty-icon-box"><FolderOpen size={28} /></span><h3>{target.kind === "ssh" ? "浏览 SSH 目录树" : "拖入代码文件夹"}</h3><p>{target.kind === "ssh" ? "使用全局 SSH 连接，在悬浮窗中选择文件夹。" : "目录按需加载，文本文件可编辑保存。"}</p></Button> : <div ref={bodyElement} className={`archive-body-split code-viewer-body glass-card-surface${projectOpen ? "" : " is-project-hidden"}`} style={{ "--project-pane-width": `${projectPane.width}px` } as React.CSSProperties}>
       <aside id={projectId} className={`archive-aside-tree code-viewer-pane-card${dropDirectory === root ? " is-upload-target" : ""}${draggedTreeEntry && canMoveEntry(draggedTreeEntry, root) ? " is-move-target" : ""}`} data-code-directory={root} aria-label="工程文件" hidden={!projectOpen}>
         <CodeBrowserControls query={treeQuery} onQuery={setTreeQuery} ssh={target.kind === "ssh"}
           uploadOpen={transferPopup === "upload"} onUploadToggle={() => setTransferPopup((current) => current === "upload" ? null : "upload")} onUploadClose={closeTransferPopup}
@@ -296,13 +296,13 @@ export function CodeViewerView({ initialState, active = true }: { initialState?:
       {projectOpen && <PaneResizeHandle label="调整工程文件宽度" controls={projectId} width={projectPane.width} min={projectPane.bounds.min} max={projectPane.bounds.max} initial={PROJECT_PANE.initial} onResize={projectPane.resize} onCommit={projectPane.commit} />}
       <article className="archive-main-article code-viewer-main code-viewer-pane-card">
         <div className="archive-preview-titlebar code-viewer-tab-bar">
-          <Button type="button" className="code-viewer-pane-toggle" variant="subtle" size="xs" icon={<PanelLeft size={14} strokeWidth={1.6} />} aria-label={projectOpen ? "隐藏工程文件" : "显示工程文件"} title={projectOpen ? "隐藏工程文件" : "显示工程文件"} aria-expanded={projectOpen} aria-controls={projectId} onClick={() => setProjectOpen((value) => !value)} />
+          <Button type="button" className="code-viewer-pane-toggle" variant="ghost" icon={<PanelLeft size={14} strokeWidth={1.6} />} aria-label={projectOpen ? "隐藏工程文件" : "显示工程文件"} title={projectOpen ? "隐藏工程文件" : "显示工程文件"} aria-expanded={projectOpen} aria-controls={projectId} onClick={() => setProjectOpen((value) => !value)} />
           <FileTabStrip tabs={tabItems} activePath={activeFile} onSelect={selectFile} onSelectFromOverflow={selectFileFromOverflow} onClose={closeTab} onCloseMany={closeTabs} label="已打开的文件" />
           <div className="archive-preview-actions">
-            {markdownFile && previewing && !readOnlyFile && <Button type="button" className={`code-viewer-pane-toggle${outlineOpen ? " is-active" : ""}`} variant="subtle" size="xs" icon={<ListTree size={14} strokeWidth={1.6} />} aria-label={outlineOpen ? "隐藏文档目录" : "显示文档目录"} title={outlineOpen ? "隐藏文档目录" : "显示文档目录"} aria-expanded={outlineOpen} aria-controls={outlineId} onClick={() => setOutlineOpen((value) => !value)} />}
-            {markdownFile && !readOnlyFile && <Button type="button" className={`code-viewer-pane-toggle${previewing ? " is-active" : ""}`} variant="subtle" size="xs" icon={previewing ? <Code2 size={13} /> : <Eye size={13} />} aria-label={previewing ? "编辑 Markdown" : "预览 Markdown"} title={previewing ? "编辑 Markdown" : "预览 Markdown"} aria-pressed={previewing} onClick={() => setPreviewing(!previewing)} />}
+            {markdownFile && previewing && !readOnlyFile && <Button type="button" className={`code-viewer-pane-toggle${outlineOpen ? " is-active" : ""}`} variant="ghost" icon={<ListTree size={14} strokeWidth={1.6} />} aria-label={outlineOpen ? "隐藏文档目录" : "显示文档目录"} title={outlineOpen ? "隐藏文档目录" : "显示文档目录"} aria-expanded={outlineOpen} aria-controls={outlineId} onClick={() => setOutlineOpen((value) => !value)} />}
+            {markdownFile && !readOnlyFile && <Button type="button" className={`code-viewer-pane-toggle${previewing ? " is-active" : ""}`} variant="ghost" icon={previewing ? <Code2 size={13} /> : <Eye size={13} />} aria-label={previewing ? "编辑 Markdown" : "预览 Markdown"} title={previewing ? "编辑 Markdown" : "预览 Markdown"} aria-pressed={previewing} onClick={() => setPreviewing(!previewing)} />}
             {/* 刷新已在第一行工具栏，这里只保留有改动时的保存按钮。 */}
-            {dirty && !readOnlyFile && <Button variant="primary" size="xs" icon={<Save size={12} />} disabled={loading || externalChanged || !targetConnected} onClick={() => void saveFile().then(() => git.refreshFile())}>保存</Button>}
+            {dirty && !readOnlyFile && <Button variant="default" icon={<Save size={12} />} disabled={loading || externalChanged || !targetConnected} onClick={() => void saveFile().then(() => git.refreshFile())}>保存</Button>}
             {/* 状态只在有事情发生时出现：平时「已同步」不用占一个位置。 */}
             {activeFile && !readOnlyFile && !fileLoading && (externalChanged || browser.saveState === "error" || browser.saveState === "saving") && <span className={`code-file-state is-${externalChanged || browser.saveState === "error" ? "error" : "saving"}`} role="status" title={externalChanged ? "文件冲突" : undefined}>
               {externalChanged || browser.saveState === "error" ? <AlertCircle size={12} /> : <LoaderCircle className="inline-spin" size={12} />}
@@ -315,18 +315,18 @@ export function CodeViewerView({ initialState, active = true }: { initialState?:
           {gitFile?.additions != null && <em className="is-added">+{gitFile.additions}</em>}
           {gitFile?.deletions != null && <em className="is-deleted">−{gitFile.deletions}</em>}
           {git.details?.author && <span className="code-viewer-git-author" title={[git.details.author, git.details.committedAt, git.details.subject].filter(Boolean).join(" · ")}>最近提交：{git.details.author}</span>}
-          {gitFile && gitFile.status !== "??" && <Button variant="subtle" size="xs" icon={<GitCompareArrows size={13} />} aria-pressed={git.diffOpen} onClick={() => git.setDiffOpen((value) => !value)}>{git.diffOpen ? "返回文件" : "改动对比"}</Button>}
-          <Button variant="subtle" size="xs" icon={<RefreshCw size={13} />} aria-label="刷新 Git 状态" title="刷新 Git 状态" onClick={() => void git.refresh()} />
+          {gitFile && gitFile.status !== "??" && <Button variant="ghost" icon={<GitCompareArrows size={13} />} aria-pressed={git.diffOpen} onClick={() => git.setDiffOpen((value) => !value)}>{git.diffOpen ? "返回文件" : "改动对比"}</Button>}
+          <Button variant="ghost" icon={<RefreshCw size={13} />} aria-label="刷新 Git 状态" title="刷新 Git 状态" onClick={() => void git.refresh()} />
         </div>}
         <div className="code-viewer-file-content" ref={contentElement} aria-busy={fileLoading}>
         {/* 搜索条悬浮在正文右上角，不参与布局，不占用正文高度。 */}
         {findOpen && activeFile && !readOnlyFile && <div className="code-viewer-find" role="search" aria-label="文件内容搜索">
-          <Input ref={findInput} size="sm" value={findQuery} aria-label="搜索文件内容" placeholder="搜索文件内容..." onChange={(event) => { setFindQuery(event.target.value); setMatchIndex(0); }} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); moveMatch(event.shiftKey ? -1 : 1); } else if (event.key === "Escape") closeFind(); }} />
-          {([{ key: "caseSensitive", label: "区分大小写", text: "Aa" }, { key: "wholeWord", label: "全词匹配", text: "Ab" }, { key: "regex", label: "正则表达式", text: ".*" }] as const).map((option) => <Button key={option.key} className="code-viewer-find-icon" variant="subtle" size="xs" aria-label={option.label} title={option.label} aria-pressed={Boolean(findOptions[option.key])} onClick={() => { setFindOptions((previous) => ({ ...previous, [option.key]: !previous[option.key] })); setMatchIndex(0); }}>{option.text}</Button>)}
+          <Input ref={findInput} value={findQuery} aria-label="搜索文件内容" placeholder="搜索文件内容..." onChange={(event) => { setFindQuery(event.target.value); setMatchIndex(0); }} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); moveMatch(event.shiftKey ? -1 : 1); } else if (event.key === "Escape") closeFind(); }} />
+          {([{ key: "caseSensitive", label: "区分大小写", text: "Aa" }, { key: "wholeWord", label: "全词匹配", text: "Ab" }, { key: "regex", label: "正则表达式", text: ".*" }] as const).map((option) => <Button key={option.key} className="code-viewer-find-icon" variant="ghost" aria-label={option.label} title={option.label} aria-pressed={Boolean(findOptions[option.key])} onClick={() => { setFindOptions((previous) => ({ ...previous, [option.key]: !previous[option.key] })); setMatchIndex(0); }}>{option.text}</Button>)}
           <span aria-live="polite">{findError || (matchCount ? `${currentMatch + 1}/${matchCount}${truncatedMatches ? "+" : ""}` : findQuery ? "无匹配" : "0/0")}</span>
-          <Button className="code-viewer-find-icon" variant="subtle" size="xs" icon={<ArrowUp size={13} />} disabled={!matchCount} aria-label="上一个匹配" title="上一个匹配" onClick={() => moveMatch(-1)} />
-          <Button className="code-viewer-find-icon" variant="subtle" size="xs" icon={<ArrowDown size={13} />} disabled={!matchCount} aria-label="下一个匹配" title="下一个匹配" onClick={() => moveMatch(1)} />
-          <Button className="code-viewer-find-icon" variant="subtle" size="xs" icon={<X size={13} />} aria-label="关闭文件搜索" title="关闭文件搜索" onClick={closeFind} />
+          <Button className="code-viewer-find-icon" variant="ghost" icon={<ArrowUp size={13} />} disabled={!matchCount} aria-label="上一个匹配" title="上一个匹配" onClick={() => moveMatch(-1)} />
+          <Button className="code-viewer-find-icon" variant="ghost" icon={<ArrowDown size={13} />} disabled={!matchCount} aria-label="下一个匹配" title="下一个匹配" onClick={() => moveMatch(1)} />
+          <Button className="code-viewer-find-icon" variant="ghost" icon={<X size={13} />} aria-label="关闭文件搜索" title="关闭文件搜索" onClick={closeFind} />
         </div>}
         {git.diffOpen ? <pre className="code-viewer-preview code-viewer-diff custom-scrollbar">{git.details?.diff ? git.details.diff.split("\n").map((line, index) => <span key={index} className={line.startsWith("+") ? "is-added" : line.startsWith("-") ? "is-deleted" : undefined}>{line}{"\n"}</span>) : "暂无可显示的差异"}</pre> : fileLoading ? <div className="code-viewer-file-loading" role="status" aria-live="polite"><TaskStepStatusIcon status="running" /><span>{target.kind === "ssh" ? "正在读取 SSH 文件…" : "正在读取文件…"}</span></div> :
         activeFile && !readOnlyFile ? previewMode ? <MarkdownFilePreview source={draft} showOutline={outlineOpen} outlineId={outlineId} /> :
@@ -361,6 +361,6 @@ export function CodeViewerView({ initialState, active = true }: { initialState?:
       ] : []),
       ...(directoryMenu.entry.symlinkTarget != null ? [{ label: "复制链接目标", icon: <Link2 size={14} />, onSelect: () => void copyPath(directoryMenu.entry.symlinkTarget!, "链接目标") }] : []),
     ]} />}
-    {historyOpen && <><button className="code-viewer-history-backdrop" aria-label="关闭历史记录" onClick={() => setHistoryOpen(false)} /><aside className="archive-history-overlay code-viewer-history"><div className="archive-history-head"><b>最近打开的目录</b><Button variant="subtle" size="xs" icon={<X size={13} />} aria-label="关闭" onClick={() => setHistoryOpen(false)} /></div><div className="archive-history-body custom-scrollbar">{recentFolders.length ? recentFolders.map((item) => <button className="code-viewer-history-row" type="button" key={JSON.stringify([item.target, item.path])} onClick={() => { if (dirty && !window.confirm("放弃当前文件的未保存修改？")) return; void loadFolder(item.path, true, item.target || { kind: "local" }); setHistoryOpen(false); }}><FolderOpen size={15} /><span><b>{folderName(item.path)}</b><small>{item.target?.kind === "ssh" ? "SSH · " + item.target.name + " · " : "本地 · "}{item.path}</small></span><time><Clock3 size={11} />{new Date(item.openedAt).toLocaleDateString()}</time></button>) : <div className="archive-history-empty">暂无目录记录。</div>}</div></aside></>}
+    {historyOpen && <><Button type="button" variant="bare" className="code-viewer-history-backdrop" aria-label="关闭历史记录" onClick={() => setHistoryOpen(false)} /><aside className="archive-history-overlay code-viewer-history"><div className="archive-history-head"><b>最近打开的目录</b><Button variant="ghost" icon={<X size={13} />} aria-label="关闭" onClick={() => setHistoryOpen(false)} /></div><div className="archive-history-body custom-scrollbar">{recentFolders.length ? recentFolders.map((item) => <Button className="code-viewer-history-row" type="button" variant="bare" key={JSON.stringify([item.target, item.path])} onClick={() => { if (dirty && !window.confirm("放弃当前文件的未保存修改？")) return; void loadFolder(item.path, true, item.target || { kind: "local" }); setHistoryOpen(false); }}><FolderOpen size={15} /><span><b>{folderName(item.path)}</b><small>{item.target?.kind === "ssh" ? "SSH · " + item.target.name + " · " : "本地 · "}{item.path}</small></span><time><Clock3 size={11} />{new Date(item.openedAt).toLocaleDateString()}</time></Button>) : <div className="archive-history-empty">暂无目录记录。</div>}</div></aside></>}
   </section>;
 }

@@ -10,6 +10,7 @@
  * 若在这一行直接回车执行，用户会跳过草稿编辑与 `mutating`/`destructive` 确认。
  */
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Button } from "rain-ui";
 import { CornerDownLeft, Sparkles } from "lucide-react";
 
 export interface TerminalCommandBarProps {
@@ -121,8 +122,8 @@ export const TerminalCommandBar: React.FC<TerminalCommandBarProps> = ({
           disabled={Boolean(aiBlockedReason)}
           aria-label="用自然语言生成命令"
         />
-        <button
-          type="button"
+        <Button
+          type="button" variant="bare"
           className="ai-smart-send"
           onClick={askAi}
           disabled={Boolean(aiBlockedReason) || !nl.trim()}
@@ -130,7 +131,7 @@ export const TerminalCommandBar: React.FC<TerminalCommandBarProps> = ({
           aria-label="生成命令草稿"
         >
           <CornerDownLeft size={12} />
-        </button>
+        </Button>
       </div>
 
       <div className="cli-exec-line" data-blocked={cliBlockedReason ? "true" : "false"}>

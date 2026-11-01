@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
-import { Button, Checkbox, Input } from "@/components/ui";
+import { Button, Checkbox, Input } from "rain-ui";
 import type { AgentModelSettings } from "@/platform/api";
 import { SettingsEditDialog } from "./SettingsEditDialog";
 
@@ -42,32 +42,32 @@ export function ModelDiscoveryDialog({ models, savedIds, onClose, onAdd }: {
     return next;
   });
 
-  return <SettingsEditDialog title="选择要添加的模型" onClose={onClose} className="model-discovery-dialog">
-    <div className="model-discovery-toolbar">
-      <Input size="sm" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索模型名称或 ID" aria-label="搜索发现的模型" prefixIcon={<Search size={14} />} />
-      <Checkbox label={query ? "全选结果" : "全选"} checked={visible.length > 0 && selectedVisible === visible.length}
+  return <SettingsEditDialog title="选择要添加的模型" onClose={onClose} className="!max-w-[660px]">
+    <div className="mb-3 flex items-center gap-3.5">
+      <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索模型名称或 ID" aria-label="搜索发现的模型" prefixIcon={<Search size={14} />} className="min-w-0 flex-1" />
+      <Checkbox label={query ? "全选结果" : "全选"} checked={visible.length > 0 && selectedVisible === visible.length} className="shrink-0 whitespace-nowrap"
         indeterminate={selectedVisible > 0 && selectedVisible < visible.length} disabled={!visible.length}
         onChange={(checked) => toggle(visible.map((model) => model.id), checked)} />
     </div>
-    <div className="model-discovery-list" role="group" aria-label="发现的模型">
-      {visible.map((model) => <div key={model.id} className="model-discovery-option" title={savedIds.includes(model.id) ? "已在模型目录中" : undefined}>
-        <label className="model-discovery-toggle">
+    <div className="max-h-[min(380px,50dvh)] overflow-y-auto [overscroll-behavior:contain] [scrollbar-gutter:stable]" role="group" aria-label="发现的模型">
+      {visible.map((model) => <div key={model.id} className="flex min-h-[40px] items-center gap-2 rounded-md p-2 hover:bg-muted/60" title={savedIds.includes(model.id) ? "已在模型目录中" : undefined}>
+        <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5">
           <Checkbox checked={selected.has(model.id)} aria-label={model.id} onChange={(checked) => toggle([model.id], checked)} />
-          <span className="model-discovery-name"><b>{model.name || model.id}</b>{model.name && model.name !== model.id && <small>{model.id}</small>}</span>
+          <span className="flex min-w-0 flex-1 flex-col gap-[3px] [overflow-wrap:anywhere]"><b className="text-xs font-medium">{model.name || model.id}</b>{model.name && model.name !== model.id && <small className="text-[11px] text-muted-foreground">{model.id}</small>}</span>
         </label>
-        <Input size="sm" inputMode="numeric" className="model-discovery-limit" aria-label={`${model.id} 上下文长度`}
+        <Input inputMode="numeric" className="w-[88px] shrink-0 text-center text-[11px]" aria-label={`${model.id} 上下文长度`}
           title="上下文长度（输入 tokens）：留空按已知窗口或 64K 估算" placeholder="上下文"
           value={tokenCountInputValue(limitValue(model, "contextWindow"))}
           onChange={(event) => updateLimit(model.id, { contextWindow: parseTokenCount(event.target.value) })} />
-        <Input size="sm" inputMode="numeric" className="model-discovery-limit" aria-label={`${model.id} 输出上限`}
+        <Input inputMode="numeric" className="w-[88px] shrink-0 text-center text-[11px]" aria-label={`${model.id} 输出上限`}
           title="单轮输出上限（tokens）：留空按上下文窗口推算" placeholder="输出上限"
           value={tokenCountInputValue(limitValue(model, "maxOutputTokens"))}
           onChange={(event) => updateLimit(model.id, { maxOutputTokens: parseTokenCount(event.target.value) })} />
       </div>)}
-      {!visible.length && <div className="model-discovery-empty">没有匹配的模型</div>}
+      {!visible.length && <div className="px-2 py-6 text-center text-[11px] text-muted-foreground">没有匹配的模型</div>}
     </div>
-    <footer className="model-discovery-actions"><span>已选 {count} / {models.length}{missingWindow > 0 && ` · ${missingWindow} 个未返回上下文，可直接填写`}</span><Button size="sm" variant="secondary" onClick={onClose}>取消</Button>
-      <Button size="sm" variant="primary" disabled={!count} onClick={() => onAdd(models.filter((model) => selected.has(model.id)).map((model) => ({ ...model, ...limits[model.id] })))}>添加所选</Button>
+    <footer className="mt-4 flex items-center justify-end gap-2"><span className="mr-auto text-[11px] text-muted-foreground">已选 {count} / {models.length}{missingWindow > 0 && ` · ${missingWindow} 个未返回上下文，可直接填写`}</span><Button variant="outline" onClick={onClose}>取消</Button>
+      <Button variant="default" disabled={!count} onClick={() => onAdd(models.filter((model) => selected.has(model.id)).map((model) => ({ ...model, ...limits[model.id] })))}>添加所选</Button>
     </footer>
   </SettingsEditDialog>;
 }
